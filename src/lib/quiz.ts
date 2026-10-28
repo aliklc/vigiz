@@ -1,18 +1,39 @@
 import { z } from 'zod';
 
+export const QUESTION_TYPES = ['choice', 'truefalse', 'buzzer'] as const;
+export type QuestionType = (typeof QUESTION_TYPES)[number];
+export const TRUE_FALSE = ['Doğru', 'Yanlış'];
+
 // Taslakta boş alanlara izin var (yarım quiz kaydedilebilsin). Veritabanının da istediği
-// kurallar (2-5 şık, geçerli doğru şık) her zaman; dolu olma kuralları sadece "Hazır"da.
+// kurallar her zaman; dolu olma kuralları sadece "Hazır"da.
 export const questionSchema = z
 	.object({
+		type: z.enum(QUESTION_TYPES).default('choice'),
 		text: z.string().trim(),
 		image_url: z.url('Geçerli bir görsel URL girin').nullable(),
 		explanation: z.string().trim().nullable(),
-		choices: z.array(z.string().trim()).min(2, 'En az 2 şık').max(5, 'En fazla 5 şık'),
+		choices: z.array(z.string().trim()).max(5, 'En fazla 5 şık'),
 		correct_index: z.number().int().min(0),
+		// buzzer: cevap ekranında gösterilen doğru cevap
+		answer_text: z.string().trim().nullish(),
 	})
-	.refine(q => q.correct_index < q.choices.length, {
-		message: 'Doğru şık seçilmeli',
-		path: ['correct_index'],
+	.transform(q =>
+		q.type === 'truefalse'
+			? { ...q, choices: TRUE_FALSE, correct_index: Math.min(q.correct_index, 1) }
+			: q.type === 'buzzer'
+				? { ...q, choices: [], correct_index: 0 }
+				: q,
+	)
+	.superRefine((q, ctx) => {
+		if (q.type !== 'choice') return;
+		if (q.choices.length < 2) ctx.addIssue({ code: 'custom', message: 'En az 2 şık' });
+		if (q.correct_index >= q.choices.length) {
+			ctx.addIssue({
+				code: 'custom',
+				message: 'Doğru şık seçilmeli',
+				path: ['correct_index'],
+			});
+		}
 	});
 
 export const quizSchema = z
@@ -33,10 +54,16 @@ export const quizSchema = z
 		if (!quiz.author_name) missing('Hazırlayan adı gerekli');
 		if (!quiz.questions.length) missing('Hazır bir quizin en az bir sorusu olmalı');
 		quiz.questions.forEach((q, i) => {
-			if (!q.text) missing(`Soru ${i + 1}: soru metni boş`);
-			if (q.choices.some(c => !c)) missing(`Soru ${i + 1}: boş şık var`);
+			const n = `Soru ${i + 1}`;
+			if (q.type === 'buzzer') {
+				if (!q.image_url) missing(`${n}: bulanık görsel sorusunun görseli olmalı`);
+				if (!q.answer_text) missing(`${n}: doğru cevabı yaz`);
+				return;
+			}
+			if (!q.text) missing(`${n}: soru metni boş`);
+			if (q.choices.some(c => !c)) missing(`${n}: boş şık var`);
 		});
 	});
 
-export type QuizInput = z.infer<typeof quizSchema>;
-export type QuestionInput = z.infer<typeof questionSchema>;
+export type QuizInput = z.input<typeof quizSchema>;
+export type QuestionInput = z.input<typeof questionSchema>;

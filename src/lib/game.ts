@@ -2,6 +2,7 @@ import 'server-only';
 
 import { type AnswerRow, computeBadges } from '@/lib/badges';
 import type { GameState, Phase } from '@/lib/game-types';
+import type { QuestionType } from '@/lib/quiz';
 import { GRACE_MS } from '@/lib/scoring';
 import { db } from '@/lib/supabase/admin';
 
@@ -60,7 +61,7 @@ export function deadlineOf(game: Game): number {
 export async function getCurrentQuestion(game: Game) {
 	const { data } = await db
 		.from('questions')
-		.select('id, text, image_url, explanation, choices, correct_index')
+		.select('id, type, text, image_url, explanation, answer_text, choices, correct_index')
 		.eq('quiz_id', game.quiz_id)
 		.order('position')
 		.range(game.current_index, game.current_index)
@@ -140,6 +141,7 @@ export async function buildState(code: string, token: string | null): Promise<Ga
 	if (current && (game.phase === 'question' || game.phase === 'reveal')) {
 		const mine = answers?.find(a => a.player_id === playerId);
 		state.question = {
+			type: current.type as QuestionType,
 			text: current.text,
 			imageUrl: current.image_url,
 			choices: current.choices,

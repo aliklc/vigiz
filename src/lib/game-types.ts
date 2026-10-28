@@ -1,3 +1,5 @@
+import type { QuestionType } from '@/lib/quiz';
+
 export type Phase = 'lobby' | 'question' | 'reveal' | 'leaderboard' | 'finished';
 
 export type GameState = {
@@ -15,6 +17,7 @@ export type GameState = {
 	me: { id: string; name: string } | null;
 	// question / reveal fazlarında
 	question: {
+		type: QuestionType;
 		text: string;
 		imageUrl: string | null;
 		choices: string[];

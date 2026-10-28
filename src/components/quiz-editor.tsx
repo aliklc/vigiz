@@ -6,18 +6,27 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { LETTERS } from '@/components/brand';
+import { FORMATS } from '@/components/formats';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import type { QuestionInput, QuizInput } from '@/lib/quiz';
+import {
+	QUESTION_TYPES,
+	type QuestionInput,
+	type QuestionType,
+	type QuizInput,
+	TRUE_FALSE,
+} from '@/lib/quiz';
 import { cn } from '@/lib/utils';
 
-const emptyQuestion = (): QuestionInput => ({
+const emptyQuestion = (type: QuestionType = 'choice'): QuestionInput => ({
+	type,
 	text: '',
 	image_url: null,
 	explanation: null,
-	choices: ['', ''],
+	answer_text: null,
+	choices: type === 'choice' ? ['', ''] : type === 'truefalse' ? TRUE_FALSE : [],
 	correct_index: 0,
 });
 
@@ -65,6 +74,24 @@ export function QuizEditor({
 			'questions',
 			quiz.questions.map((q, j) => (j === i ? { ...q, ...patch } : q)),
 		);
+
+	// Format değişince şıklar formata uygun hale gelir (metin, görsel, açıklama korunur).
+	const changeType = (i: number, type: QuestionType) => {
+		const q = quiz.questions[i];
+		const choices =
+			type === 'truefalse'
+				? TRUE_FALSE
+				: type === 'choice'
+					? q.type === 'choice' && q.choices.length >= 2
+						? q.choices
+						: ['', '']
+					: [];
+		setQuestion(i, {
+			type,
+			choices,
+			correct_index: type === 'buzzer' ? 0 : Math.min(q.correct_index, choices.length - 1),
+		});
+	};
 
 	const moveQuestion = (i: number, dir: -1 | 1) => {
 		const qs = [...quiz.questions];
@@ -155,8 +182,14 @@ export function QuizEditor({
 					key={i}
 					className="flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
 				>
-					<div className="flex items-center justify-between">
-						<h2 className="text-lg font-semibold">Soru {i + 1}</h2>
+					<div className="flex items-start justify-between gap-3">
+						<div className="flex flex-wrap items-center gap-3">
+							<h2 className="text-lg font-semibold">Soru {i + 1}</h2>
+							<FormatPicker
+								value={q.type ?? 'choice'}
+								onChange={type => changeType(i, type)}
+							/>
+						</div>
 						<div className="flex gap-1">
 							<IconButton
 								label="Yukarı"
@@ -185,85 +218,159 @@ export function QuizEditor({
 							</IconButton>
 						</div>
 					</div>
-					<Textarea
-						placeholder="Soru metni"
-						value={q.text}
-						onChange={e => setQuestion(i, { text: e.target.value })}
-					/>
-					<div className="flex flex-col gap-2" role="radiogroup" aria-label="Şıklar">
-						{q.choices.map((c, ci) => (
-							<div key={ci} className="flex items-center gap-2">
-								<label
-									title="Doğru cevap olarak işaretle"
-									className={cn(
-										'relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-sm font-bold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
-										q.correct_index === ci
-											? 'bg-green-600 text-white'
-											: 'bg-brand-tint text-brand-ink hover:bg-brand/20',
-									)}
+					{(q.type ?? 'choice') === 'buzzer' ? (
+						<>
+							<p className="text-sm text-muted-foreground">
+								Görsel bulanık başlar ve süre boyunca netleşir. Bilen oyuncular
+								buzzer'a basar, sırayla sesli cevap verir; sen Doğru ya da Yanlış
+								dersin.
+							</p>
+							<ImageField
+								value={q.image_url}
+								onChange={image_url => setQuestion(i, { image_url })}
+								blurredPreview
+							/>
+							<Input
+								placeholder="Doğru cevap (sadece cevap ekranında görünür)"
+								value={q.answer_text ?? ''}
+								onChange={e =>
+									setQuestion(i, { answer_text: e.target.value || null })
+								}
+							/>
+							<Input
+								placeholder="Soru (isteğe bağlı, örn. Bu hangi şehir?)"
+								value={q.text}
+								onChange={e => setQuestion(i, { text: e.target.value })}
+							/>
+						</>
+					) : (
+						<>
+							<Textarea
+								placeholder="Soru metni"
+								value={q.text}
+								onChange={e => setQuestion(i, { text: e.target.value })}
+							/>
+							{q.type === 'truefalse' ? (
+								<div
+									className="flex gap-2"
+									role="radiogroup"
+									aria-label="Doğru cevap"
 								>
-									<input
-										type="radio"
-										name={`correct-${i}`}
-										aria-label={`Şık ${ci + 1} doğru cevap`}
-										checked={q.correct_index === ci}
-										onChange={() => setQuestion(i, { correct_index: ci })}
-										className="sr-only"
-									/>
-									{q.correct_index === ci ? (
-										<Check className="size-5" strokeWidth={3} />
-									) : (
-										LETTERS[ci]
-									)}
-								</label>
-								<Input
-									placeholder={`Şık ${ci + 1}`}
-									value={c}
-									onChange={e =>
-										setQuestion(i, {
-											choices: q.choices.map((x, k) =>
-												k === ci ? e.target.value : x,
-											),
-										})
-									}
-								/>
-								<IconButton
-									label="Şıkkı sil"
-									disabled={q.choices.length <= 2}
-									onClick={() =>
-										setQuestion(i, {
-											choices: q.choices.filter((_, k) => k !== ci),
-											correct_index:
+									{TRUE_FALSE.map((label, ci) => (
+										<label
+											key={label}
+											className={cn(
+												'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 py-3 font-semibold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 												q.correct_index === ci
-													? 0
-													: q.correct_index > ci
-														? q.correct_index - 1
-														: q.correct_index,
-										})
-									}
+													? 'border-green-600 bg-green-50 text-green-800'
+													: 'border-border hover:bg-muted',
+											)}
+										>
+											<input
+												type="radio"
+												name={`tf-${i}`}
+												checked={q.correct_index === ci}
+												onChange={() =>
+													setQuestion(i, { correct_index: ci })
+												}
+												className="sr-only"
+											/>
+											{q.correct_index === ci && (
+												<Check className="size-4" strokeWidth={3} />
+											)}
+											{label}
+										</label>
+									))}
+								</div>
+							) : (
+								<div
+									className="flex flex-col gap-2"
+									role="radiogroup"
+									aria-label="Şıklar"
 								>
-									<Trash2 />
-								</IconButton>
-							</div>
-						))}
-						{q.choices.length < 5 && (
-							<Button
-								variant="outline"
-								size="sm"
-								className="self-start"
-								onClick={() => setQuestion(i, { choices: [...q.choices, ''] })}
-							>
-								<Plus /> Şık ekle
-							</Button>
-						)}
-						<p className="text-xs text-muted-foreground">
-							Doğru cevabı soldaki harfe basarak işaretle (yeşil olan doğru cevap).
-						</p>
-					</div>
-					<ImageField
-						value={q.image_url}
-						onChange={image_url => setQuestion(i, { image_url })}
-					/>
+									{q.choices.map((c, ci) => (
+										<div key={ci} className="flex items-center gap-2">
+											<label
+												title="Doğru cevap olarak işaretle"
+												className={cn(
+													'relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-sm font-bold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
+													q.correct_index === ci
+														? 'bg-green-600 text-white'
+														: 'bg-brand-tint text-brand-ink hover:bg-brand/20',
+												)}
+											>
+												<input
+													type="radio"
+													name={`correct-${i}`}
+													aria-label={`Şık ${ci + 1} doğru cevap`}
+													checked={q.correct_index === ci}
+													onChange={() =>
+														setQuestion(i, { correct_index: ci })
+													}
+													className="sr-only"
+												/>
+												{q.correct_index === ci ? (
+													<Check className="size-5" strokeWidth={3} />
+												) : (
+													LETTERS[ci]
+												)}
+											</label>
+											<Input
+												placeholder={`Şık ${ci + 1}`}
+												value={c}
+												onChange={e =>
+													setQuestion(i, {
+														choices: q.choices.map((x, k) =>
+															k === ci ? e.target.value : x,
+														),
+													})
+												}
+											/>
+											<IconButton
+												label="Şıkkı sil"
+												disabled={q.choices.length <= 2}
+												onClick={() =>
+													setQuestion(i, {
+														choices: q.choices.filter(
+															(_, k) => k !== ci,
+														),
+														correct_index:
+															q.correct_index === ci
+																? 0
+																: q.correct_index > ci
+																	? q.correct_index - 1
+																	: q.correct_index,
+													})
+												}
+											>
+												<Trash2 />
+											</IconButton>
+										</div>
+									))}
+									{q.choices.length < 5 && (
+										<Button
+											variant="outline"
+											size="sm"
+											className="self-start"
+											onClick={() =>
+												setQuestion(i, { choices: [...q.choices, ''] })
+											}
+										>
+											<Plus /> Şık ekle
+										</Button>
+									)}
+									<p className="text-xs text-muted-foreground">
+										Doğru cevabı soldaki harfe basarak işaretle (yeşil olan
+										doğru cevap).
+									</p>
+								</div>
+							)}
+							<ImageField
+								value={q.image_url}
+								onChange={image_url => setQuestion(i, { image_url })}
+							/>
+						</>
+					)}
 					<Input
 						placeholder="Cevaptan sonra gösterilecek açıklama (isteğe bağlı)"
 						value={q.explanation ?? ''}
@@ -272,12 +379,22 @@ export function QuizEditor({
 				</section>
 			))}
 
-			<Button
-				variant="outline"
-				onClick={() => set('questions', [...quiz.questions, emptyQuestion()])}
-			>
-				<Plus /> Soru ekle
-			</Button>
+			<div className="flex flex-wrap gap-2">
+				{QUESTION_TYPES.map(type => {
+					const { label, Icon } = FORMATS[type];
+					return (
+						<Button
+							key={type}
+							variant="outline"
+							onClick={() =>
+								set('questions', [...quiz.questions, emptyQuestion(type)])
+							}
+						>
+							<Plus /> <Icon /> {label}
+						</Button>
+					);
+				})}
+			</div>
 
 			<footer className="sticky bottom-0 -mx-4 border-t bg-background/95 p-3 backdrop-blur sm:-mx-8 sm:px-8">
 				<div className="flex flex-col gap-2">
@@ -319,9 +436,12 @@ function IconButton({ label, ...props }: React.ComponentProps<typeof Button> & {
 function ImageField({
 	value,
 	onChange,
+	blurredPreview,
 }: {
 	value: string | null;
 	onChange: (url: string | null) => void;
+	// Bulanık görsel sorusu: oyuncuların başta göreceği hali de göster
+	blurredPreview?: boolean;
 }) {
 	const [uploading, setUploading] = useState(false);
 	const [error, setError] = useState('');
@@ -374,18 +494,75 @@ function ImageField({
 			</div>
 			{value && (
 				<div className="flex items-center gap-3">
-					{/* biome-ignore lint/performance/noImgElement: dış URL'ler için next/image domain ayarı gerekir */}
-					<img
-						src={value}
-						alt="Soru görseli önizleme"
-						className="h-20 rounded-lg border object-contain"
-					/>
+					{blurredPreview && (
+						<figure className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+							<span className="h-20 overflow-hidden rounded-lg border">
+								{/* biome-ignore lint/performance/noImgElement: dış URL'ler için next/image domain ayarı gerekir */}
+								<img
+									src={value}
+									alt=""
+									className="h-20 scale-110 object-contain blur-md"
+								/>
+							</span>
+							<figcaption>Başta</figcaption>
+						</figure>
+					)}
+					<figure className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
+						{/* biome-ignore lint/performance/noImgElement: dış URL'ler için next/image domain ayarı gerekir */}
+						<img
+							src={value}
+							alt="Soru görseli önizleme"
+							className="h-20 rounded-lg border object-contain"
+						/>
+						{blurredPreview && <figcaption>Sonunda</figcaption>}
+					</figure>
 					<Button variant="ghost" size="sm" onClick={() => onChange(null)}>
 						Kaldır
 					</Button>
 				</div>
 			)}
 			{error && <p className="text-sm text-destructive">{error}</p>}
+		</div>
+	);
+}
+
+function FormatPicker({
+	value,
+	onChange,
+}: {
+	value: QuestionType;
+	onChange: (t: QuestionType) => void;
+}) {
+	return (
+		<div
+			className="flex rounded-lg border bg-muted/50 p-0.5"
+			role="radiogroup"
+			aria-label="Soru formatı"
+		>
+			{QUESTION_TYPES.map(type => {
+				const { label, Icon } = FORMATS[type];
+				return (
+					<label
+						key={type}
+						title={label}
+						className={cn(
+							'flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition has-focus-visible:ring-2 has-focus-visible:ring-ring',
+							value === type
+								? 'bg-white text-ink shadow-sm'
+								: 'text-muted-foreground hover:text-ink',
+						)}
+					>
+						<input
+							type="radio"
+							checked={value === type}
+							onChange={() => onChange(type)}
+							className="sr-only"
+						/>
+						<Icon className="size-3.5" />
+						<span className="hidden sm:inline">{label}</span>
+					</label>
+				);
+			})}
 		</div>
 	);
 }

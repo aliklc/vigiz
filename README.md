@@ -69,7 +69,12 @@ pnpm seed                    # seed/quiz.json → SEED_OWNER_EMAIL hesabına
 pnpm seed sorularim.json     # kendi dosyan
 ```
 
-Her çalıştırma yeni bir quiz ekler. Dosya formatı (`image_url` ve `explanation` isteğe bağlı, 2–5 şık, `correct_index` 0'dan başlar):
+Her çalıştırma yeni bir quiz ekler. Soru formatı `type` ile seçilir:
+- `choice` (varsayılan, çoktan seçmeli).
+- `truefalse` (şıklar otomatik `Doğru`/`Yanlış`, `correct_index` 0 = Doğru).
+- `buzzer` (bulanık görsel: `image_url` ve `answer_text` zorunlu, şık yok).
+
+Dosya formatı (`image_url` ve `explanation` isteğe bağlı, 2–5 şık, `correct_index` 0'dan başlar):
 
 ```json
 {

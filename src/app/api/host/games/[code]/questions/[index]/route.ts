@@ -25,7 +25,7 @@ export async function GET(
 	}
 	const { data: q } = await db
 		.from('questions')
-		.select('id, text, image_url, explanation, choices, correct_index')
+		.select('id, type, text, image_url, explanation, choices, correct_index')
 		.eq('quiz_id', game.quiz_id)
 		.order('position')
 		.range(index, index)
@@ -39,6 +39,7 @@ export async function GET(
 		.eq('question_id', q.id);
 	return NextResponse.json({
 		index,
+		type: q.type,
 		text: q.text,
 		imageUrl: q.image_url,
 		choices: q.choices,

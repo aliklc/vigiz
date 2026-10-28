@@ -16,6 +16,7 @@ import {
 import { Centered, PlayerList, PrimaryButton } from '@/components/player-screen';
 import { useGame } from '@/hooks/use-game';
 import type { GameState } from '@/lib/game-types';
+import type { QuestionType } from '@/lib/quiz';
 
 type Action = 'start' | 'next' | 'pause' | 'resume' | 'end';
 
@@ -292,6 +293,7 @@ function JoinQr({ url }: { url: string }) {
 
 type PastQuestion = {
 	index: number;
+	type: QuestionType;
 	text: string;
 	imageUrl: string | null;
 	choices: string[];
@@ -305,6 +307,7 @@ function PastQuestionView({ state, past }: { state: GameState; past: PastQuestio
 	const view: GameState = {
 		...state,
 		question: {
+			type: past.type,
 			text: past.text,
 			imageUrl: past.imageUrl,
 			choices: past.choices,

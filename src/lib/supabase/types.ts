@@ -6,7 +6,7 @@ export type Database = {
 			answers: {
 				Row: {
 					answered_at: string;
-					choice_index: number;
+					choice_index: number | null;
 					game_id: string;
 					player_id: string;
 					points: number;
@@ -15,7 +15,7 @@ export type Database = {
 				ComputedFields: never;
 				Insert: {
 					answered_at?: string;
-					choice_index: number;
+					choice_index?: number | null;
 					game_id: string;
 					player_id: string;
 					points: number;
@@ -23,7 +23,7 @@ export type Database = {
 				};
 				Update: {
 					answered_at?: string;
-					choice_index?: number;
+					choice_index?: number | null;
 					game_id?: string;
 					player_id?: string;
 					points?: number;
@@ -168,6 +168,7 @@ export type Database = {
 			};
 			questions: {
 				Row: {
+					answer_text: string | null;
 					choices: string[];
 					correct_index: number;
 					explanation: string | null;
@@ -176,9 +177,11 @@ export type Database = {
 					position: number;
 					quiz_id: string;
 					text: string;
+					type: string;
 				};
 				ComputedFields: never;
 				Insert: {
+					answer_text?: string | null;
 					choices: string[];
 					correct_index: number;
 					explanation?: string | null;
@@ -187,8 +190,10 @@ export type Database = {
 					position: number;
 					quiz_id: string;
 					text: string;
+					type?: string;
 				};
 				Update: {
+					answer_text?: string | null;
 					choices?: string[];
 					correct_index?: number;
 					explanation?: string | null;
@@ -197,6 +202,7 @@ export type Database = {
 					position?: number;
 					quiz_id?: string;
 					text?: string;
+					type?: string;
 				};
 				Relationships: [
 					{
@@ -250,7 +256,7 @@ export type Database = {
 			answer_points: {
 				Row: {
 					answered_at: string;
-					choice_index: number;
+					choice_index: number | null;
 					game_id: string;
 					player_id: string;
 					points: number;

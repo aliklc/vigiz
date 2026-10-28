@@ -454,6 +454,85 @@ try {
 	await db.from('games').delete().eq('id', g3.id);
 	log('rozetler: 2 doğru üst üste 🔥2, turun en hızlısı ⚡, finalde ⚡ yok');
 
+	// Doğru/Yanlış: şıklar sunucuda sabitlenir, oyun çoktan seçmeliyle aynı akışta oynanır.
+	const tfQuiz = {
+		title: 'TF',
+		topic: 'T',
+		author_name: 'Bot',
+		quiz_date: '2026-10-28',
+		time_limit_sec: 20,
+		status: 'ready',
+		questions: [
+			{
+				type: 'truefalse',
+				text: 'Dünya yuvarlaktır',
+				image_url: null,
+				explanation: null,
+				choices: ['x', 'y', 'z'],
+				correct_index: 0,
+			},
+		],
+	};
+	const tfRes = await fetch(`${B}/api/host/quizzes`, {
+		method: 'POST',
+		headers: { cookie },
+		body: JSON.stringify(tfQuiz),
+	});
+	assert.equal(tfRes.status, 200);
+	const { id: tfId } = await tfRes.json();
+	const { data: tfQ } = await db
+		.from('questions')
+		.select('type, choices')
+		.eq('quiz_id', tfId)
+		.single();
+	assert.deepEqual(tfQ, { type: 'truefalse', choices: ['Doğru', 'Yanlış'] });
+	const tfRoom = await fetch(`${B}/api/host/games`, {
+		method: 'POST',
+		headers: { cookie },
+		body: new URLSearchParams({ quizId: tfId }),
+		redirect: 'manual',
+	});
+	const tfCode = tfRoom.headers.get('location').split('/').pop();
+	const tfToken = (await (await post(`/api/games/${tfCode}/join`, { name: 'Tek' })).json()).token;
+	await fetch(`${B}/api/host/games/${tfCode}/action`, {
+		method: 'POST',
+		headers: { cookie },
+		body: '{"action":"start"}',
+	});
+	const tfState = async () =>
+		(await fetch(`${B}/api/games/${tfCode}/state?token=${tfToken}`)).json();
+	assert.equal((await tfState()).question.type, 'truefalse');
+	assert.equal(
+		(await post(`/api/games/${tfCode}/answer`, { token: tfToken, choiceIndex: 0 })).status,
+		200,
+	);
+	const tfReveal = await tfState();
+	assert.equal(tfReveal.game.phase, 'reveal');
+	assert.equal(tfReveal.reveal.correctIndex, 0);
+	assert.ok(tfReveal.reveal.myPoints > 500);
+	const badBuzzer = await fetch(`${B}/api/host/quizzes`, {
+		method: 'POST',
+		headers: { cookie },
+		body: JSON.stringify({
+			...tfQuiz,
+			questions: [
+				{
+					type: 'buzzer',
+					text: '',
+					image_url: null,
+					explanation: null,
+					choices: [],
+					correct_index: 0,
+				},
+			],
+		}),
+	});
+	assert.equal(badBuzzer.status, 400, 'görselsiz buzzer sorusu hazır olamaz');
+	await db.from('quizzes').delete().eq('id', tfId);
+	log(
+		'Doğru/Yanlış: şıklar sabitlendi, oynandı, doğru cevap puan aldı; görselsiz buzzer hazır olamaz',
+	);
+
 	// Sıra bonusu ara değerleri: 3 doğru cevap → +200 / +100 / +0 (yanlış cevap sırayı etkilemez).
 	const { data: g2 } = await db
 		.from('games')

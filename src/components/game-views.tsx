@@ -1,6 +1,6 @@
 'use client';
 
-import { Flame, Zap } from 'lucide-react';
+import { Check, Flame, X, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { LETTERS } from '@/components/brand';
@@ -154,7 +154,15 @@ export function Choices({
 										: 'bg-brand-tint text-brand-ink',
 							)}
 						>
-							{LETTERS[i]}
+							{question.type === 'truefalse' ? (
+								i === 0 ? (
+									<Check className="size-5" strokeWidth={3} aria-hidden />
+								) : (
+									<X className="size-5" strokeWidth={3} aria-hidden />
+								)
+							) : (
+								LETTERS[i]
+							)}
 						</span>
 						<span className="flex-1">{choice}</span>
 						{reveal && (
