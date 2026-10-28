@@ -3,7 +3,7 @@
 import { ArrowDown, ArrowUp, Check, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { LETTERS } from '@/components/brand';
 import { Button } from '@/components/ui/button';
@@ -25,7 +25,8 @@ const emptyQuiz = (authorName = ''): QuizInput => ({
 	title: '',
 	topic: '',
 	author_name: authorName,
-	quiz_date: new Date().toISOString().slice(0, 10),
+	// Yerel tarih (toISOString UTC verir; Türkiye'de gece 00-03 arası dünün tarihi olurdu).
+	quiz_date: new Date().toLocaleDateString('sv-SE'),
 	time_limit_sec: 20,
 	status: 'draft',
 	questions: [emptyQuestion()],
@@ -45,9 +46,19 @@ export function QuizEditor({
 	const [error, setError] = useState('');
 	const [saved, setSaved] = useState('');
 	const [pending, setPending] = useState(false);
+	// Kaydedilmemiş değişiklik varken sekmeyi kapatma/yenileme uyarısı.
+	const [dirty, setDirty] = useState(false);
+	useEffect(() => {
+		if (!dirty) return;
+		const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+		window.addEventListener('beforeunload', warn);
+		return () => window.removeEventListener('beforeunload', warn);
+	}, [dirty]);
 
-	const set = <K extends keyof QuizInput>(key: K, value: QuizInput[K]) =>
+	const set = <K extends keyof QuizInput>(key: K, value: QuizInput[K]) => {
 		setQuiz(q => ({ ...q, [key]: value }));
+		setDirty(true);
+	};
 
 	const setQuestion = (i: number, patch: Partial<QuestionInput>) =>
 		set(
@@ -65,20 +76,26 @@ export function QuizEditor({
 		setPending(true);
 		setError('');
 		setSaved('');
-		const res = await fetch(id ? `/api/host/quizzes/${id}` : '/api/host/quizzes', {
-			method: id ? 'PUT' : 'POST',
-			body: JSON.stringify({ ...quiz, status }),
-		});
-		const body = await res.json();
-		setPending(false);
-		if (!res.ok) return setError(body.error ?? 'Kaydedilemedi');
-		set('status', status);
-		setSaved(status === 'ready' ? 'Hazır olarak kaydedildi' : 'Taslak kaydedildi');
-		if (!id) router.replace(`/host/quizzes/${body.id}`);
+		try {
+			const res = await fetch(id ? `/api/host/quizzes/${id}` : '/api/host/quizzes', {
+				method: id ? 'PUT' : 'POST',
+				body: JSON.stringify({ ...quiz, status }),
+			});
+			const body = await res.json();
+			if (!res.ok) return setError(body.error ?? 'Kaydedilemedi');
+			set('status', status);
+			setDirty(false);
+			setSaved(status === 'ready' ? 'Hazır olarak kaydedildi' : 'Taslak kaydedildi');
+			if (!id) router.replace(`/host/quizzes/${body.id}`);
+		} catch {
+			setError('Bağlantı koptu, kaydedilemedi. Sayfayı kapatmadan tekrar dene.');
+		} finally {
+			setPending(false);
+		}
 	}
 
 	async function remove() {
-		if (!id || !confirm('Bu quiz silinsin mi?')) return;
+		if (!id || !confirm('Bu quiz ve oynandığı oyunların sonuçları silinsin mi?')) return;
 		const res = await fetch(`/api/host/quizzes/${id}`, { method: 'DELETE' });
 		if (!res.ok) return setError((await res.json()).error);
 		router.replace('/host');

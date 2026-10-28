@@ -45,13 +45,19 @@ export function HostScreen({ code }: { code: string }) {
 
 	async function act(action: Action) {
 		setBusy(true);
-		const res = await fetch(`/api/host/games/${code}/action`, {
-			method: 'POST',
-			body: JSON.stringify({ action }),
-		});
-		if (!res.ok) alert((await res.json()).error ?? 'İşlem başarısız');
-		await refresh();
-		setBusy(false);
+		try {
+			const res = await fetch(`/api/host/games/${code}/action`, {
+				method: 'POST',
+				body: JSON.stringify({ action }),
+			});
+			if (!res.ok) alert((await res.json()).error ?? 'İşlem başarısız');
+			await refresh();
+		} catch {
+			alert('Bağlantı koptu, tekrar dene.');
+		} finally {
+			// Ağ hatasında da butonlar tekrar açılsın; yoksa oyun ortasında kilitlenir.
+			setBusy(false);
+		}
 	}
 
 	if (notFound) return <Centered>Oda bulunamadı.</Centered>;

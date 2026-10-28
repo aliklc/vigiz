@@ -17,9 +17,11 @@ export async function saveQuiz(request: Request, id: string | null, ownerId: str
 		p_owner: ownerId,
 		p_quiz: parsed.data,
 	});
-	if (error) {
-		const status = error.code === 'P0001' ? 409 : error.code === 'P0002' ? 404 : 500;
-		return NextResponse.json({ error: error.message }, { status });
-	}
+	// Sadece bizim yazdığımız hata mesajları kullanıcıya gider; Postgres iç mesajları gitmez.
+	if (error?.code === 'P0001')
+		return NextResponse.json({ error: error.message }, { status: 409 });
+	if (error?.code === 'P0002')
+		return NextResponse.json({ error: error.message }, { status: 404 });
+	if (error) return NextResponse.json({ error: 'Kaydedilemedi, tekrar dene' }, { status: 500 });
 	return NextResponse.json({ id: data });
 }

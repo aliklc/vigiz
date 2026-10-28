@@ -106,7 +106,9 @@ export default async function HostHome() {
 									</span>
 								</div>
 								<div className="min-w-0 flex-1">
-									<p className="truncate font-semibold sm:text-lg">{q.title}</p>
+									<p className="truncate font-semibold sm:text-lg">
+										{q.title || 'Adsız quiz'}
+									</p>
 									<p className="truncate text-sm text-muted-foreground">
 										{q.topic}, {q.questions[0]?.count ?? 0} soru
 									</p>

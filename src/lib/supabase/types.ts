@@ -105,6 +105,37 @@ export type Database = {
 					},
 				];
 			};
+			player_tokens: {
+				Row: {
+					player_id: string;
+					token: string;
+				};
+				ComputedFields: never;
+				Insert: {
+					player_id: string;
+					token?: string;
+				};
+				Update: {
+					player_id?: string;
+					token?: string;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'player_tokens_player_id_fkey';
+						columns: ['player_id'];
+						isOneToOne: true;
+						referencedRelation: 'game_scores';
+						referencedColumns: ['player_id'];
+					},
+					{
+						foreignKeyName: 'player_tokens_player_id_fkey';
+						columns: ['player_id'];
+						isOneToOne: true;
+						referencedRelation: 'players';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			players: {
 				Row: {
 					game_id: string;

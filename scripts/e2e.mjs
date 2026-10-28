@@ -107,6 +107,26 @@ try {
 	assert.equal(stillA.title, 'E2E Test');
 	log("B, A'nın quizini göremedi, düzenleyemedi, silemedi, oda açamadı");
 
+	// Taslak eksik kaydedilebilir; "Hazır" eksiksiz olmalı.
+	const draft = {
+		title: '',
+		topic: '',
+		author_name: '',
+		quiz_date: '2026-11-01',
+		time_limit_sec: 20,
+		status: 'draft',
+		questions: [
+			{ text: '', image_url: null, explanation: null, choices: ['', ''], correct_index: 0 },
+		],
+	};
+	const postB = body =>
+		asB('/api/host/quizzes', { method: 'POST', body: JSON.stringify(body) }).then(
+			r => r.status,
+		);
+	assert.equal(await postB(draft), 200, 'yarım taslak kaydedilebilmeli');
+	assert.equal(await postB({ ...draft, status: 'ready' }), 400, 'yarım quiz hazır olamaz');
+	log('taslak: yarım hali kaydedildi, aynısı "Hazır" olarak reddedildi');
+
 	const room = await fetch(`${B}/api/host/games`, {
 		method: 'POST',
 		headers: { cookie },
@@ -128,14 +148,29 @@ try {
 	const act = async action =>
 		(await post(`/api/host/games/${code}/action`, { action }, { cookie })).json();
 	const state = async id =>
-		(await fetch(`${B}/api/games/${code}/state${id ? `?playerId=${id}` : ''}`)).json();
-	const stateRaw = async id =>
-		(await fetch(`${B}/api/games/${code}/state?playerId=${id}`)).text();
-	const answer = (playerId, choiceIndex) =>
-		post(`/api/games/${code}/answer`, { playerId, choiceIndex });
+		(await fetch(`${B}/api/games/${code}/state${id ? `?token=${id}` : ''}`)).json();
+	const stateRaw = async id => (await fetch(`${B}/api/games/${code}/state?token=${id}`)).text();
+	const answer = (token, choiceIndex) =>
+		post(`/api/games/${code}/answer`, { token, choiceIndex });
 
-	const A = (await (await post(`/api/games/${code}/join`, { name: 'Ayşe' })).json()).id;
-	const Bp = (await (await post(`/api/games/${code}/join`, { name: 'Bora' })).json()).id;
+	// A ve Bp gizli token'lar; aId/bId herkese açık oyuncu kimlikleri (lobi listesinde görünür).
+	const A = (await (await post(`/api/games/${code}/join`, { name: 'Ayşe' })).json()).token;
+	const Bp = (await (await post(`/api/games/${code}/join`, { name: 'Bora' })).json()).token;
+	const aId = (await state(A)).me.id;
+	const bId = (await state(Bp)).me.id;
+
+	// Lobideki herkese açık kimlikler token yerine geçemez (başkası adına cevap/bağlanma yok).
+	const lobby = await state();
+	assert.deepEqual(lobby.players.map(p => p.id).sort(), [aId, bId].sort());
+	assert.ok(!JSON.stringify(lobby).includes(A), 'token state yanıtında görünmemeli');
+	assert.equal((await post(`/api/games/${code}/join`, { token: aId })).status, 400);
+	const anon = createClient(
+		process.env.NEXT_PUBLIC_SUPABASE_URL,
+		process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+	);
+	const { data: leaked } = await anon.from('player_tokens').select('token');
+	assert.deepEqual(leaked, [], 'tarayıcı anahtarıyla token okunamamalı');
+	log('token gizli: herkese açık id ile bağlanılamıyor, tarayıcıdan token okunamıyor');
 
 	assert.equal((await post(`/api/host/games/${code}/action`, { action: 'start' })).status, 401);
 	log('cookie olmadan host aksiyonu 401');
@@ -152,13 +187,15 @@ try {
 		'soru fazında doğru cevap sızmamalı',
 	);
 	log('soru fazı, doğru cevap ve açıklama yanıtta yok');
+	assert.equal((await answer(bId, 0)).status, 403, 'açık id ile başkası adına cevap verilemez');
+	log("başkasının açık id'siyle cevap 403");
 
 	assert.equal((await answer(A, 1)).status, 200);
 	assert.equal((await answer(A, 0)).status, 409);
 	const { data: a1 } = await db
 		.from('answers')
 		.select('choice_index, points')
-		.eq('player_id', A)
+		.eq('player_id', aId)
 		.single();
 	assert.equal(a1.choice_index, 1);
 	assert.ok(a1.points > 500 && a1.points <= 800, `puan ${a1.points}`);
@@ -183,7 +220,7 @@ try {
 	log('duraklat: cevap 409; devam: süre', s.question.deadline - before, 'ms kaydı');
 
 	assert.equal((await answer(Bp, 1)).status, 200);
-	const { data: b1 } = await db.from('answers').select('points').eq('player_id', Bp).single();
+	const { data: b1 } = await db.from('answers').select('points').eq('player_id', bId).single();
 	s = await state(A);
 	assert.equal(s.game.phase, 'reveal', 'herkes cevaplayınca reveal');
 	assert.equal(s.reveal.correctIndex, 1);
@@ -268,6 +305,111 @@ try {
 	const r = await act('next');
 	assert.equal(r.changed, false);
 	log('final; bitmiş oyunda Sonraki etkisiz');
+
+	// Oynanmış quiz: başlık değişebilir, sorular değişemez.
+	const playedQuiz = {
+		title: 'E2E Test (düzeltildi)',
+		topic: 'Test',
+		author_name: 'Bot',
+		quiz_date: '2026-10-28',
+		time_limit_sec: 15,
+		status: 'ready',
+		questions: [
+			{
+				text: 'S1',
+				image_url: null,
+				explanation: 'açıklama 1',
+				choices: ['yanlış', 'doğru', 'x'],
+				correct_index: 1,
+			},
+			{
+				text: 'S2',
+				image_url: null,
+				explanation: null,
+				choices: ['a', 'b'],
+				correct_index: 0,
+			},
+		],
+	};
+	const putA = body =>
+		fetch(`${B}/api/host/quizzes/${quizId}`, {
+			method: 'PUT',
+			headers: { cookie },
+			body: JSON.stringify(body),
+		});
+	assert.equal((await putA(playedQuiz)).status, 200, 'oynanmış quizin başlığı değişebilmeli');
+	const changed = structuredClone(playedQuiz);
+	changed.questions[0].text = 'S1 değişti';
+	const rejected = await putA(changed);
+	assert.equal(rejected.status, 409, 'oynanmış quizin soruları değişememeli');
+	assert.ok((await rejected.json()).error.includes('soruları'));
+	log('oynanmış quiz: başlık düzenlendi, soru değişikliği 409');
+
+	// Sıra bonusu ara değerleri: 3 doğru cevap → +200 / +100 / +0 (yanlış cevap sırayı etkilemez).
+	const { data: g2 } = await db
+		.from('games')
+		.insert({ quiz_id: quizId, code: `T${stamp}`.slice(0, 6) })
+		.select('id')
+		.single();
+	const pids = [
+		crypto.randomUUID(),
+		crypto.randomUUID(),
+		crypto.randomUUID(),
+		crypto.randomUUID(),
+	];
+	await db.from('players').insert(pids.map((id, i) => ({ id, game_id: g2.id, name: `P${i}` })));
+	const { data: q1 } = await db
+		.from('questions')
+		.select('id')
+		.eq('quiz_id', quizId)
+		.eq('position', 0)
+		.single();
+	const at = i => new Date(Date.UTC(2026, 0, 1, 0, 0, i)).toISOString();
+	await db.from('answers').insert([
+		{
+			game_id: g2.id,
+			player_id: pids[0],
+			question_id: q1.id,
+			choice_index: 0,
+			points: 0,
+			answered_at: at(0),
+		},
+		{
+			game_id: g2.id,
+			player_id: pids[1],
+			question_id: q1.id,
+			choice_index: 1,
+			points: 700,
+			answered_at: at(1),
+		},
+		{
+			game_id: g2.id,
+			player_id: pids[2],
+			question_id: q1.id,
+			choice_index: 1,
+			points: 600,
+			answered_at: at(2),
+		},
+		{
+			game_id: g2.id,
+			player_id: pids[3],
+			question_id: q1.id,
+			choice_index: 1,
+			points: 500,
+			answered_at: at(3),
+		},
+	]);
+	const { data: totals } = await db
+		.from('answer_points')
+		.select('player_id, total')
+		.eq('game_id', g2.id);
+	const byP = Object.fromEntries(totals.map(t => [t.player_id, t.total]));
+	assert.deepEqual(
+		pids.map(id => byP[id]),
+		[0, 900, 700, 500],
+	);
+	await db.from('games').delete().eq('id', g2.id);
+	log('sıra bonusu: 3 doğru cevapta +200 / +100 / +0, yanlış cevap 0');
 
 	console.log('\nTÜM KONTROLLER GEÇTİ');
 } finally {

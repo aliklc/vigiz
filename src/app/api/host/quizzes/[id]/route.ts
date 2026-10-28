@@ -15,21 +15,14 @@ export async function DELETE(_: Request, ctx: RouteContext<'/api/host/quizzes/[i
 	if (!host) return unauthorized();
 	const { id } = await ctx.params;
 
-	const { data: quiz } = await db
+	// Oyunları, oyuncuları ve cevapları da cascade ile silinir (editör onay sorar).
+	const { data: deleted, error } = await db
 		.from('quizzes')
-		.select('id, games(phase)')
+		.delete()
 		.eq('id', id)
 		.eq('owner_id', host.id)
-		.maybeSingle();
-	if (!quiz) return notFoundJson('Quiz bulunamadı');
-	// Oynanmış quizin sonuçları arşivde durur; quiz silinirse onlar da gider.
-	if (quiz.games.some(g => g.phase !== 'lobby')) {
-		return NextResponse.json(
-			{ error: 'Bu quiz oynandığı için silinemez (arşivde duruyor).' },
-			{ status: 409 },
-		);
-	}
-	const { error } = await db.from('quizzes').delete().eq('id', id).eq('owner_id', host.id);
+		.select('id');
 	if (error) return NextResponse.json({ error: 'Silinemedi' }, { status: 500 });
+	if (!deleted.length) return notFoundJson('Quiz bulunamadı');
 	return NextResponse.json({ ok: true });
 }

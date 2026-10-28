@@ -39,6 +39,18 @@ export async function getOwnedGame(code: string, hostId: string) {
 	return game?.quiz.owner_id === hostId ? game : null;
 }
 
+// Gizli token → bu oyundaki oyuncunun id'si. players.id herkese açık, token değil.
+export async function playerIdByToken(gameId: string, token: string | null) {
+	if (!token || !/^[0-9a-f-]{36}$/i.test(token)) return null;
+	const { data } = await db
+		.from('player_tokens')
+		.select('player_id, players!inner(game_id)')
+		.eq('token', token)
+		.eq('players.game_id', gameId)
+		.maybeSingle();
+	return data?.player_id ?? null;
+}
+
 // Duraklatma süresi question_started_at ileri kaydırılarak düşülür.
 export function deadlineOf(game: Game): number {
 	return Date.parse(game.question_started_at ?? '') + game.limitMs;
@@ -81,9 +93,10 @@ export async function maybeReveal(game: Game, questionId: string): Promise<boole
 	return true;
 }
 
-export async function buildState(code: string, playerId: string | null): Promise<GameState | null> {
+export async function buildState(code: string, token: string | null): Promise<GameState | null> {
 	let game = await getGame(code);
 	if (!game) return null;
+	const playerId = await playerIdByToken(game.id, token);
 
 	const showsQuestion = game.phase === 'question' || game.phase === 'reveal';
 	const current = showsQuestion ? await getCurrentQuestion(game) : null;
@@ -101,7 +114,7 @@ export async function buildState(code: string, playerId: string | null): Promise
 					.eq('question_id', current.id)
 					.eq('game_id', game.id)
 			: { data: null },
-		game.phase === 'leaderboard' || game.phase === 'finished' ? getScores([game.id]) : null,
+		game.phase === 'leaderboard' || game.phase === 'finished' ? getScores(game.id) : null,
 	]);
 	const me = players?.find(p => p.id === playerId) ?? null;
 
@@ -165,16 +178,15 @@ export async function buildState(code: string, playerId: string | null): Promise
 	return state;
 }
 
-// Oyun(lar)ın puan listesi, puana göre sıralı. Oyun bitince bu liste arşivde de kullanılır.
-export async function getScores(gameIds: string[]) {
+// Oyunun puan listesi, puana göre sıralı.
+export async function getScores(gameId: string) {
 	const { data } = await db
 		.from('game_scores')
-		.select('game_id, player_id, name, score')
-		.in('game_id', gameIds)
+		.select('player_id, name, score')
+		.eq('game_id', gameId)
 		.order('score', { ascending: false })
 		.order('name');
 	return (data ?? []).map(s => ({
-		gameId: s.game_id ?? '',
 		id: s.player_id ?? '',
 		name: s.name ?? '',
 		score: s.score ?? 0,

@@ -15,7 +15,7 @@ import {
 import { useGame } from '@/hooks/use-game';
 import { cn } from '@/lib/utils';
 
-const storageKey = (code: string) => `vigiz:player:${code}`;
+const storageKey = (code: string) => `vigiz:token:${code}`;
 
 function readStored(code: string): string | null {
 	try {
@@ -33,10 +33,10 @@ function writeStored(code: string, id: string | null) {
 }
 
 export function PlayerScreen({ code }: { code: string }) {
-	// undefined = localStorage henüz okunmadı, null = kayıtlı oyuncu yok
-	const [playerId, setPlayerId] = useState<string | null | undefined>(undefined);
+	// Gizli oyuncu token'ı. undefined = localStorage henüz okunmadı, null = kayıtlı oyuncu yok
+	const [token, setToken] = useState<string | null | undefined>(undefined);
 	const [error, setError] = useState('');
-	const { state, notFound, refresh, offset } = useGame(code, playerId ?? null);
+	const { state, notFound, refresh, offset } = useGame(code, token ?? null);
 	const remaining = useRemaining(state?.question ?? null, offset, !!state?.reveal, refresh);
 	// Gönderilen ama state'e henüz yansımamış seçim (anında geri bildirim için)
 	const [pending, setPending] = useState<{ index: number; choice: number } | null>(null);
@@ -45,38 +45,52 @@ export function PlayerScreen({ code }: { code: string }) {
 		if (!state) return;
 		setPending({ index: state.game.currentIndex, choice: choiceIndex });
 		setError('');
-		const res = await fetch(`/api/games/${code}/answer`, {
-			method: 'POST',
-			body: JSON.stringify({ playerId, choiceIndex }),
-		});
-		if (!res.ok) setError((await res.json()).error ?? 'Cevap gönderilemedi');
-		await refresh();
-		setPending(null);
-	}
-
-	async function join(body: { playerId?: string; name?: string }) {
-		const res = await fetch(`/api/games/${code}/join`, {
-			method: 'POST',
-			body: JSON.stringify(body),
-		});
-		const data = await res.json();
-		if (res.ok) {
-			writeStored(code, data.id);
-			setPlayerId(data.id);
-			setError('');
-			return;
+		try {
+			const res = await fetch(`/api/games/${code}/answer`, {
+				method: 'POST',
+				body: JSON.stringify({ token, choiceIndex }),
+			});
+			if (!res.ok) setError((await res.json()).error ?? 'Cevap gönderilemedi');
+			await refresh();
+		} catch {
+			// Ağ hatası: cevap kaydedilmedi; seçim temizlenir, oyuncu tekrar basabilir.
+			setError('Bağlantı koptu, cevabın gönderilemedi. Tekrar dene.');
+		} finally {
+			setPending(null);
 		}
-		writeStored(code, null);
-		setPlayerId(null);
-		setError(data.error);
 	}
 
-	// Sayfa yenilenince / geri gelinince kayıtlı kimlikle yeniden bağlan.
+	async function join(body: { token?: string; name?: string }) {
+		try {
+			const res = await fetch(`/api/games/${code}/join`, {
+				method: 'POST',
+				body: JSON.stringify(body),
+			});
+			const data = await res.json();
+			if (res.ok) {
+				writeStored(code, data.token);
+				setToken(data.token);
+				setError('');
+				return;
+			}
+			// Kimlik sadece sunucu "bu odada kaydın yok" dediğinde (400) silinir.
+			if (body.token && res.status !== 400) throw new Error(data.error);
+			if (body.token) writeStored(code, null);
+			setToken(null);
+			setError(body.token ? '' : data.error);
+		} catch {
+			if (!body.token) return setError('Bağlantı koptu, tekrar dene.');
+			// Yeniden bağlanırken geçici hata: kimliği koru, biraz sonra tekrar dene.
+			setTimeout(() => join(body), 2000);
+		}
+	}
+
+	// Sayfa yenilenince / geri gelinince kayıtlı token ile yeniden bağlan.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: sadece ilk açılışta
 	useEffect(() => {
 		const stored = readStored(code);
-		if (stored) join({ playerId: stored });
-		else setPlayerId(null);
+		if (stored) join({ token: stored });
+		else setToken(null);
 	}, [code]);
 
 	if (notFound) {
@@ -92,8 +106,8 @@ export function PlayerScreen({ code }: { code: string }) {
 			</Centered>
 		);
 	}
-	// playerId ayarlandı ama state henüz o oyuncuyla yeniden çekilmediyse isim formunu gösterme.
-	if (playerId === undefined || !state || (playerId && !state.me)) {
+	// token ayarlandı ama state henüz o oyuncuyla yeniden çekilmediyse isim formunu gösterme.
+	if (token === undefined || !state || (token && !state.me)) {
 		return <Centered>Yükleniyor…</Centered>;
 	}
 
