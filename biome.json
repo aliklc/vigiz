@@ -1,0 +1,38 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
+	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true, "defaultBranch": "main" },
+	"files": {
+		"ignoreUnknown": true,
+		"includes": ["**", "!!**/.next", "!**/docs", "!**/next-env.d.ts", "!src/components/ui"]
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"indentWidth": 4,
+		"lineEnding": "lf",
+		"lineWidth": 100
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "single",
+			"jsxQuoteStyle": "double",
+			"trailingCommas": "all",
+			"semicolons": "always",
+			"arrowParentheses": "asNeeded"
+		}
+	},
+	"css": {
+		"parser": { "tailwindDirectives": true },
+		"formatter": { "quoteStyle": "single" }
+	},
+	"assist": { "enabled": true, "actions": { "source": { "organizeImports": "on" } } },
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"recommended": true,
+			"a11y": { "useButtonType": "off", "noSvgWithoutTitle": "off" },
+			"suspicious": { "noArrayIndexKey": "off" },
+			"style": { "noNonNullAssertion": "off" }
+		}
+	}
+}
