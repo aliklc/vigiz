@@ -1,7 +1,7 @@
 import { Plus } from 'lucide-react';
 import Link from 'next/link';
 
-import { CHOICE_BG, CHOICE_TEXT, CodeTiles } from '@/components/brand';
+import { CodeTiles } from '@/components/brand';
 import { Button } from '@/components/ui/button';
 import { requireHost } from '@/lib/auth';
 import { db } from '@/lib/supabase/admin';
@@ -33,10 +33,10 @@ export default async function HostHome() {
 	const totalPlayers = played.reduce((sum, g) => sum + (g.players[0]?.count ?? 0), 0);
 
 	return (
-		<main className="mx-auto flex w-full max-w-4xl flex-col gap-8 p-4 sm:p-8">
+		<main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-8 sm:py-10">
 			<header className="flex flex-wrap items-end justify-between gap-4">
 				<div>
-					<h1 className="font-display text-4xl font-extrabold">
+					<h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
 						Merhaba, {host.name.split(' ')[0]}
 					</h1>
 					<p className="text-muted-foreground">
@@ -54,23 +54,23 @@ export default async function HostHome() {
 
 			{open.length > 0 && (
 				<section aria-labelledby="open-rooms" className="flex flex-col gap-3">
-					<h2 id="open-rooms" className="font-display text-xl font-extrabold">
+					<h2 id="open-rooms" className="text-xl font-semibold">
 						Açık odalar
 					</h2>
 					{open.map(g => (
 						<Link
 							key={g.code}
 							href={`/host/games/${g.code}`}
-							className="flex flex-wrap items-center gap-4 rounded-2xl bg-night p-4 text-white hover:bg-night-2"
+							className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4 shadow-sm hover:border-brand"
 						>
 							<CodeTiles code={g.code} size="md" />
 							<div className="min-w-0 flex-1">
 								<p className="truncate font-semibold">{g.quizzes.title}</p>
-								<p className="text-sm opacity-75">
+								<p className="text-sm text-muted-foreground">
 									{PHASE_LABEL[g.phase]}, {g.players[0]?.count ?? 0} oyuncu
 								</p>
 							</div>
-							<span className="rounded-xl bg-c3 px-4 py-2 font-semibold text-ink">
+							<span className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white">
 								Ekrana dön
 							</span>
 						</Link>
@@ -79,11 +79,11 @@ export default async function HostHome() {
 			)}
 
 			<section aria-labelledby="quizzes" className="flex flex-col gap-3">
-				<h2 id="quizzes" className="font-display text-xl font-extrabold">
+				<h2 id="quizzes" className="text-xl font-semibold">
 					Quizlerim
 				</h2>
 				{!quizzes?.length && (
-					<div className="rounded-2xl border-2 border-dashed p-8 text-center">
+					<div className="rounded-2xl border-2 border-dashed bg-white p-8 text-center">
 						<p className="font-semibold">Henüz bir quizin yok</p>
 						<p className="text-muted-foreground">
 							Bir konu seç, soruları yaz, hazır olunca oda açıp ekibi davet et.
@@ -91,32 +91,22 @@ export default async function HostHome() {
 					</div>
 				)}
 				<ul className="flex flex-col gap-2">
-					{quizzes?.map((q, i) => {
+					{quizzes?.map(q => {
 						const date = new Date(q.quiz_date);
 						const ready = q.status === 'ready';
 						return (
 							<li
 								key={q.id}
-								className="flex items-center gap-4 rounded-2xl bg-card p-3 pr-4 shadow-sm"
+								className="flex items-center gap-4 rounded-2xl border bg-white p-3 pr-4 shadow-sm"
 							>
-								<div
-									className={cn(
-										'flex size-16 shrink-0 flex-col items-center justify-center rounded-xl leading-none',
-										CHOICE_BG[i % 5],
-										CHOICE_TEXT[i % 5],
-									)}
-								>
-									<span className="font-display text-2xl font-extrabold">
-										{date.getDate()}
-									</span>
+								<div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-tint leading-none text-brand-ink sm:size-16">
+									<span className="text-2xl font-bold">{date.getDate()}</span>
 									<span className="text-xs font-semibold">
 										{date.toLocaleDateString('tr-TR', { month: 'short' })}
 									</span>
 								</div>
 								<div className="min-w-0 flex-1">
-									<p className="truncate font-display text-lg font-extrabold">
-										{q.title}
-									</p>
+									<p className="truncate font-semibold sm:text-lg">{q.title}</p>
 									<p className="truncate text-sm text-muted-foreground">
 										{q.topic}, {q.questions[0]?.count ?? 0} soru
 									</p>
@@ -125,7 +115,7 @@ export default async function HostHome() {
 									className={cn(
 										'hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline',
 										ready
-											? 'bg-c4/15 text-emerald-800'
+											? 'bg-green-50 text-green-700'
 											: 'bg-muted text-muted-foreground',
 									)}
 								>

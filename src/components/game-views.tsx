@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { CHOICE_BG, CHOICE_TEXT, ChoiceShape } from '@/components/brand';
+import { LETTERS } from '@/components/brand';
 import type { GameState } from '@/lib/game-types';
 import { GRACE_MS } from '@/lib/scoring';
 import { cn } from '@/lib/utils';
@@ -47,12 +47,15 @@ export function Countdown({
 	paused: boolean;
 	size?: 'md' | 'lg';
 }) {
-	const r = 42;
+	const r = 44;
 	const circumference = 2 * Math.PI * r;
 	const low = remaining <= 5000;
 	return (
 		<div
-			className={cn('relative shrink-0', size === 'lg' ? 'size-28' : 'size-16')}
+			className={cn(
+				'relative shrink-0',
+				size === 'lg' ? 'size-24 lg:size-28' : 'size-14 sm:size-16',
+			)}
 			role="timer"
 			aria-label={paused ? 'Duraklatıldı' : `${Math.ceil(remaining / 1000)} saniye`}
 		>
@@ -61,28 +64,29 @@ export function Countdown({
 					cx="50"
 					cy="50"
 					r={r}
-					className="fill-none stroke-white/15"
-					strokeWidth="10"
+					className="fill-white stroke-border"
+					strokeWidth="8"
 				/>
 				<circle
 					cx="50"
 					cy="50"
 					r={r}
-					strokeWidth="10"
+					strokeWidth="8"
 					strokeLinecap="round"
 					strokeDasharray={circumference}
 					strokeDashoffset={circumference * (1 - remaining / limitMs)}
 					className={cn(
 						'fill-none transition-[stroke-dashoffset] duration-300 ease-linear',
-						low ? 'stroke-c1' : 'stroke-c3',
+						low ? 'stroke-destructive' : 'stroke-brand',
 					)}
 				/>
 			</svg>
 			<span
 				aria-hidden
 				className={cn(
-					'absolute inset-0 flex items-center justify-center font-display font-extrabold tabular-nums',
-					size === 'lg' ? 'text-5xl' : 'text-2xl',
+					'absolute inset-0 flex items-center justify-center font-bold tabular-nums',
+					size === 'lg' ? 'text-4xl' : 'text-xl sm:text-2xl',
+					low && 'text-destructive',
 				)}
 			>
 				{paused ? 'II' : Math.ceil(remaining / 1000)}
@@ -91,7 +95,7 @@ export function Countdown({
 	);
 }
 
-// Şık karoları. Cevap gösteriminde her karonun içinde seçen kişi sayısı kadar dolan bir çubuk var.
+// Şık kartları. Cevap gösteriminde her kartın altında seçen kişi oranı kadar dolan bir çubuk var.
 export function Choices({
 	state,
 	open,
@@ -111,20 +115,13 @@ export function Choices({
 				reveal.counts.reduce((a, b) => a + b, 0),
 			)
 		: 1;
-	const twoCols = question.choices.length <= 4 && question.choices.every(c => c.length <= 28);
 
 	return (
-		<div
-			className={cn(
-				'grid gap-2 sm:gap-3',
-				twoCols ? 'grid-cols-2' : 'grid-cols-1',
-				size === 'player' && 'flex-1 auto-rows-fr',
-			)}
-		>
+		<div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
 			{question.choices.map((choice, i) => {
 				const chosen = question.myChoice === i;
 				const correct = reveal?.correctIndex === i;
-				const dimmed = reveal ? !correct : question.myChoice != null && !chosen;
+				const wrongPick = reveal && chosen && !correct;
 				return (
 					<button
 						key={i}
@@ -133,48 +130,49 @@ export function Choices({
 						onClick={() => onChoose?.(i)}
 						aria-pressed={onChoose ? chosen : undefined}
 						className={cn(
-							'relative flex items-center gap-3 overflow-hidden rounded-2xl p-4 text-left font-semibold shadow-[0_5px_0_rgb(0_0_0/0.3)] transition',
-							CHOICE_BG[i],
-							CHOICE_TEXT[i],
+							'relative flex items-center gap-3 overflow-hidden rounded-2xl border-2 bg-white p-3 text-left font-medium transition sm:p-4',
 							size === 'host'
-								? 'min-h-24 text-2xl sm:text-3xl'
-								: twoCols
-									? 'min-h-20 flex-col justify-center text-center text-xl'
-									: 'min-h-16 text-xl',
-							open && onChoose && 'active:translate-y-1 active:shadow-none',
-							dimmed && 'opacity-40',
-							chosen &&
-								!reveal &&
-								'ring-4 ring-white ring-offset-2 ring-offset-night',
-							correct && 'ring-4 ring-white ring-offset-2 ring-offset-night',
+								? 'min-h-20 text-xl lg:min-h-24 lg:text-2xl'
+								: 'min-h-16 text-lg',
+							open && onChoose && 'hover:border-brand active:scale-[0.99]',
+							!reveal && chosen && 'border-brand bg-brand-tint',
+							!reveal && !chosen && 'border-border',
+							reveal && correct && 'border-green-600 bg-green-50',
+							wrongPick && 'border-destructive bg-red-50',
+							reveal && !correct && !wrongPick && 'border-border opacity-60',
 						)}
 					>
-						{reveal && (
-							<span
-								aria-hidden
-								className="absolute inset-y-0 left-0 bg-black/20 transition-[width] duration-700 ease-out"
-								style={{ width: `${(reveal.counts[i] / total) * 100}%` }}
-							/>
-						)}
-						<ChoiceShape
-							index={i}
-							className={cn(
-								'relative',
-								size === 'host' ? 'size-9' : twoCols ? 'size-12' : 'size-8',
-							)}
-						/>
 						<span
-							className={cn('relative', !(size === 'player' && twoCols) && 'flex-1')}
+							className={cn(
+								'flex size-9 shrink-0 items-center justify-center rounded-xl text-base font-bold',
+								size === 'host' && 'lg:size-11 lg:text-lg',
+								correct
+									? 'bg-green-600 text-white'
+									: chosen
+										? 'bg-brand text-white'
+										: 'bg-brand-tint text-brand-ink',
+							)}
 						>
-							{choice}
+							{LETTERS[i]}
 						</span>
+						<span className="flex-1">{choice}</span>
 						{reveal && (
-							<span className="relative font-display text-2xl font-extrabold tabular-nums">
+							<span className="font-bold tabular-nums">
 								{reveal.counts[i]}
 								<span className="sr-only"> kişi seçti</span>
 							</span>
 						)}
 						{correct && <span className="sr-only">Doğru cevap</span>}
+						{reveal && (
+							<span
+								aria-hidden
+								className={cn(
+									'absolute bottom-0 left-0 h-1.5 transition-[width] duration-700 ease-out',
+									correct ? 'bg-green-600' : 'bg-brand/50',
+								)}
+								style={{ width: `${(reveal.counts[i] / total) * 100}%` }}
+							/>
+						)}
 					</button>
 				);
 			})}
@@ -205,16 +203,20 @@ export function Scoreboard({
 				<li
 					key={s.id}
 					className={cn(
-						'flex items-center gap-3 rounded-xl bg-white/8 px-4 py-2.5 text-lg',
-						i < 3 && 'bg-white/14',
-						s.id === meId && 'bg-c3 font-semibold text-ink',
+						'flex items-center gap-3 rounded-xl border bg-white px-4 py-2.5 sm:text-lg',
+						s.id === meId && 'border-brand bg-brand-tint font-semibold',
 					)}
 				>
-					<span className="w-7 text-right font-display font-extrabold tabular-nums opacity-70">
+					<span
+						className={cn(
+							'w-7 text-right font-bold tabular-nums',
+							i < 3 ? 'text-brand-ink' : 'text-muted-foreground',
+						)}
+					>
 						{i + 1}
 					</span>
 					<span className="flex-1 truncate">{s.name}</span>
-					<span className="font-display font-extrabold tabular-nums">{s.score}</span>
+					<span className="font-bold tabular-nums">{s.score}</span>
 				</li>
 			))}
 		</ol>
@@ -224,7 +226,11 @@ export function Scoreboard({
 export function Podium({ scores }: { scores: NonNullable<GameState['scores']> }) {
 	// 2. - 1. - 3. sırasıyla yan yana
 	const order = [1, 0, 2].filter(i => scores[i]);
-	const blocks = ['h-40 bg-c3 text-ink', 'h-28 bg-c2 text-white', 'h-20 bg-c1 text-white'];
+	const blocks = [
+		'h-36 bg-brand text-white',
+		'h-24 bg-brand/60 text-white',
+		'h-16 bg-brand/30 text-brand-ink',
+	];
 	return (
 		<div className="flex items-end justify-center gap-2 sm:gap-4">
 			{order.map(i => (
@@ -232,15 +238,15 @@ export function Podium({ scores }: { scores: NonNullable<GameState['scores']> })
 					key={scores[i].id}
 					className="flex w-28 flex-col items-center gap-1 text-center sm:w-40"
 				>
-					<span className="w-full truncate text-lg font-semibold sm:text-2xl">
+					<span className="w-full truncate font-semibold sm:text-xl">
 						{scores[i].name}
 					</span>
-					<span className="font-display text-sm font-extrabold tabular-nums opacity-80 sm:text-lg">
+					<span className="text-sm text-muted-foreground tabular-nums sm:text-base">
 						{scores[i].score}
 					</span>
 					<div
 						className={cn(
-							'flex w-full items-start justify-center rounded-t-2xl pt-2 font-display text-4xl font-extrabold',
+							'flex w-full items-start justify-center rounded-t-2xl pt-2 text-3xl font-bold',
 							blocks[i],
 						)}
 					>

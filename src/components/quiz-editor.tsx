@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
-import { CHOICE_BG, CHOICE_TEXT, ChoiceShape } from '@/components/brand';
+import { LETTERS } from '@/components/brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -85,13 +85,13 @@ export function QuizEditor({
 	}
 
 	return (
-		<main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 sm:p-8">
+		<main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-8">
 			<div className="flex items-center justify-between gap-4">
 				<div>
 					<Link href="/host" className="text-sm text-muted-foreground hover:underline">
 						Quizlerim
 					</Link>
-					<h1 className="font-display text-3xl font-extrabold">
+					<h1 className="text-3xl font-bold tracking-tight">
 						{id ? quiz.title || 'Adsız quiz' : 'Yeni quiz'}
 					</h1>
 				</div>
@@ -102,7 +102,7 @@ export function QuizEditor({
 				)}
 			</div>
 
-			<section className="grid gap-3 rounded-2xl bg-card p-4 shadow-sm sm:grid-cols-2">
+			<section className="grid gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-6">
 				<Field label="Başlık">
 					<Input value={quiz.title} onChange={e => set('title', e.target.value)} />
 				</Field>
@@ -134,9 +134,12 @@ export function QuizEditor({
 			</section>
 
 			{quiz.questions.map((q, i) => (
-				<section key={i} className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm">
+				<section
+					key={i}
+					className="flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
+				>
 					<div className="flex items-center justify-between">
-						<h2 className="font-display text-lg font-extrabold">Soru {i + 1}</h2>
+						<h2 className="text-lg font-semibold">Soru {i + 1}</h2>
 						<div className="flex gap-1">
 							<IconButton
 								label="Yukarı"
@@ -176,12 +179,10 @@ export function QuizEditor({
 								<label
 									title="Doğru cevap olarak işaretle"
 									className={cn(
-										'relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
-										CHOICE_BG[ci],
-										CHOICE_TEXT[ci],
+										'relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-sm font-bold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 										q.correct_index === ci
-											? 'ring-3 ring-ink ring-offset-2'
-											: 'opacity-60 hover:opacity-100',
+											? 'bg-green-600 text-white'
+											: 'bg-brand-tint text-brand-ink hover:bg-brand/20',
 									)}
 								>
 									<input
@@ -195,7 +196,7 @@ export function QuizEditor({
 									{q.correct_index === ci ? (
 										<Check className="size-5" strokeWidth={3} />
 									) : (
-										<ChoiceShape index={ci} className="size-4" />
+										LETTERS[ci]
 									)}
 								</label>
 								<Input
@@ -239,7 +240,7 @@ export function QuizEditor({
 							</Button>
 						)}
 						<p className="text-xs text-muted-foreground">
-							Doğru cevabı soldaki renkli kutuya basarak işaretle.
+							Doğru cevabı soldaki harfe basarak işaretle (yeşil olan doğru cevap).
 						</p>
 					</div>
 					<Input

@@ -1,39 +1,51 @@
-import Link from 'next/link';
-
-import { Wordmark } from '@/components/brand';
-import { BigButton } from '@/components/player-screen';
+import { FIELD } from '@/components/brand';
+import { PrimaryButton } from '@/components/player-screen';
+import { SiteHeader } from '@/components/site-header';
+import { cn } from '@/lib/utils';
 
 export default function Home() {
 	return (
-		<main className="stage flex flex-col items-center justify-center gap-10 p-6">
-			<div className="flex flex-col items-center gap-2 text-center">
-				<Wordmark className="text-7xl sm:text-8xl" />
-				<p className="text-lg opacity-80">Ayın quiz gecesi. Kodu gir, katıl.</p>
-			</div>
-			<form action="/play" className="flex w-full max-w-sm flex-col gap-3">
-				<label htmlFor="code" className="sr-only">
-					Oda kodu
-				</label>
-				<input
-					id="code"
-					name="code"
-					placeholder="Oda kodu"
-					autoComplete="off"
-					autoCapitalize="characters"
-					maxLength={6}
-					required
-					className="h-16 rounded-2xl bg-white text-center font-display text-3xl font-extrabold tracking-[0.3em] text-ink uppercase outline-none placeholder:tracking-normal placeholder:text-ink/40 focus-visible:ring-4 focus-visible:ring-c3"
-				/>
-				<BigButton type="submit">Katıl</BigButton>
-			</form>
-			<nav className="flex gap-6 text-sm opacity-75">
-				<Link href="/archive" className="underline-offset-4 hover:underline">
-					Geçmiş quizler
-				</Link>
-				<Link href="/host" className="underline-offset-4 hover:underline">
-					Quiz hazırla
-				</Link>
-			</nav>
-		</main>
+		<div className="stage flex flex-col">
+			<SiteHeader />
+			<main className="mx-auto grid w-full max-w-6xl flex-1 content-center items-center gap-10 px-4 py-10 sm:px-8 lg:grid-cols-2 lg:gap-16">
+				<div className="flex flex-col gap-4 text-center lg:text-left">
+					<span className="mx-auto inline-block rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-sm text-brand-ink lg:mx-0">
+						Her ay bir konu, bir sunucu
+					</span>
+					<h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
+						Ayın quiz gecesine katıl
+					</h1>
+					<p className="text-lg text-muted-foreground">
+						Hesap açmana gerek yok. Host'un ekranındaki kodu gir, adını yaz ve oyna.
+					</p>
+				</div>
+				<form
+					action="/play"
+					className="mx-auto flex w-full max-w-md flex-col gap-4 rounded-3xl border bg-white p-6 shadow-sm sm:p-8"
+				>
+					<div>
+						<h2 className="text-xl font-semibold">Odaya gir</h2>
+						<p className="text-sm text-muted-foreground">6 karakterlik oda kodu</p>
+					</div>
+					<label htmlFor="code" className="sr-only">
+						Oda kodu
+					</label>
+					<input
+						id="code"
+						name="code"
+						placeholder="ÖRN. 3SZ6PU"
+						autoComplete="off"
+						autoCapitalize="characters"
+						maxLength={6}
+						required
+						className={cn(
+							FIELD,
+							'h-14 text-center text-2xl font-bold tracking-[0.25em] uppercase placeholder:text-base placeholder:font-normal placeholder:tracking-normal',
+						)}
+					/>
+					<PrimaryButton type="submit">Katıl</PrimaryButton>
+				</form>
+			</main>
+		</div>
 	);
 }

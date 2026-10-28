@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-import { CHOICE_BG, CHOICE_TEXT, ChoiceShape, Wordmark } from '@/components/brand';
+import { FIELD, LETTERS } from '@/components/brand';
 import {
 	Choices,
 	Countdown,
@@ -82,52 +82,60 @@ export function PlayerScreen({ code }: { code: string }) {
 	if (notFound) {
 		return (
 			<Centered>
-				<p className="font-display text-2xl font-extrabold">Bu kodla bir oda yok</p>
-				<p className="opacity-75">Kodu host'un ekranından kontrol edip tekrar dene.</p>
-				<a href="/" className="mt-4 underline">
+				<p className="text-2xl font-bold tracking-tight">Bu kodla bir oda yok</p>
+				<p className="text-muted-foreground">
+					Kodu host'un ekranından kontrol edip tekrar dene.
+				</p>
+				<a href="/" className="mt-4 font-medium text-brand-ink underline">
 					Kodu yeniden gir
 				</a>
 			</Centered>
 		);
 	}
-	if (playerId === undefined || !state) return <Centered>Yükleniyor…</Centered>;
+	// playerId ayarlandı ama state henüz o oyuncuyla yeniden çekilmediyse isim formunu gösterme.
+	if (playerId === undefined || !state || (playerId && !state.me)) {
+		return <Centered>Yükleniyor…</Centered>;
+	}
 
 	if (!state.me) {
 		if (state.game.phase === 'finished') {
-			return <Centered>Bu oyun bitti. Sonuçlar arşivde.</Centered>;
+			return <Centered>Bu oyun bitti. Sonuçlar geçmiş quizlerde.</Centered>;
 		}
 		return (
 			<Stage className="justify-center">
-				<div className="flex flex-col items-center gap-1 text-center">
-					<Wordmark className="mb-6 text-5xl" />
-					<p className="opacity-75">{state.quiz.topic}</p>
-					<h1 className="font-display text-3xl font-extrabold">{state.quiz.title}</h1>
-				</div>
-				<form
-					className="mt-8 flex flex-col gap-3"
-					onSubmit={e => {
-						e.preventDefault();
-						join({ name: String(new FormData(e.currentTarget).get('name')) });
-					}}
-				>
-					<label htmlFor="name" className="text-center opacity-75">
-						Sıralamada görünecek adın
-					</label>
-					<input
-						id="name"
-						name="name"
-						maxLength={30}
-						autoComplete="nickname"
-						required
-						className="h-14 rounded-2xl bg-white px-4 text-center text-xl font-semibold text-ink outline-none focus-visible:ring-4 focus-visible:ring-c3"
-					/>
-					{error && (
-						<p role="alert" className="text-center text-c3">
-							{error}
-						</p>
-					)}
-					<BigButton type="submit">Katıl</BigButton>
-				</form>
+				<Card className="flex flex-col gap-6">
+					<div className="text-center">
+						<p className="text-muted-foreground">{state.quiz.topic}</p>
+						<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+							{state.quiz.title}
+						</h1>
+					</div>
+					<form
+						className="flex flex-col gap-3"
+						onSubmit={e => {
+							e.preventDefault();
+							join({ name: String(new FormData(e.currentTarget).get('name')) });
+						}}
+					>
+						<label htmlFor="name" className="text-sm font-medium">
+							Sıralamada görünecek adın
+						</label>
+						<input
+							id="name"
+							name="name"
+							maxLength={30}
+							autoComplete="nickname"
+							required
+							className={FIELD}
+						/>
+						{error && (
+							<p role="alert" className="text-sm text-destructive">
+								{error}
+							</p>
+						)}
+						<PrimaryButton type="submit">Katıl</PrimaryButton>
+					</form>
+				</Card>
 			</Stage>
 		);
 	}
@@ -143,16 +151,21 @@ export function PlayerScreen({ code }: { code: string }) {
 
 	if (phase === 'lobby') {
 		return (
-			<Stage>
-				<Wordmark className="text-3xl" />
-				<div className="my-auto flex flex-col items-center gap-2 py-10 text-center">
-					<p className="opacity-75">{state.quiz.title}</p>
-					<h1 className="font-display text-4xl font-extrabold">Hazırsın, {me.name}</h1>
-					<p className="max-w-xs opacity-75">
-						Host başlatınca ilk soru burada belirecek.
-					</p>
-				</div>
-				<PlayerList players={state.players} meId={me.id} />
+			<Stage className="justify-center">
+				<Card className="flex flex-col gap-6">
+					<div className="text-center">
+						<span className="inline-block rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-sm text-brand-ink">
+							{state.quiz.title}
+						</span>
+						<h1 className="mt-3 text-3xl font-bold tracking-tight">
+							Hazırsın, {me.name}
+						</h1>
+						<p className="text-muted-foreground">
+							Host başlatınca ilk soru burada belirecek.
+						</p>
+					</div>
+					<PlayerList players={state.players} meId={me.id} />
+				</Card>
 			</Stage>
 		);
 	}
@@ -162,26 +175,24 @@ export function PlayerScreen({ code }: { code: string }) {
 		const chosen = question.myChoice;
 		if (chosen != null) {
 			return (
-				<main
-					className={cn(
-						'flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center',
-						CHOICE_BG[chosen],
-						CHOICE_TEXT[chosen],
-					)}
-				>
-					<ChoiceShape index={chosen} className="size-24" />
-					<p className="font-display text-4xl font-extrabold">Cevabın alındı</p>
-					<p className="text-lg opacity-80">{question.choices[chosen]}</p>
-					<p className="mt-6 opacity-80">Diğerleri bekleniyor…</p>
-					{error && <p role="alert">{error}</p>}
-				</main>
+				<Stage className="justify-center">
+					<Card className="flex flex-col items-center gap-3 text-center">
+						<span className="flex size-16 items-center justify-center rounded-2xl bg-brand text-3xl font-bold text-white">
+							{LETTERS[chosen]}
+						</span>
+						<p className="text-2xl font-bold tracking-tight">Cevabın alındı</p>
+						<p className="text-muted-foreground">{question.choices[chosen]}</p>
+						<p className="mt-4 text-sm text-muted-foreground">Diğerleri bekleniyor…</p>
+						{error && <p role="alert">{error}</p>}
+					</Card>
+				</Stage>
 			);
 		}
 		return (
-			<Stage className="gap-4">
+			<Stage className="gap-4 sm:gap-6">
 				<div className="flex items-center justify-between gap-3">
-					<p className="font-display text-lg font-extrabold opacity-75">
-						{state.game.currentIndex + 1}/{state.game.questionCount}
+					<p className="font-semibold text-muted-foreground">
+						Soru {state.game.currentIndex + 1}/{state.game.questionCount}
 					</p>
 					<Countdown
 						remaining={remaining}
@@ -189,14 +200,14 @@ export function PlayerScreen({ code }: { code: string }) {
 						paused={paused}
 					/>
 				</div>
-				<h1 className="font-display text-2xl leading-tight font-extrabold">
+				<h1 className="text-2xl leading-tight font-bold tracking-tight sm:text-3xl">
 					{question.text}
 				</h1>
-				<QuestionImage src={question.imageUrl} className="max-h-40" />
+				<QuestionImage src={question.imageUrl} className="max-h-48 sm:max-h-72" />
 				{paused && (
 					<p
 						role="status"
-						className="rounded-xl bg-white/10 p-3 text-center font-semibold"
+						className="rounded-xl border bg-white p-3 text-center font-medium"
 					>
 						Oyun duraklatıldı
 					</p>
@@ -208,7 +219,7 @@ export function PlayerScreen({ code }: { code: string }) {
 					size="player"
 				/>
 				{error && (
-					<p role="alert" className="text-center text-c3">
+					<p role="alert" className="text-center text-destructive">
 						{error}
 					</p>
 				)}
@@ -218,20 +229,34 @@ export function PlayerScreen({ code }: { code: string }) {
 
 	if (phase === 'reveal' && question && reveal) {
 		const verdict = reveal.myPoints
-			? { bg: 'bg-c4 text-white', title: 'Doğru!', sub: `+${reveal.myPoints} puan` }
+			? {
+					cls: 'border-green-600 bg-green-50 text-green-800',
+					title: 'Doğru!',
+					sub: `+${reveal.myPoints} puan`,
+				}
 			: question.myChoice == null
-				? { bg: 'bg-white/10', title: 'Süre doldu', sub: 'Bu soruya cevap vermedin' }
-				: { bg: 'bg-c1 text-white', title: 'Yanlış', sub: 'Bu sorudan puan yok' };
+				? {
+						cls: 'border-border bg-white',
+						title: 'Süre doldu',
+						sub: 'Bu soruya cevap vermedin',
+					}
+				: {
+						cls: 'border-destructive bg-red-50 text-red-800',
+						title: 'Yanlış',
+						sub: 'Bu sorudan puan yok',
+					};
 		return (
-			<Stage className="gap-4">
-				<div className={cn('rounded-2xl p-5 text-center', verdict.bg)}>
-					<p className="font-display text-4xl font-extrabold">{verdict.title}</p>
-					<p className="text-lg opacity-90">{verdict.sub}</p>
+			<Stage className="gap-4 sm:gap-6">
+				<div className={cn('rounded-2xl border-2 p-5 text-center', verdict.cls)}>
+					<p className="text-3xl font-bold tracking-tight">{verdict.title}</p>
+					<p>{verdict.sub}</p>
 				</div>
-				<p className="font-semibold">{question.text}</p>
+				<p className="text-lg font-semibold">{question.text}</p>
 				<Choices state={{ ...state, question }} open={false} size="player" />
 				{reveal.explanation && (
-					<p className="rounded-2xl bg-white/10 p-4">{reveal.explanation}</p>
+					<p className="rounded-2xl border bg-white p-4 text-muted-foreground">
+						{reveal.explanation}
+					</p>
 				)}
 			</Stage>
 		);
@@ -242,24 +267,24 @@ export function PlayerScreen({ code }: { code: string }) {
 		const myScore = state.scores.find(s => s.id === me.id)?.score ?? 0;
 		const finished = phase === 'finished';
 		return (
-			<Stage className="gap-5">
-				<h1 className="font-display text-3xl font-extrabold">
+			<Stage className="gap-5 sm:gap-6">
+				<h1 className="text-3xl font-bold tracking-tight">
 					{finished ? 'Sonuçlar' : 'Sıralama'}
 				</h1>
 				{finished && <Podium scores={state.scores} />}
 				{rank && (
-					<div className="flex items-center justify-between rounded-2xl bg-c3 p-5 text-ink">
+					<div className="flex items-center justify-between rounded-2xl bg-brand p-5 text-white">
 						<div>
-							<p className="font-display text-5xl font-extrabold">{rank}.</p>
-							<p>{state.scores.length} kişi arasında</p>
+							<p className="text-4xl font-bold">{rank}.</p>
+							<p className="text-white/85">{state.scores.length} kişi arasında</p>
 						</div>
-						<p className="font-display text-3xl font-extrabold tabular-nums">
-							{myScore}
-						</p>
+						<p className="text-3xl font-bold tabular-nums">{myScore}</p>
 					</div>
 				)}
 				<Scoreboard scores={state.scores} meId={me.id} />
-				{!finished && <p className="text-center opacity-75">Sıradaki soru birazdan…</p>}
+				{!finished && (
+					<p className="text-center text-muted-foreground">Sıradaki soru birazdan…</p>
+				)}
 			</Stage>
 		);
 	}
@@ -276,18 +301,14 @@ export function PlayerList({
 }) {
 	return (
 		<section aria-label="Oyuncular">
-			<p className="mb-3 font-display text-lg font-extrabold">
-				{players.length} kişi katıldı
-			</p>
+			<p className="mb-3 font-semibold">{players.length} kişi katıldı</p>
 			<ul className="flex flex-wrap gap-2">
-				{players.map((p, i) => (
+				{players.map(p => (
 					<li
 						key={p.id}
 						className={cn(
-							'animate-in rounded-full px-4 py-1.5 font-semibold duration-300 fade-in zoom-in-75',
-							p.id === meId
-								? 'bg-white text-ink'
-								: cn(CHOICE_BG[i % 5], CHOICE_TEXT[i % 5]),
+							'animate-in rounded-full border px-3.5 py-1.5 text-sm font-medium duration-300 fade-in zoom-in-90 sm:text-base',
+							p.id === meId ? 'border-brand bg-brand text-white' : 'bg-white',
 						)}
 					>
 						{p.name}
@@ -300,11 +321,24 @@ export function PlayerList({
 
 export function Stage({ children, className }: { children: React.ReactNode; className?: string }) {
 	return (
-		<main className="stage flex flex-col p-4 sm:p-6">
-			<div className={cn('mx-auto flex w-full max-w-xl flex-1 flex-col', className)}>
+		<main className="stage flex flex-col px-4 py-6 sm:px-8 sm:py-10">
+			<div className={cn('mx-auto flex w-full max-w-2xl flex-1 flex-col', className)}>
 				{children}
 			</div>
 		</main>
+	);
+}
+
+export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
+	return (
+		<div
+			className={cn(
+				'mx-auto w-full max-w-md rounded-3xl border bg-white p-6 shadow-sm sm:p-8',
+				className,
+			)}
+		>
+			{children}
+		</div>
 	);
 }
 
@@ -316,11 +350,12 @@ export function Centered({ children }: { children: React.ReactNode }) {
 	);
 }
 
-export function BigButton({ className, ...props }: React.ComponentProps<'button'>) {
+// vignetim.com'daki siyah ana buton.
+export function PrimaryButton({ className, ...props }: React.ComponentProps<'button'>) {
 	return (
 		<button
 			className={cn(
-				'h-14 rounded-2xl bg-c3 font-display text-xl font-extrabold text-ink shadow-[0_5px_0_rgb(0_0_0/0.3)] transition outline-none focus-visible:ring-4 focus-visible:ring-white active:translate-y-1 active:shadow-none disabled:opacity-50',
+				'h-12 rounded-xl bg-ink px-6 font-semibold text-white transition outline-none hover:bg-ink/85 focus-visible:ring-3 focus-visible:ring-brand/40 disabled:opacity-50',
 				className,
 			)}
 			{...props}
