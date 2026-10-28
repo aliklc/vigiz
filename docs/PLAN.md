@@ -1,4 +1,6 @@
-# Vigiz — Canlı Quiz Night (plan)
+# Vigiz — Canlı Quiz Night (ilk plan)
+
+> Bu ilk plandır; sonradan değişen kararlar (host hesapları, arşivin kaldırılması, puanlama vb.) için güncel kaynak `README.md`.
 
 > Not: Host girişi artık ortak şifre değil; her host Supabase Auth ile kendi hesabına (e-posta + şifre) giriş yapar ve sadece kendi quizlerini görür (`quizzes.owner_id`). Ayrıntı: `src/lib/auth.ts`, `src/proxy.ts`.
 
