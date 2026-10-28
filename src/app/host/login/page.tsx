@@ -1,33 +1,11 @@
-'use client';
-
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-export default function LoginPage() {
-	const router = useRouter();
-	const [error, setError] = useState('');
-	const [pending, setPending] = useState(false);
-
-	async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-		e.preventDefault();
-		setPending(true);
-		const password = new FormData(e.currentTarget).get('password');
-		const res = await fetch('/api/host/login', {
-			method: 'POST',
-			body: JSON.stringify({ password }),
-		});
-		setPending(false);
-		if (!res.ok) return setError('Şifre yanlış');
-		router.replace('/host');
-		router.refresh();
-	}
-
+export default async function LoginPage({ searchParams }: PageProps<'/host/login'>) {
+	const { error } = await searchParams;
 	return (
 		<main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center p-4">
-			<form onSubmit={onSubmit} className="flex flex-col gap-3">
+			<form method="post" action="/api/host/login" className="flex flex-col gap-3">
 				<h1 className="text-2xl font-bold">Host girişi</h1>
 				<Input
 					name="password"
@@ -36,10 +14,8 @@ export default function LoginPage() {
 					autoFocus
 					required
 				/>
-				{error && <p className="text-sm text-destructive">{error}</p>}
-				<Button type="submit" disabled={pending}>
-					Giriş
-				</Button>
+				{error && <p className="text-sm text-destructive">Şifre yanlış</p>}
+				<Button type="submit">Giriş</Button>
 			</form>
 		</main>
 	);

@@ -72,7 +72,6 @@ export function QuizEditor({ id, initial }: { id?: string; initial?: QuizInput }
 		const res = await fetch(`/api/host/quizzes/${id}`, { method: 'DELETE' });
 		if (!res.ok) return setError((await res.json()).error);
 		router.replace('/host');
-		router.refresh();
 	}
 
 	return (
