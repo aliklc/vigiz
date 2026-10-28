@@ -99,7 +99,7 @@ export function PlayerScreen({ code }: { code: string }) {
 
 	if (!state.me) {
 		if (state.game.phase === 'finished') {
-			return <Centered>Bu oyun bitti. Sonuçlar geçmiş quizlerde.</Centered>;
+			return <Centered>Bu oyun bitti.</Centered>;
 		}
 		// Masaüstünde host lobisiyle aynı genişlik ve boyutlar
 		return (

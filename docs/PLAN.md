@@ -88,7 +88,6 @@ lobby ──Başlat──▶ question(i) ──süre bitti / herkes cevapladı�
 | `/host` | Quiz listesi (taslak/hazır) + "Oda aç" |
 | `/host/quizzes/new`, `/host/quizzes/[id]` | Quiz editörü: meta alanlar + soru listesi (ekle, sil, ↑↓ ile sırala), "Taslak kaydet" / "Hazır" |
 | `/host/games/[code]` | Host/projeksiyon ekranı: link + QR yerine büyük kod, oyuncu listesi (çıkar butonu), Başlat / Sonraki / Duraklat |
-| `/archive` | Biten oyunlar: konu, hazırlayan, tarih, kazanan |
 
 ## API route'ları (`src/app/api`)
 - `POST /api/host/login` → `ADMIN_PASSWORD` kontrol edilir, httpOnly cookie verilir (HMAC, Web Crypto). `src/proxy.ts` `/host/*` ve `/api/host/*` yollarını bu cookie ile korur.

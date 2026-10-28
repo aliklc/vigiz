@@ -17,9 +17,6 @@ export default async function PanelLayout({ children }: LayoutProps<'/host'>) {
 						<Link href="/host" className="rounded-lg px-3 py-2 hover:bg-muted">
 							Quizlerim
 						</Link>
-						<Link href="/archive" className="rounded-lg px-3 py-2 hover:bg-muted">
-							Geçmiş quizler
-						</Link>
 					</nav>
 					<span
 						className="hidden truncate text-sm text-muted-foreground sm:block"

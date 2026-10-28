@@ -35,6 +35,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-	// Arşiv de dahil: oyunun sahibine Sil butonu gösterilirken oturum taze olsun.
-	matcher: ['/host/:path*', '/api/host/:path*', '/archive/:path*'],
+	matcher: ['/host/:path*', '/api/host/:path*'],
 };

@@ -11,9 +11,6 @@ export function SiteHeader() {
 					<Wordmark className="text-2xl" />
 				</Link>
 				<nav className="flex items-center gap-1 text-sm font-medium sm:gap-3">
-					<Link href="/archive" className="rounded-lg px-3 py-2 hover:bg-muted">
-						Geçmiş quizler
-					</Link>
 					<Link
 						href="/host"
 						className="rounded-lg bg-ink px-4 py-2 text-white hover:bg-ink/85"

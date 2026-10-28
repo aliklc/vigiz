@@ -121,8 +121,7 @@ try {
 		body: '{"action":"start"}',
 	});
 	assert.equal(actB.status, 404);
-	assert.equal((await asB(`/api/host/games/${code}/delete`, { method: 'POST' })).status, 404);
-	log("B, A'nın odasını açamadı, yönetemedi, silemedi");
+	log("B, A'nın odasını açamadı ve yönetemedi");
 
 	const post = (path, body, headers = {}) =>
 		fetch(`${B}${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
@@ -222,6 +221,31 @@ try {
 	assert.equal(s.game.currentIndex, 1);
 	log('çift "Sonraki" tek ilerletti → soru 2');
 
+	// Soru sürerken geri git: önceki sorunun sonuçları, puanlar aynı; yarıda kalan soru silinir.
+	assert.equal((await answer(A, 0)).status, 200);
+	await act('prev');
+	s = await state(A);
+	assert.equal(s.game.phase, 'reveal');
+	assert.equal(s.game.currentIndex, 0);
+	assert.equal(s.reveal.myPoints, a1.points + 200, 'geri gidince puan değişmemeli');
+	const { count: aAnswers } = await db
+		.from('answers')
+		.select('*', { count: 'exact', head: true })
+		.eq('player_id', A);
+	assert.equal(aAnswers, 1, 'yarıda kalan sorunun cevabı silinmeli');
+	await act('next');
+	s = await state(A);
+	assert.deepEqual(
+		s.scores.map(x => x.score),
+		[a1.points + 200, b1.points],
+	);
+	await act('next');
+	s = await state(A);
+	assert.equal(s.game.phase, 'question', 'yarıda kalan soru yeniden sorulmalı');
+	assert.equal(s.game.currentIndex, 1);
+	assert.equal(s.question.myChoice, null);
+	log('Önceki soru: sonuçlar geri geldi, puanlar aynı, yarıda kalan soru yeniden soruldu');
+
 	s = await state(A);
 	await sleep(s.question.deadline - s.serverNow + 600);
 	s = await state(A);
@@ -239,42 +263,23 @@ try {
 	const r = await act('next');
 	assert.equal(r.changed, false);
 	log('final; bitmiş oyunda Sonraki etkisiz');
-	const archive = await (await fetch(`${B}/archive`)).text();
-	assert.ok(
-		archive.includes(`/archive/${code}`) && archive.includes('Kazanan Ayşe'),
-		'arşivde oyun ve kazanan',
-	);
-	assert.ok(
-		!archive.includes(`/api/host/games/${code}/delete`),
-		'girişsiz Sil butonu görünmemeli',
-	);
-	const detail = await (await fetch(`${B}/archive/${code}`)).text();
-	assert.ok(detail.includes('Ayşe') && detail.includes('Bora'), 'detayda tüm oyuncular');
-	const adminArchive = await (await fetch(`${B}/archive`, { headers: { cookie } })).text();
-	assert.ok(adminArchive.includes(`/api/host/games/${code}/delete`), 'host için Sil butonu');
-	const bArchive = await (await asB('/archive')).text();
-	assert.ok(!bArchive.includes(`/api/host/games/${code}/delete`), 'başka host Sil görmemeli');
-	log('arşiv: kazanan, detay listesi, Sil sadece oyunun sahibine');
 
-	const delAnon = await fetch(`${B}/api/host/games/${code}/delete`, {
-		method: 'POST',
-		redirect: 'manual',
-	});
-	assert.equal(delAnon.status, 401);
-	const del = await fetch(`${B}/api/host/games/${code}/delete`, {
-		method: 'POST',
-		headers: { cookie },
-		redirect: 'manual',
-	});
-	assert.equal(del.status, 303);
-	const { count } = await db
-		.from('answers')
-		.select('*', { count: 'exact', head: true })
-		.eq('game_id', s.game.id);
-	assert.equal(count, 0, 'cevaplar da silinmeli');
-	assert.equal((await fetch(`${B}/archive/${code}`)).status, 404);
-	log('Sil: girişsiz 401, host ile oyun + cevaplar silindi');
-
+	// Finalden geri gidip ilerle: oynanmış soru yeniden sorulmaz, sonucu gösterilir.
+	await act('prev');
+	s = await state(A);
+	assert.deepEqual([s.game.phase, s.game.currentIndex], ['reveal', 0]);
+	await act('next');
+	await act('next');
+	s = await state(A);
+	assert.deepEqual(
+		[s.game.phase, s.game.currentIndex],
+		['reveal', 1],
+		'oynanmış soru tekrar sorulmamalı',
+	);
+	await act('next');
+	await act('next');
+	assert.equal((await state(A)).game.phase, 'finished');
+	log('finalden geri/ileri: oynanmış soru sonuçla gösterildi, final geri geldi');
 	console.log('\nTÜM KONTROLLER GEÇTİ');
 } finally {
 	// Kullanıcı silinince quizleri, oyunları, oyuncuları ve cevapları cascade ile gider.
