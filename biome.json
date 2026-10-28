@@ -3,7 +3,14 @@
 	"vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true, "defaultBranch": "main" },
 	"files": {
 		"ignoreUnknown": true,
-		"includes": ["**", "!!**/.next", "!**/docs", "!**/next-env.d.ts", "!src/components/ui"]
+		"includes": [
+			"**",
+			"!!**/.next",
+			"!**/docs",
+			"!**/next-env.d.ts",
+			"!src/components/ui",
+			"!pnpm-lock.yaml"
+		]
 	},
 	"formatter": {
 		"enabled": true,

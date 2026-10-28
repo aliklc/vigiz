@@ -30,7 +30,7 @@
 ## Mimari (tek cümle)
 Oyunun tek doğruluk kaynağı `games` satırıdır. Tarayıcılar Supabase Realtime ile yalnızca `games` ve `players` değişikliklerini dinler. Değişiklik olunca `GET /api/games/[code]/state` çağrılır ve ekran buna göre çizilir. Soru ve cevap verisi tarayıcıya **sadece** bu API üzerinden, faza göre süzülerek gider.
 
-## Veritabanı şeması (`supabase/migrations/0001_init.sql`)
+## Veritabanı şeması (`supabase/migrations/20261028000000_init.sql`)
 ```
 quizzes    id uuid pk, title, topic, author_name, quiz_date date,
            time_limit_sec int default 20, status text check in ('draft','ready'), created_at
