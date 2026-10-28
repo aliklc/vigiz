@@ -17,7 +17,7 @@ import { Centered, PlayerList, PrimaryButton } from '@/components/player-screen'
 import { useGame } from '@/hooks/use-game';
 import type { GameState } from '@/lib/game-types';
 
-type Action = 'start' | 'next' | 'pause' | 'resume';
+type Action = 'start' | 'next' | 'pause' | 'resume' | 'end';
 
 export function HostScreen({ code }: { code: string }) {
 	const { state, notFound, refresh, offset } = useGame(code, null);
@@ -91,7 +91,30 @@ export function HostScreen({ code }: { code: string }) {
 					<Link href="/host" aria-label="Panele dön">
 						<Wordmark className="text-2xl" />
 					</Link>
-					<p className="truncate font-medium text-muted-foreground">{state.quiz.title}</p>
+					<div className="flex min-w-0 items-center gap-4">
+						<p className="truncate font-medium text-muted-foreground">
+							{state.quiz.title}
+						</p>
+						{['question', 'reveal', 'leaderboard'].includes(game.phase) && (
+							<button
+								type="button"
+								disabled={busy}
+								onClick={() => {
+									if (
+										confirm(
+											'Oyun şimdi bitsin mi? O ana kadarki puanlarla sonuçlar gösterilir.',
+										)
+									) {
+										setViewing(null);
+										act('end');
+									}
+								}}
+								className="shrink-0 rounded-lg border border-destructive/40 px-3 py-1.5 text-sm font-semibold text-destructive hover:bg-red-50 disabled:opacity-50"
+							>
+								Oyunu bitir
+							</button>
+						)}
+					</div>
 				</div>
 			</header>
 

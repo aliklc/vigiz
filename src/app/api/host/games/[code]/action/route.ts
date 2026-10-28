@@ -6,7 +6,7 @@ import { type Game, getOwnedGame } from '@/lib/game';
 import { db } from '@/lib/supabase/admin';
 import type { TablesUpdate } from '@/lib/supabase/types';
 
-const actionSchema = z.object({ action: z.enum(['start', 'next', 'pause', 'resume']) });
+const actionSchema = z.object({ action: z.enum(['start', 'next', 'pause', 'resume', 'end']) });
 
 function nextUpdate(game: Game, action: z.infer<typeof actionSchema>['action']) {
 	const now = new Date().toISOString();
@@ -25,6 +25,10 @@ function nextUpdate(game: Game, action: z.infer<typeof actionSchema>['action']) 
 		return game.current_index >= game.questionCount - 1
 			? { phase: 'finished', finished_at: now }
 			: nextQuestion(game.current_index + 1);
+	}
+	// Oyunu erken bitir: o ana kadarki puanlarla final ekranına geç.
+	if (action === 'end' && ['question', 'reveal', 'leaderboard'].includes(game.phase)) {
+		return { phase: 'finished', finished_at: now, paused_at: null };
 	}
 	if (action === 'pause' && game.phase === 'question' && !game.paused_at) {
 		return { paused_at: now };

@@ -345,6 +345,36 @@ try {
 	assert.ok((await rejected.json()).error.includes('soruları'));
 	log('oynanmış quiz: başlık düzenlendi, soru değişikliği 409');
 
+	// Oyunu erken bitir: soru sırasında → final; lobide etkisiz; başka host bitiremez.
+	const endCode = `E${String(stamp).slice(-5)}`;
+	await db.from('games').insert({ quiz_id: quizId, code: endCode });
+	const endAct = c =>
+		fetch(`${B}/api/host/games/${endCode}/action`, {
+			method: 'POST',
+			headers: { cookie: c },
+			body: '{"action":"end"}',
+		});
+	assert.equal((await (await endAct(cookie)).json()).changed, false, 'lobide bitir etkisiz');
+	await db
+		.from('games')
+		.update({
+			phase: 'question',
+			current_index: 0,
+			question_started_at: new Date().toISOString(),
+		})
+		.eq('code', endCode);
+	assert.equal((await endAct(hostB.cookie)).status, 404, 'başka host bitiremez');
+	await endAct(cookie);
+	const { data: ended } = await db
+		.from('games')
+		.select('phase, finished_at')
+		.eq('code', endCode)
+		.single();
+	assert.equal(ended.phase, 'finished');
+	assert.ok(ended.finished_at);
+	await db.from('games').delete().eq('code', endCode);
+	log('Oyunu bitir: soru sırasında final, lobide etkisiz, başka host 404');
+
 	// Sıra bonusu ara değerleri: 3 doğru cevap → +200 / +100 / +0 (yanlış cevap sırayı etkilemez).
 	const { data: g2 } = await db
 		.from('games')
