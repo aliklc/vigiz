@@ -221,35 +221,40 @@ try {
 	assert.equal(s.game.currentIndex, 1);
 	log('çift "Sonraki" tek ilerletti → soru 2');
 
-	// Soru sürerken geri git: önceki sorunun sonuçları, puanlar aynı; yarıda kalan soru silinir.
-	assert.equal((await answer(A, 0)).status, 200);
-	await act('prev');
-	s = await state(A);
-	assert.equal(s.game.phase, 'reveal');
-	assert.equal(s.game.currentIndex, 0);
-	assert.equal(s.reveal.myPoints, a1.points + 200, 'geri gidince puan değişmemeli');
-	const { count: aAnswers } = await db
-		.from('answers')
-		.select('*', { count: 'exact', head: true })
-		.eq('player_id', A);
-	assert.equal(aAnswers, 1, 'yarıda kalan sorunun cevabı silinmeli');
-	await act('next');
+	// "Önceki soru" sadece host'a gösterilir, oyunu değiştirmez; sıradaki/mevcut soru sızmaz.
+	const past = await fetch(`${B}/api/host/games/${code}/questions/0`, { headers: { cookie } });
+	assert.equal(past.status, 200);
+	const pastQ = await past.json();
+	assert.equal(pastQ.text, 'S1');
+	assert.equal(pastQ.correctIndex, 1);
+	assert.deepEqual(pastQ.counts, [0, 2, 0]);
+	const getQ = (i, c) =>
+		fetch(`${B}/api/host/games/${code}/questions/${i}`, { headers: c ? { cookie: c } : {} });
+	assert.equal((await getQ(1, cookie)).status, 404, 'sürmekte olan soru görüntülenemez');
+	assert.equal((await getQ(5, cookie)).status, 404);
+	assert.equal((await getQ(0, hostB.cookie)).status, 404, 'başka host göremez');
+	assert.equal((await getQ(0)).status, 401);
 	s = await state(A);
 	assert.deepEqual(
-		s.scores.map(x => x.score),
-		[a1.points + 200, b1.points],
+		[s.game.phase, s.game.currentIndex],
+		['question', 1],
+		'oyun durumu değişmemeli',
 	);
-	await act('next');
-	s = await state(A);
-	assert.equal(s.game.phase, 'question', 'yarıda kalan soru yeniden sorulmalı');
-	assert.equal(s.game.currentIndex, 1);
-	assert.equal(s.question.myChoice, null);
-	log('Önceki soru: sonuçlar geri geldi, puanlar aynı, yarıda kalan soru yeniden soruldu');
+	log('Önceki soru: host görüyor, oyun etkilenmiyor, mevcut/sıradaki soru ve başka host 404');
 
 	s = await state(A);
+	const beforeExpiry = {
+		deadline: s.question.deadline,
+		serverNow: s.serverNow,
+		phase: s.game.phase,
+	};
 	await sleep(s.question.deadline - s.serverNow + 600);
 	s = await state(A);
-	assert.equal(s.game.phase, 'reveal', 'süre dolunca reveal');
+	assert.equal(
+		s.game.phase,
+		'reveal',
+		`süre dolunca reveal; önce ${JSON.stringify(beforeExpiry)}, sonra ${JSON.stringify({ deadline: s.question?.deadline, serverNow: s.serverNow, pausedAt: s.question?.pausedAt })}`,
+	);
 	assert.deepEqual(s.reveal.counts, [0, 0]);
 	assert.equal(s.reveal.myPoints, null);
 	log('süre doldu → reveal (cevapsız)');
@@ -264,22 +269,6 @@ try {
 	assert.equal(r.changed, false);
 	log('final; bitmiş oyunda Sonraki etkisiz');
 
-	// Finalden geri gidip ilerle: oynanmış soru yeniden sorulmaz, sonucu gösterilir.
-	await act('prev');
-	s = await state(A);
-	assert.deepEqual([s.game.phase, s.game.currentIndex], ['reveal', 0]);
-	await act('next');
-	await act('next');
-	s = await state(A);
-	assert.deepEqual(
-		[s.game.phase, s.game.currentIndex],
-		['reveal', 1],
-		'oynanmış soru tekrar sorulmamalı',
-	);
-	await act('next');
-	await act('next');
-	assert.equal((await state(A)).game.phase, 'finished');
-	log('finalden geri/ileri: oynanmış soru sonuçla gösterildi, final geri geldi');
 	console.log('\nTÜM KONTROLLER GEÇTİ');
 } finally {
 	// Kullanıcı silinince quizleri, oyunları, oyuncuları ve cevapları cascade ile gider.
