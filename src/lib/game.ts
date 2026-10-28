@@ -3,7 +3,7 @@ import 'server-only';
 import { type AnswerRow, computeBadges } from '@/lib/badges';
 import type { GameState, Phase } from '@/lib/game-types';
 import type { QuestionType } from '@/lib/quiz';
-import { GRACE_MS } from '@/lib/scoring';
+import { blurLevel, GRACE_MS } from '@/lib/scoring';
 import { db } from '@/lib/supabase/admin';
 
 // Karışabilecek karakterler (0/O, 1/I) yok.
@@ -71,8 +71,13 @@ export async function getCurrentQuestion(game: Game) {
 
 // Süre dolduysa ya da herkes cevapladıysa question → reveal. Koşullu update sayesinde
 // aynı anda gelen istekler arasında yalnızca biri geçişi yapar.
-export async function maybeReveal(game: Game, questionId: string): Promise<boolean> {
-	if (game.phase !== 'question' || game.paused_at) return false;
+// Buzzer sorusunda geçişi host yapar (doğru cevap ya da "Cevabı göster").
+export async function maybeReveal(
+	game: Game,
+	question: { id: string; type: string },
+): Promise<boolean> {
+	if (game.phase !== 'question' || game.paused_at || question.type === 'buzzer') return false;
+	const questionId = question.id;
 	let due = Date.now() > deadlineOf(game) + GRACE_MS;
 	if (!due) {
 		const [{ count: players }, { count: answers }] = await Promise.all([
@@ -102,12 +107,13 @@ export async function buildState(code: string, token: string | null): Promise<Ga
 
 	const showsQuestion = game.phase === 'question' || game.phase === 'reveal';
 	const current = showsQuestion ? await getCurrentQuestion(game) : null;
-	if (current && (await maybeReveal(game, current.id))) {
+	if (current && (await maybeReveal(game, current))) {
 		game = (await getGame(code)) as Game;
 	}
 
 	// Birbirinden bağımsız sorgular paralel: her biri veritabanına ayrı bir gidiş-dönüş.
-	const [{ data: players }, { data: answers }, scores] = await Promise.all([
+	const isBuzzer = current?.type === 'buzzer';
+	const [{ data: players }, { data: answers }, scores, { data: buzzes }] = await Promise.all([
 		db.from('players').select('id, name').eq('game_id', game.id).order('joined_at'),
 		current
 			? db
@@ -117,6 +123,14 @@ export async function buildState(code: string, token: string | null): Promise<Ga
 					.eq('game_id', game.id)
 			: { data: null },
 		game.phase === 'leaderboard' || game.phase === 'finished' ? getScores(game.id) : null,
+		current && isBuzzer
+			? db
+					.from('buzzes')
+					.select('player_id, verdict, points_if_correct, players(name)')
+					.eq('game_id', game.id)
+					.eq('question_id', current.id)
+					.order('buzzed_at')
+			: { data: null },
 	]);
 	const me = players?.find(p => p.id === playerId) ?? null;
 
@@ -136,21 +150,38 @@ export async function buildState(code: string, token: string | null): Promise<Ga
 		question: null,
 		reveal: null,
 		scores: null,
+		buzzer: null,
 	};
 
 	if (current && (game.phase === 'question' || game.phase === 'reveal')) {
 		const mine = answers?.find(a => a.player_id === playerId);
+		const pausedAt = game.paused_at ? Date.parse(game.paused_at) : null;
+		const deadline = deadlineOf(game);
 		state.question = {
 			type: current.type as QuestionType,
 			text: current.text,
-			imageUrl: current.image_url,
+			// Buzzer: net görsel cevap gösterimine kadar gönderilmez; bulanık hali /image'dan gelir.
+			imageUrl: isBuzzer && game.phase === 'question' ? null : current.image_url,
 			choices: current.choices,
-			deadline: deadlineOf(game),
-			pausedAt: game.paused_at ? Date.parse(game.paused_at) : null,
-			answeredCount: answers?.length ?? 0,
+			deadline,
+			pausedAt,
+			answeredCount: (isBuzzer ? buzzes?.length : answers?.length) ?? 0,
 			myChoice: mine?.choice_index ?? null,
+			blurLevel: isBuzzer
+				? blurLevel(deadline - (pausedAt ?? Date.now()), game.limitMs)
+				: undefined,
 		};
+		if (isBuzzer) {
+			state.buzzer = {
+				queue: (buzzes ?? []).map(b => ({
+					id: b.player_id,
+					name: b.players?.name ?? '',
+					verdict: b.verdict as 'correct' | 'wrong' | null,
+				})),
+			};
+		}
 		if (game.phase === 'reveal') {
+			const winner = buzzes?.find(b => b.verdict === 'correct');
 			state.reveal = {
 				correctIndex: current.correct_index,
 				counts: current.choices.map(
@@ -158,6 +189,10 @@ export async function buildState(code: string, token: string | null): Promise<Ga
 				),
 				explanation: current.explanation,
 				myPoints: mine ? mine.total : null,
+				answerText: isBuzzer ? current.answer_text : null,
+				winner: winner
+					? { name: winner.players?.name ?? '', points: winner.points_if_correct }
+					: null,
 			};
 		}
 	}
@@ -174,7 +209,13 @@ export async function buildState(code: string, token: string | null): Promise<Ga
 			correct: (a.total ?? 0) > 0,
 			answeredAt: a.answered_at ?? '',
 		}));
-		const { streaks, fastestId } = computeBadges(rows, game.current_index);
+		const { data: types } = await db
+			.from('questions')
+			.select('position')
+			.eq('quiz_id', game.quiz_id)
+			.eq('type', 'buzzer');
+		const buzzerPositions = new Set((types ?? []).map(q => q.position));
+		const { streaks, fastestId } = computeBadges(rows, game.current_index, buzzerPositions);
 		const leaderboard = game.phase === 'leaderboard';
 		// Sıralamada son sorudan kazanılan puan: çubuk önceki puandan yenisine uzar.
 		const gained = new Map(

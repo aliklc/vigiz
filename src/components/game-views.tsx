@@ -237,7 +237,7 @@ export function Scoreboard({
 								'absolute inset-y-0 left-0 transition-[width] duration-1000 ease-out',
 								s.id === meId ? 'bg-brand/25' : 'bg-brand-tint',
 							)}
-							style={{ width: `${(shown / max) * 100}%` }}
+							style={{ width: `${(Math.max(shown, 0) / max) * 100}%` }}
 						/>
 						<span
 							className={cn(
@@ -278,9 +278,14 @@ export function Scoreboard({
 								</span>
 							)}
 						</span>
-						{animated && gained > 0 && (
-							<span className="relative animate-in rounded-full bg-green-600 px-2 py-0.5 text-sm font-semibold text-white delay-300 duration-500 fill-mode-backwards fade-in slide-in-from-left-4">
-								+{gained}
+						{animated && gained !== 0 && (
+							<span
+								className={cn(
+									'relative animate-in rounded-full px-2 py-0.5 text-sm font-semibold text-white delay-300 duration-500 fill-mode-backwards fade-in slide-in-from-left-4',
+									gained > 0 ? 'bg-green-600' : 'bg-destructive',
+								)}
+							>
+								{gained > 0 ? `+${gained}` : `−${-gained}`}
 							</span>
 						)}
 						<span className="relative font-bold tabular-nums">
@@ -351,4 +356,28 @@ export function Podium({ scores }: { scores: NonNullable<GameState['scores']> })
 export function myRank(scores: GameState['scores'], meId?: string): number | null {
 	const i = scores?.findIndex(s => s.id === meId) ?? -1;
 	return i >= 0 ? i + 1 : null;
+}
+
+// Bulanık görsel: soru sırasında sunucunun bulanıklaştırdığı hali (seviye değiştikçe yenilenir),
+// cevap gösteriminde net hali. Net URL soru sırasında tarayıcıya hiç gelmez.
+export function BuzzerImage({
+	code,
+	level,
+	src,
+	className,
+}: {
+	code: string;
+	level: number | undefined;
+	src: string | null;
+	className?: string;
+}) {
+	const url = src ?? `/api/games/${code}/image?l=${level ?? 0}`;
+	return (
+		// biome-ignore lint/performance/noImgElement: sunucunun ürettiği görsel, next/image gerekmez
+		<img
+			src={url}
+			alt={src ? 'Görsel' : 'Bulanık görsel'}
+			className={cn('mx-auto w-full rounded-2xl bg-muted object-contain', className)}
+		/>
+	);
 }

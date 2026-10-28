@@ -30,7 +30,7 @@ export async function POST(request: Request, ctx: RouteContext<'/api/games/[code
 		getCurrentQuestion(game),
 		playerIdByToken(game.id, token),
 	]);
-	if (!question || choiceIndex >= question.choices.length) {
+	if (!question || question.type === 'buzzer' || choiceIndex >= question.choices.length) {
 		return NextResponse.json({ error: 'Geçersiz şık' }, { status: 400 });
 	}
 	if (!playerId) return NextResponse.json({ error: 'Bu odada değilsin' }, { status: 403 });
@@ -50,6 +50,6 @@ export async function POST(request: Request, ctx: RouteContext<'/api/games/[code
 	}
 	if (error) return NextResponse.json({ error: 'Cevap kaydedilemedi' }, { status: 500 });
 
-	await maybeReveal(game, question.id);
+	await maybeReveal(game, question);
 	return NextResponse.json({ ok: true });
 }

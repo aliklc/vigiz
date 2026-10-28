@@ -533,6 +533,133 @@ try {
 		'Doğru/Yanlış: şıklar sabitlendi, oynandı, doğru cevap puan aldı; görselsiz buzzer hazır olamaz',
 	);
 
+	// Bulanık görsel (buzzer): net görsel sızmaz, sıra korunur, ilk basış dondurur, host karar verir.
+	const bzUp = await uploadAs(cookie, new Blob([png], { type: 'image/png' }), 'bz.png');
+	const { url: bzImage } = await bzUp.json();
+	const bzQuiz = {
+		title: 'BZ',
+		topic: 'T',
+		author_name: 'Bot',
+		quiz_date: '2026-10-28',
+		time_limit_sec: 60,
+		status: 'ready',
+		questions: [
+			{
+				type: 'buzzer',
+				text: 'Bu ne?',
+				image_url: bzImage,
+				explanation: null,
+				answer_text: 'Nokta',
+				choices: [],
+				correct_index: 0,
+			},
+		],
+	};
+	const { id: bzId } = await (
+		await fetch(`${B}/api/host/quizzes`, {
+			method: 'POST',
+			headers: { cookie },
+			body: JSON.stringify(bzQuiz),
+		})
+	).json();
+	const bzRoom = await fetch(`${B}/api/host/games`, {
+		method: 'POST',
+		headers: { cookie },
+		body: new URLSearchParams({ quizId: bzId }),
+		redirect: 'manual',
+	});
+	const bzCode = bzRoom.headers.get('location').split('/').pop();
+	const bzTok = [];
+	for (const name of ['Bir', 'İki', 'Üç'])
+		bzTok.push((await (await post(`/api/games/${bzCode}/join`, { name })).json()).token);
+	const bzAct = (body, c = cookie) =>
+		fetch(`${B}/api/host/games/${bzCode}/action`, {
+			method: 'POST',
+			headers: { cookie: c },
+			body: JSON.stringify(body),
+		});
+	await bzAct({ action: 'start' });
+	const bzState = async (t = bzTok[0]) =>
+		(await fetch(`${B}/api/games/${bzCode}/state?token=${t}`)).json();
+	let bz = await bzState();
+	assert.equal(bz.question.type, 'buzzer');
+	assert.equal(bz.question.imageUrl, null);
+	assert.ok(!JSON.stringify(bz).includes('question-images'), "net görsel URL state'te olmamalı");
+	assert.ok(!JSON.stringify(bz).includes('Nokta'), 'cevap soru sırasında gitmemeli');
+	const blurred = await fetch(`${B}/api/games/${bzCode}/image?l=10`);
+	assert.equal(blurred.status, 200);
+	assert.equal(blurred.headers.get('content-type'), 'image/jpeg');
+	assert.ok(Number(blurred.headers.get('x-blur-level')) <= 1, 'istekteki seviyeye güvenilmemeli');
+	assert.equal(
+		(await post(`/api/games/${bzCode}/answer`, { token: bzTok[0], choiceIndex: 0 })).status,
+		400,
+	);
+
+	const buzz = t => post(`/api/games/${bzCode}/buzz`, { token: t });
+	const { data: bzQ } = await db.from('questions').select('id').eq('quiz_id', bzId).single();
+
+	// Tek kişi basıp yanlış derse kuyruk boşalır: donma kalkar, süre kaldığı yerden devam eder.
+	assert.equal((await buzz(bzTok[0])).status, 200);
+	bz = await bzState();
+	assert.ok(bz.question.pausedAt, 'ilk basış dondurur');
+	assert.equal((await bzAct({ action: 'judge', verdict: 'correct' }, hostB.cookie)).status, 404);
+	await sleep(1200);
+	await bzAct({ action: 'judge', verdict: 'wrong' });
+	const resumed = await bzState();
+	assert.equal(resumed.question.pausedAt, null, 'kuyruk boşalınca netleşme devam eder');
+	assert.ok(
+		resumed.question.deadline - bz.question.deadline >= 1000,
+		'donma süresi süreye eklenir',
+	);
+	assert.equal((await buzz(bzTok[0])).status, 409, 'tek hak');
+
+	// İki kişi sırayla basar: birincisi yanlışsa donma sürer, ikincisi cevaplar.
+	assert.equal((await buzz(bzTok[1])).status, 200);
+	assert.equal((await buzz(bzTok[2])).status, 200);
+	await bzAct({ action: 'judge', verdict: 'wrong' });
+	bz = await bzState();
+	assert.ok(bz.question.pausedAt, 'sırada bekleyen varken donma sürer');
+	assert.deepEqual(
+		bz.buzzer.queue.map(b => [b.name, b.verdict]),
+		[
+			['Bir', 'wrong'],
+			['İki', 'wrong'],
+			['Üç', null],
+		],
+	);
+
+	await bzAct({ action: 'judge', verdict: 'correct' });
+	const { data: bzBuzz } = await db
+		.from('buzzes')
+		.select('points_if_correct')
+		.eq('question_id', bzQ.id)
+		.eq('verdict', 'correct')
+		.single();
+	bz = await bzState(bzTok[2]);
+	assert.equal(bz.game.phase, 'reveal');
+	assert.equal(bz.reveal.myPoints, bzBuzz.points_if_correct);
+	assert.ok(bzBuzz.points_if_correct > 500 && bzBuzz.points_if_correct <= 1000);
+	assert.equal(bz.reveal.answerText, 'Nokta');
+	assert.equal(bz.reveal.winner.name, 'Üç');
+	assert.equal(bz.question.imageUrl, bzImage);
+	assert.equal((await bzState(bzTok[0])).reveal.myPoints, -300);
+	assert.equal((await fetch(`${B}/api/games/${bzCode}/image`)).status, 404);
+	assert.equal((await buzz(bzTok[2])).status, 409);
+	await bzAct({ action: 'next' });
+	const bzScores = Object.fromEntries(
+		(await bzState()).scores.map(x => [x.name, [x.score, x.gained]]),
+	);
+	assert.deepEqual(bzScores, {
+		Üç: [bzBuzz.points_if_correct, bzBuzz.points_if_correct],
+		Bir: [-300, -300],
+		İki: [-300, -300],
+	});
+	await db.from('quizzes').delete().eq('id', bzId);
+	await db.storage.from('question-images').remove([bzImage.split('/question-images/')[1]]);
+	log(
+		`buzzer: donma/devam, sıra, yanlış −300, doğru +${bzBuzz.points_if_correct}, net görsel ve cevap sadece sonra`,
+	);
+
 	// Sıra bonusu ara değerleri: 3 doğru cevap → +200 / +100 / +0 (yanlış cevap sırayı etkilemez).
 	const { data: g2 } = await db
 		.from('games')

@@ -6,6 +6,7 @@ import { renderSVG } from 'uqr';
 
 import { CodeTiles, Wordmark } from '@/components/brand';
 import {
+	BuzzerImage,
 	Choices,
 	Countdown,
 	Podium,
@@ -17,8 +18,9 @@ import { Centered, PlayerList, PrimaryButton } from '@/components/player-screen'
 import { useGame } from '@/hooks/use-game';
 import type { GameState } from '@/lib/game-types';
 import type { QuestionType } from '@/lib/quiz';
+import { cn } from '@/lib/utils';
 
-type Action = 'start' | 'next' | 'pause' | 'resume' | 'end';
+type Action = 'start' | 'next' | 'pause' | 'resume' | 'end' | 'reveal' | 'judge';
 
 export function HostScreen({ code }: { code: string }) {
 	const { state, notFound, refresh, offset } = useGame(code, null);
@@ -44,12 +46,12 @@ export function HostScreen({ code }: { code: string }) {
 		return () => clearInterval(id);
 	}, [phase, refresh]);
 
-	async function act(action: Action) {
+	async function act(action: Action, verdict?: 'correct' | 'wrong') {
 		setBusy(true);
 		try {
 			const res = await fetch(`/api/host/games/${code}/action`, {
 				method: 'POST',
-				body: JSON.stringify({ action }),
+				body: JSON.stringify({ action, verdict }),
 			});
 			if (!res.ok) alert((await res.json()).error ?? 'İşlem başarısız');
 			await refresh();
@@ -148,35 +150,42 @@ export function HostScreen({ code }: { code: string }) {
 							</>
 						)}
 
-						{(game.phase === 'question' || game.phase === 'reveal') && question && (
-							<>
-								<div className="flex items-start justify-between gap-6">
-									<div className="flex flex-col gap-2">
-										<p className="font-semibold text-muted-foreground lg:text-lg">
-											Soru {game.currentIndex + 1}/{game.questionCount}
-										</p>
-										<h1 className="text-3xl leading-tight font-bold tracking-tight lg:text-5xl">
-											{question.text}
-										</h1>
+						{(game.phase === 'question' || game.phase === 'reveal') &&
+							question?.type === 'buzzer' && (
+								<BuzzerHostView state={state} code={code} remaining={remaining} />
+							)}
+
+						{(game.phase === 'question' || game.phase === 'reveal') &&
+							question &&
+							question.type !== 'buzzer' && (
+								<>
+									<div className="flex items-start justify-between gap-6">
+										<div className="flex flex-col gap-2">
+											<p className="font-semibold text-muted-foreground lg:text-lg">
+												Soru {game.currentIndex + 1}/{game.questionCount}
+											</p>
+											<h1 className="text-3xl leading-tight font-bold tracking-tight lg:text-5xl">
+												{question.text}
+											</h1>
+										</div>
+										{!reveal && (
+											<Countdown
+												remaining={remaining}
+												limitMs={game.timeLimitSec * 1000}
+												paused={!!question.pausedAt}
+												size="lg"
+											/>
+										)}
 									</div>
-									{!reveal && (
-										<Countdown
-											remaining={remaining}
-											limitMs={game.timeLimitSec * 1000}
-											paused={!!question.pausedAt}
-											size="lg"
-										/>
+									<QuestionImage src={question.imageUrl} className="max-h-72" />
+									<Choices state={state} open={false} size="host" />
+									{reveal?.explanation && (
+										<p className="rounded-2xl border bg-white p-5 text-lg text-muted-foreground lg:text-xl">
+											{reveal.explanation}
+										</p>
 									)}
-								</div>
-								<QuestionImage src={question.imageUrl} className="max-h-72" />
-								<Choices state={state} open={false} size="host" />
-								{reveal?.explanation && (
-									<p className="rounded-2xl border bg-white p-5 text-lg text-muted-foreground lg:text-xl">
-										{reveal.explanation}
-									</p>
-								)}
-							</>
-						)}
+								</>
+							)}
 
 						{game.phase === 'leaderboard' && scores && (
 							<>
@@ -205,6 +214,10 @@ export function HostScreen({ code }: { code: string }) {
 					{viewing ? (
 						<p className="font-medium text-muted-foreground">
 							Önceki soruya bakıyorsun; oyun devam ediyor.
+						</p>
+					) : game.phase === 'question' && question?.type === 'buzzer' ? (
+						<p className="font-medium text-muted-foreground">
+							{question.answeredCount} kişi bastı
 						</p>
 					) : game.phase === 'question' && question ? (
 						<AnsweredBar answered={question.answeredCount} total={playerCount} />
@@ -237,7 +250,40 @@ export function HostScreen({ code }: { code: string }) {
 										'start',
 										game.questionCount === 0 || playerCount === 0,
 									)}
+								{game.phase === 'question' && question?.type === 'buzzer' && (
+									<>
+										{state.buzzer?.queue.some(b => !b.verdict) && (
+											<>
+												<button
+													type="button"
+													disabled={busy}
+													onClick={() => act('judge', 'wrong')}
+													className="h-12 rounded-xl bg-destructive px-6 font-semibold text-white hover:bg-destructive/85 disabled:opacity-50 lg:h-14 lg:px-8 lg:text-lg"
+												>
+													Yanlış
+												</button>
+												<button
+													type="button"
+													disabled={busy}
+													onClick={() => act('judge', 'correct')}
+													className="h-12 rounded-xl bg-green-600 px-6 font-semibold text-white hover:bg-green-700 disabled:opacity-50 lg:h-14 lg:px-8 lg:text-lg"
+												>
+													Doğru
+												</button>
+											</>
+										)}
+										<button
+											type="button"
+											disabled={busy}
+											onClick={() => act('reveal')}
+											className="h-12 rounded-xl border bg-white px-5 font-semibold hover:bg-muted disabled:opacity-50 lg:h-14 lg:px-6 lg:text-lg"
+										>
+											Cevabı göster
+										</button>
+									</>
+								)}
 								{game.phase === 'question' &&
+									question?.type !== 'buzzer' &&
 									(question?.pausedAt
 										? control('Devam et', 'resume')
 										: control('Duraklat', 'pause'))}
@@ -341,5 +387,94 @@ function PastQuestionView({ state, past }: { state: GameState; past: PastQuestio
 				</p>
 			)}
 		</>
+	);
+}
+
+// Bulanık görsel: büyük görsel + basış sırası. Cevap metni soru sırasında gösterilmez
+// (ekran Meet'te paylaşılıyor); cevap gösteriminde net görsel, cevap ve bilen kişi.
+function BuzzerHostView({
+	state,
+	code,
+	remaining,
+}: {
+	state: GameState;
+	code: string;
+	remaining: number;
+}) {
+	const { question, reveal, game } = state;
+	if (!question) return null;
+	const queue = state.buzzer?.queue ?? [];
+	const answeringId = queue.find(b => !b.verdict)?.id;
+	return (
+		<div className="grid gap-6 lg:grid-cols-[1fr_20rem] lg:gap-8">
+			<div className="flex flex-col gap-4">
+				<div className="flex items-start justify-between gap-6">
+					<div className="flex flex-col gap-2">
+						<p className="font-semibold text-muted-foreground lg:text-lg">
+							Soru {game.currentIndex + 1}/{game.questionCount}
+						</p>
+						<h1 className="text-3xl leading-tight font-bold tracking-tight lg:text-5xl">
+							{reveal ? reveal.answerText : question.text || 'Bu ne?'}
+						</h1>
+					</div>
+					{!reveal && (
+						<Countdown
+							remaining={remaining}
+							limitMs={game.timeLimitSec * 1000}
+							paused={!!question.pausedAt}
+							size="lg"
+						/>
+					)}
+				</div>
+				<BuzzerImage
+					code={code}
+					level={question.blurLevel}
+					src={reveal ? question.imageUrl : null}
+					className="max-h-[55vh]"
+				/>
+				{reveal && (
+					<p className="text-center text-xl font-semibold lg:text-2xl">
+						{reveal.winner
+							? `${reveal.winner.name} bildi, +${reveal.winner.points}`
+							: 'Kimse bilemedi'}
+					</p>
+				)}
+				{reveal?.explanation && (
+					<p className="rounded-2xl border bg-white p-5 text-lg text-muted-foreground lg:text-xl">
+						{reveal.explanation}
+					</p>
+				)}
+			</div>
+			<section aria-label="Basış sırası" className="flex flex-col gap-2">
+				<h2 className="font-semibold text-muted-foreground lg:text-lg">Basış sırası</h2>
+				{!queue.length && <p className="text-muted-foreground">Henüz kimse basmadı.</p>}
+				<ol className="flex flex-col gap-1.5">
+					{queue.map((b, i) => (
+						<li
+							key={b.id}
+							className={cn(
+								'flex items-center gap-3 rounded-xl border bg-white px-4 py-2.5 lg:text-lg',
+								b.id === answeringId && 'border-brand bg-brand-tint font-semibold',
+								b.verdict === 'wrong' && 'text-muted-foreground line-through',
+								b.verdict === 'correct' &&
+									'border-green-600 bg-green-50 font-semibold',
+							)}
+						>
+							<span className="w-6 text-right font-bold tabular-nums">{i + 1}</span>
+							<span className="flex-1 truncate">{b.name}</span>
+							<span className="text-sm no-underline">
+								{b.verdict === 'correct'
+									? 'Doğru'
+									: b.verdict === 'wrong'
+										? '−300'
+										: b.id === answeringId
+											? 'Cevaplıyor'
+											: 'Bekliyor'}
+							</span>
+						</li>
+					))}
+				</ol>
+			</section>
+		</div>
 	);
 }

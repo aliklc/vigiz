@@ -60,6 +60,63 @@ export type Database = {
 					},
 				];
 			};
+			buzzes: {
+				Row: {
+					buzzed_at: string;
+					game_id: string;
+					player_id: string;
+					points_if_correct: number;
+					question_id: string;
+					verdict: string | null;
+				};
+				ComputedFields: never;
+				Insert: {
+					buzzed_at?: string;
+					game_id: string;
+					player_id: string;
+					points_if_correct: number;
+					question_id: string;
+					verdict?: string | null;
+				};
+				Update: {
+					buzzed_at?: string;
+					game_id?: string;
+					player_id?: string;
+					points_if_correct?: number;
+					question_id?: string;
+					verdict?: string | null;
+				};
+				Relationships: [
+					{
+						foreignKeyName: 'buzzes_game_id_fkey';
+						columns: ['game_id'];
+						isOneToOne: false;
+						referencedRelation: 'games';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'buzzes_player_id_fkey';
+						columns: ['player_id'];
+						isOneToOne: false;
+						referencedRelation: 'game_scores';
+						referencedColumns: ['player_id'];
+					},
+					{
+						foreignKeyName: 'buzzes_player_id_fkey';
+						columns: ['player_id'];
+						isOneToOne: false;
+						referencedRelation: 'players';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'buzzes_question_id_fkey';
+						columns: ['question_id'];
+						isOneToOne: false;
+						referencedRelation: 'questions';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			games: {
 				Row: {
 					code: string;

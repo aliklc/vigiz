@@ -54,6 +54,11 @@ export function useGame(code: string, token: string | null) {
 				{ event: '*', schema: 'public', table: 'players', filter: `game_id=eq.${gameId}` },
 				refresh,
 			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'buzzes', filter: `game_id=eq.${gameId}` },
+				refresh,
+			)
 			// Yeniden bağlanınca kaçırılmış değişiklikleri yakala.
 			.subscribe(status => status === 'SUBSCRIBED' && refresh());
 		return () => {

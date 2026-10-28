@@ -6,13 +6,23 @@ export type AnswerRow = {
 };
 
 // Seri: currentIndex'ten geriye doğru üst üste doğru cevap sayısı (yanlış ya da boş seriyi bitirir).
+// Buzzer sorularında sadece biri bilebildiği için basmamak seriyi bozmaz (atlanır); yanlış basış bozar.
 // En hızlı: currentIndex'teki soruyu doğru bilenler arasında en erken cevaplayan.
-export function computeBadges(answers: AnswerRow[], currentIndex: number) {
-	const correct = new Set(answers.filter(a => a.correct).map(a => `${a.playerId}:${a.position}`));
+export function computeBadges(
+	answers: AnswerRow[],
+	currentIndex: number,
+	buzzerPositions: Set<number> = new Set(),
+) {
+	const status = new Map(answers.map(a => [`${a.playerId}:${a.position}`, a.correct]));
 	const streaks = new Map<string, number>();
 	for (const playerId of new Set(answers.map(a => a.playerId))) {
 		let streak = 0;
-		while (correct.has(`${playerId}:${currentIndex - streak}`)) streak++;
+		for (let p = currentIndex; p >= 0; p--) {
+			const correct = status.get(`${playerId}:${p}`);
+			if (correct === undefined && buzzerPositions.has(p)) continue;
+			if (!correct) break;
+			streak++;
+		}
 		streaks.set(playerId, streak);
 	}
 

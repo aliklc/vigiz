@@ -46,3 +46,26 @@ test('en hızlı: mevcut soruyu doğru bilenler arasında en erken cevaplayan', 
 test('en hızlı: kimse doğru bilmediyse yok', () => {
 	assert.equal(computeBadges([row('a', 0, false, 1)], 0).fastestId, null);
 });
+
+test('seri: buzzer sorusunda basmamak seriyi bozmaz, yanlış basış bozar', () => {
+	const buzzer = new Set([1]);
+	const { streaks } = computeBadges(
+		[
+			row('a', 0, true),
+			row('a', 2, true), // 1. soru buzzer, basmadı → seri 2
+			row('b', 0, true),
+			row('b', 1, false),
+			row('b', 2, true), // buzzer'da yanlış → 1
+			row('c', 0, true),
+			row('c', 1, true),
+			row('c', 2, true), // buzzer'ı bildi → 3
+		],
+		2,
+		buzzer,
+	);
+	assert.deepEqual([...streaks].sort(), [
+		['a', 2],
+		['b', 1],
+		['c', 3],
+	]);
+});

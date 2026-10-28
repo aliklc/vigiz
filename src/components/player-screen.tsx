@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 
 import { FIELD, LETTERS } from '@/components/brand';
 import {
+	BuzzerImage,
 	Choices,
 	Countdown,
 	myRank,
@@ -15,6 +16,7 @@ import {
 	useRemaining,
 } from '@/components/game-views';
 import { useGame } from '@/hooks/use-game';
+import type { GameState } from '@/lib/game-types';
 import { cn } from '@/lib/utils';
 
 const storageKey = (code: string) => `vigiz:token:${code}`;
@@ -59,6 +61,20 @@ export function PlayerScreen({ code }: { code: string }) {
 			setError('Bağlantı koptu, cevabın gönderilemedi. Tekrar dene.');
 		} finally {
 			setPending(null);
+		}
+	}
+
+	async function buzz() {
+		setError('');
+		try {
+			const res = await fetch(`/api/games/${code}/buzz`, {
+				method: 'POST',
+				body: JSON.stringify({ token }),
+			});
+			if (!res.ok) setError((await res.json()).error ?? 'Basılamadı');
+			await refresh();
+		} catch {
+			setError('Bağlantı koptu, tekrar bas.');
 		}
 	}
 
@@ -189,6 +205,19 @@ export function PlayerScreen({ code }: { code: string }) {
 				</div>
 				<PlayerList players={state.players} meId={me.id} />
 			</Stage>
+		);
+	}
+
+	if (question?.type === 'buzzer' && (phase === 'question' || phase === 'reveal')) {
+		return (
+			<BuzzerPlayerView
+				state={state}
+				code={code}
+				meId={me.id}
+				remaining={remaining}
+				onBuzz={buzz}
+				error={error}
+			/>
 		);
 	}
 
@@ -418,5 +447,129 @@ export function PrimaryButton({ className, ...props }: React.ComponentProps<'but
 			)}
 			{...props}
 		/>
+	);
+}
+
+function BuzzerPlayerView({
+	state,
+	code,
+	meId,
+	remaining,
+	onBuzz,
+	error,
+}: {
+	state: GameState;
+	code: string;
+	meId: string;
+	remaining: number;
+	onBuzz: () => void;
+	error: string;
+}) {
+	const { question, reveal, game } = state;
+	const queue = state.buzzer?.queue ?? [];
+	const pending = queue.filter(b => !b.verdict);
+	const mine = queue.find(b => b.id === meId);
+	const myTurn = pending.findIndex(b => b.id === meId);
+	if (!question) return null;
+
+	if (reveal) {
+		const verdict = reveal.myPoints
+			? reveal.myPoints > 0
+				? {
+						cls: 'border-green-600 bg-green-50 text-green-800',
+						title: 'Doğru!',
+						sub: `+${reveal.myPoints} puan`,
+					}
+				: {
+						cls: 'border-destructive bg-red-50 text-red-800',
+						title: 'Yanlış',
+						sub: `${reveal.myPoints} puan`,
+					}
+			: {
+					cls: 'border-border bg-white',
+					title: reveal.winner ? `${reveal.winner.name} bildi` : 'Kimse bilemedi',
+					sub: reveal.winner ? `+${reveal.winner.points} puan` : 'Bu soruda puan yok',
+				};
+		return (
+			<Stage wide className="gap-4 sm:gap-6">
+				<div className={cn('rounded-2xl border-2 p-5 text-center', verdict.cls)}>
+					<p className="text-3xl font-bold tracking-tight">{verdict.title}</p>
+					<p>{verdict.sub}</p>
+				</div>
+				<BuzzerImage
+					code={code}
+					level={10}
+					src={question.imageUrl}
+					className="max-h-[45vh]"
+				/>
+				<p className="text-center text-3xl font-bold tracking-tight lg:text-5xl">
+					{reveal.answerText}
+				</p>
+				{reveal.explanation && (
+					<p className="rounded-2xl border bg-white p-4 text-muted-foreground">
+						{reveal.explanation}
+					</p>
+				)}
+			</Stage>
+		);
+	}
+
+	const answering = pending[0];
+	return (
+		<Stage wide className="gap-4 sm:gap-6">
+			<div className="flex items-center justify-between gap-4">
+				<div>
+					<p className="font-semibold text-muted-foreground lg:text-lg">
+						Soru {game.currentIndex + 1}/{game.questionCount}
+					</p>
+					<h1 className="text-2xl font-bold tracking-tight lg:text-4xl">
+						{question.text || 'Bu ne?'}
+					</h1>
+				</div>
+				<Countdown
+					remaining={remaining}
+					limitMs={game.timeLimitSec * 1000}
+					paused={!!question.pausedAt}
+				/>
+			</div>
+			<BuzzerImage
+				code={code}
+				level={question.blurLevel}
+				src={null}
+				className="max-h-[45vh]"
+			/>
+			{answering && answering.id !== meId && (
+				<p role="status" className="rounded-xl border bg-white p-3 text-center font-medium">
+					{answering.name} cevaplıyor…
+				</p>
+			)}
+			{mine?.verdict === 'wrong' ? (
+				<p className="rounded-2xl border-2 border-destructive bg-red-50 p-4 text-center text-lg font-semibold text-red-800">
+					Yanlış, −300. Bu soruda hakkın bitti.
+				</p>
+			) : myTurn === 0 ? (
+				<p className="rounded-2xl bg-brand p-5 text-center text-2xl font-bold text-white">
+					Sıra sende! Cevabını söyle.
+				</p>
+			) : myTurn > 0 ? (
+				<p className="rounded-2xl border-2 border-brand bg-brand-tint p-5 text-center text-2xl font-bold text-brand-ink">
+					Sıran: {myTurn + 1}
+				</p>
+			) : (
+				<button
+					type="button"
+					onClick={onBuzz}
+					disabled={remaining <= 0}
+					className="h-24 rounded-3xl bg-brand text-3xl font-extrabold tracking-tight text-white shadow-[0_6px_0_var(--color-brand-ink)] transition outline-none focus-visible:ring-4 focus-visible:ring-brand/40 active:translate-y-1 active:shadow-none disabled:opacity-40 lg:h-28 lg:text-4xl"
+				>
+					{remaining > 0 ? 'BİLDİM!' : 'Süre doldu'}
+				</button>
+			)}
+			{error && (
+				<p role="alert" className="text-center text-destructive">
+					{error}
+				</p>
+			)}
+		</Stage>
 	);
 }
