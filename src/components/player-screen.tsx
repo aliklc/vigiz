@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { FIELD, LETTERS } from '@/components/brand';
@@ -85,6 +87,13 @@ export function PlayerScreen({ code }: { code: string }) {
 		}
 	}
 
+	// Bitmiş oyuna kaydı olmayan biri gelirse doğrudan ana sayfaya.
+	const router = useRouter();
+	const finishedForStranger = token === null && state?.game.phase === 'finished';
+	useEffect(() => {
+		if (finishedForStranger) router.replace('/');
+	}, [finishedForStranger, router]);
+
 	// Sayfa yenilenince / geri gelinince kayıtlı token ile yeniden bağlan.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: sadece ilk açılışta
 	useEffect(() => {
@@ -112,9 +121,7 @@ export function PlayerScreen({ code }: { code: string }) {
 	}
 
 	if (!state.me) {
-		if (state.game.phase === 'finished') {
-			return <Centered>Bu oyun bitti.</Centered>;
-		}
+		if (state.game.phase === 'finished') return <Centered>Yükleniyor…</Centered>;
 		// Masaüstünde host lobisiyle aynı genişlik ve boyutlar
 		return (
 			<Stage wide className="justify-center gap-6 lg:gap-8">
@@ -289,9 +296,15 @@ export function PlayerScreen({ code }: { code: string }) {
 		return (
 			<Stage wide className="gap-5 sm:gap-6 lg:gap-8">
 				{finished ? (
-					<h1 className="text-center text-3xl font-bold tracking-tight lg:text-5xl">
-						Sonuçlar
-					</h1>
+					<div className="flex items-center justify-between gap-4">
+						<h1 className="text-3xl font-bold tracking-tight lg:text-5xl">Sonuçlar</h1>
+						<Link
+							href="/"
+							className="flex h-11 shrink-0 items-center rounded-xl bg-ink px-5 font-semibold text-white hover:bg-ink/85 lg:h-14 lg:px-8 lg:text-lg"
+						>
+							Ana sayfaya dön
+						</Link>
+					</div>
 				) : (
 					<h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
 						{state.game.currentIndex + 1}. sorudan sonra sıralama
