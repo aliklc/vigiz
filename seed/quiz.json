@@ -1,0 +1,28 @@
+{
+	"title": "Örnek Quiz Night",
+	"topic": "Genel Kültür",
+	"author_name": "Ali",
+	"quiz_date": "2026-11-01",
+	"time_limit_sec": 20,
+	"status": "ready",
+	"questions": [
+		{
+			"text": "Türkiye'nin başkenti neresidir?",
+			"choices": ["İstanbul", "Ankara", "İzmir", "Bursa"],
+			"correct_index": 1,
+			"explanation": "Ankara, 13 Ekim 1923'ten beri başkenttir."
+		},
+		{
+			"text": "Güneş sistemindeki en büyük gezegen hangisidir?",
+			"choices": ["Satürn", "Jüpiter"],
+			"correct_index": 1,
+			"image_url": "https://upload.wikimedia.org/wikipedia/commons/2/2b/Jupiter_and_its_shrunken_Great_Red_Spot.jpg"
+		},
+		{
+			"text": "HTTP 404 ne anlama gelir?",
+			"choices": ["Sunucu hatası", "Yetkisiz", "Bulunamadı", "Yönlendirme", "Zaman aşımı"],
+			"correct_index": 2,
+			"explanation": "404 Not Found: istenen kaynak sunucuda yok."
+		}
+	]
+}
