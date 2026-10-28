@@ -50,7 +50,6 @@ answers    game_id, player_id fk, question_id fk, choice_index int, points int, 
 - **RLS:** her tabloda RLS açık. anon için yalnızca `games` ve `players` üzerinde SELECT policy var (Realtime için gerekiyor). Bu iki tabloda gizli bilgi yok. Diğer her şeye yalnızca sunucudaki service-role key ile erişilir.
 - `alter publication supabase_realtime add table games, players;`
 - **View `game_scores`:** oyun başına oyuncu puanı, yani `sum(answers.points)`. Ayrı bir skor kolonu yok, böylece skorlar arasında tutarsızlık oluşamaz.
-- **View `yearly_scores`:** biten oyunlarda `lower(trim(name))` bazında puan toplamı, yıla göre filtrelenir.
 
 ## Oyun durum akışı
 ```
@@ -87,7 +86,6 @@ lobby ──Başlat──▶ question(i) ──süre bitti / herkes cevapladı�
 | `/host` | Quiz listesi (taslak/hazır) + "Oda aç" |
 | `/host/quizzes/new`, `/host/quizzes/[id]` | Quiz editörü: meta alanlar + soru listesi (ekle, sil, ↑↓ ile sırala), "Taslak kaydet" / "Hazır" |
 | `/host/games/[code]` | Host/projeksiyon ekranı: link + QR yerine büyük kod, oyuncu listesi (çıkar butonu), Başlat / Sonraki / Duraklat |
-| `/leaderboard` | Yıllık sıralama + not: "Sunucu, sunduğu ayın quizinden puan almaz" |
 | `/archive` | Biten oyunlar: konu, hazırlayan, tarih, kazanan |
 
 ## API route'ları (`src/app/api`)
@@ -111,8 +109,7 @@ lobby ──Başlat──▶ question(i) ──süre bitti / herkes cevapladı�
    *Test:* host ekranı + 2 tarayıcı (biri gizli sekme). Sayfayı yenile → aynı oyuncu. Çıkar → oyuncu ekranı "çıkarıldınız" göstermeli.
 3. **Oyun akışı + puanlama:** fazlar, geri sayım, cevap, reveal sayıları, ilk 5, final podyumu, duraklatma.
    *Test:* `node --test` ile `scoring.test.ts` çalıştırılır. Elle: DevTools Network'te soru fazında `correct_index` görünmemeli. Süre bitince cevap 409 dönmeli. Herkes cevaplayınca hemen reveal'a geçmeli.
-4. **Sıralama + arşiv:** view'lar + 2 sayfa.
-   *Test:* 2 oyun bitir, aynı isim farklı büyük/küçük harfle yazılsa bile toplamın birleştiğini kontrol et.
+4. **Arşiv (ertelendi):** biten oyunların listesi ve her oyunun sonuç listesi (`game_scores`). Yıllık toplam sıralama yapılmayacak: her oyunun sonucu saklandığı için kazananlar arşivden görülür.
 5. **README:** Supabase projesi açma, migration, Realtime publication, Vercel env'leri, seed JSON formatı.
 
 ## Ortam değişkenleri (`.env.example`)
@@ -127,4 +124,4 @@ ADMIN_COOKIE_SECRET=dummy-random-32-chars
 ```
 
 ## Bilinçli olarak yapılmayanlar
-QR kod, ses/animasyon, sürükle-bırak sıralama (↑↓ butonları yeterli), çoklu dil, Sentry, rate limiting, birden fazla eşzamanlı oyun için özel bir şey (kod bazlı olduğu için zaten çalışır).
+Yıllık toplam sıralama, QR kod, ses/animasyon, sürükle-bırak sıralama (↑↓ butonları yeterli), çoklu dil, Sentry, rate limiting, birden fazla eşzamanlı oyun için özel bir şey (kod bazlı olduğu için zaten çalışır).

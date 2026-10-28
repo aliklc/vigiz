@@ -273,17 +273,6 @@ export type Database = {
 					},
 				];
 			};
-			yearly_scores: {
-				Row: {
-					games_played: number | null;
-					name: string | null;
-					name_key: string | null;
-					score: number | null;
-					year: number | null;
-				};
-				ComputedFields: never;
-				Relationships: [];
-			};
 		};
 		Functions: {
 			save_quiz: { Args: { p_id: string; p_quiz: Json }; Returns: string };
