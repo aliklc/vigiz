@@ -1,5 +1,6 @@
 import 'server-only';
 
+import { type AnswerRow, computeBadges } from '@/lib/badges';
 import type { GameState, Phase } from '@/lib/game-types';
 import { GRACE_MS } from '@/lib/scoring';
 import { db } from '@/lib/supabase/admin';
@@ -159,20 +160,31 @@ export async function buildState(code: string, token: string | null): Promise<Ga
 		}
 	}
 
-	if (scores && game.phase === 'leaderboard') {
-		// Son sorudan kazanılan puan: sıralamada çubuk önceki puandan yenisine uzar.
-		const lastQuestion = await getCurrentQuestion(game);
-		const { data: gains } = lastQuestion
-			? await db
-					.from('answer_points')
-					.select('player_id, total')
-					.eq('question_id', lastQuestion.id)
-					.eq('game_id', game.id)
-			: { data: [] };
-		const byPlayer = new Map(gains?.map(g => [g.player_id, g.total ?? 0]));
-		state.scores = scores.map(s => ({ ...s, gained: byPlayer.get(s.id) ?? 0 }));
-	} else if (scores) {
-		state.scores = scores;
+	if (scores) {
+		// Seri ve en hızlı rozetleri için oyunun tüm cevapları (30 kişi × birkaç soru: küçük).
+		const { data: all } = await db
+			.from('answer_points')
+			.select('player_id, question_id, total, answered_at, questions(position)')
+			.eq('game_id', game.id);
+		const rows: AnswerRow[] = (all ?? []).map(a => ({
+			playerId: a.player_id ?? '',
+			position: a.questions?.position ?? -1,
+			correct: (a.total ?? 0) > 0,
+			answeredAt: a.answered_at ?? '',
+		}));
+		const { streaks, fastestId } = computeBadges(rows, game.current_index);
+		const leaderboard = game.phase === 'leaderboard';
+		// Sıralamada son sorudan kazanılan puan: çubuk önceki puandan yenisine uzar.
+		const gained = new Map(
+			(all ?? [])
+				.filter(a => a.questions?.position === game.current_index)
+				.map(a => [a.player_id, a.total ?? 0]),
+		);
+		state.scores = scores.map(s => ({
+			...s,
+			...(leaderboard && { gained: gained.get(s.id) ?? 0, fastest: s.id === fastestId }),
+			...((streaks.get(s.id) ?? 0) >= 2 && { streak: streaks.get(s.id) }),
+		}));
 	}
 
 	return state;

@@ -32,5 +32,15 @@ export type GameState = {
 	} | null;
 	// leaderboard / finished fazlarında: tüm oyuncular, puana göre sıralı
 	// gained: sıralama fazında son sorudan kazanılan puan (animasyon için)
-	scores: { id: string; name: string; score: number; gained?: number }[] | null;
+	// streak: üst üste doğru (2+ ise); fastest: bu turun en hızlısı (sadece sıralama fazında)
+	scores:
+		| {
+				id: string;
+				name: string;
+				score: number;
+				gained?: number;
+				streak?: number;
+				fastest?: boolean;
+		  }[]
+		| null;
 };

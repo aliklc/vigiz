@@ -1,5 +1,6 @@
 'use client';
 
+import { Flame, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { LETTERS } from '@/components/brand';
@@ -238,7 +239,37 @@ export function Scoreboard({
 						>
 							{i + 1}
 						</span>
-						<span className="relative flex-1 truncate">{s.name}</span>
+						<span className="relative flex min-w-0 flex-1 items-center gap-2">
+							<span className="truncate">{s.name}</span>
+							{!!s.streak && (
+								// Seri sayısı alevin içinde
+								<span
+									className="relative flex size-8 shrink-0 items-center justify-center"
+									title={`${s.streak} soru üst üste doğru`}
+								>
+									<Flame
+										className="absolute size-8 fill-orange-500 stroke-orange-600"
+										aria-hidden
+									/>
+									<span className="relative mt-2 text-xs font-extrabold text-white">
+										{s.streak}
+									</span>
+									<span className="sr-only"> soru üst üste doğru</span>
+								</span>
+							)}
+							{s.fastest && (
+								<span
+									className="flex shrink-0 items-center rounded-full bg-brand-tint p-1 text-brand-ink"
+									title="Bu turun en hızlısı"
+								>
+									<Zap
+										className="size-4 fill-brand stroke-brand-ink"
+										aria-hidden
+									/>
+									<span className="sr-only">Bu turun en hızlısı</span>
+								</span>
+							)}
+						</span>
 						{animated && gained > 0 && (
 							<span className="relative animate-in rounded-full bg-green-600 px-2 py-0.5 text-sm font-semibold text-white delay-300 duration-500 fill-mode-backwards fade-in slide-in-from-left-4">
 								+{gained}

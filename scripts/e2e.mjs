@@ -406,6 +406,54 @@ try {
 	await db.from('games').delete().eq('code', endCode);
 	log('Oyunu bitir: soru sırasında final, lobide etkisiz, başka host 404');
 
+	// Rozetler: 2 soru üst üste doğru → 🔥2; son soruyu en hızlı doğru bilen → ⚡ (sadece sıralamada).
+	const badgeCode = `R${String(stamp).slice(-5)}`;
+	const { data: g3 } = await db
+		.from('games')
+		.insert({ quiz_id: quizId, code: badgeCode, phase: 'leaderboard', current_index: 1 })
+		.select('id')
+		.single();
+	const bp = [crypto.randomUUID(), crypto.randomUUID(), crypto.randomUUID()];
+	await db.from('players').insert(bp.map((id, i) => ({ id, game_id: g3.id, name: `R${i}` })));
+	const { data: qs } = await db
+		.from('questions')
+		.select('id, position')
+		.eq('quiz_id', quizId)
+		.order('position');
+	const t = sec => new Date(Date.UTC(2026, 0, 1, 0, 0, sec)).toISOString();
+	const ans = (p, q, ok, sec) => ({
+		game_id: g3.id,
+		player_id: bp[p],
+		question_id: qs[q].id,
+		choice_index: 0,
+		points: ok ? 600 : 0,
+		answered_at: t(sec),
+	});
+	await db.from('answers').insert([
+		ans(0, 0, true, 1),
+		ans(0, 1, true, 5), // iki doğru → seri 2
+		ans(1, 0, false, 2),
+		ans(1, 1, true, 3), // ikinci soruda en hızlı doğru
+		ans(2, 0, true, 3), // ikinci soruyu boş → seri yok
+	]);
+	const badges = async () =>
+		(await (await fetch(`${B}/api/games/${badgeCode}/state`)).json()).scores
+			.map(x => [x.name, x.streak ?? 0, !!x.fastest])
+			.sort();
+	assert.deepEqual(await badges(), [
+		['R0', 2, false],
+		['R1', 0, true],
+		['R2', 0, false],
+	]);
+	await db.from('games').update({ phase: 'finished' }).eq('id', g3.id);
+	assert.deepEqual(await badges(), [
+		['R0', 2, false],
+		['R1', 0, false],
+		['R2', 0, false],
+	]);
+	await db.from('games').delete().eq('id', g3.id);
+	log('rozetler: 2 doğru üst üste 🔥2, turun en hızlısı ⚡, finalde ⚡ yok');
+
 	// Sıra bonusu ara değerleri: 3 doğru cevap → +200 / +100 / +0 (yanlış cevap sırayı etkilemez).
 	const { data: g2 } = await db
 		.from('games')
