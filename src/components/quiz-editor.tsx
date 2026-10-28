@@ -1,11 +1,11 @@
 'use client';
 
 import { ArrowDown, ArrowUp, Check, ImageUp, Plus, Trash2 } from 'lucide-react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { LETTERS } from '@/components/brand';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import { FORMATS } from '@/components/formats';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -131,10 +131,13 @@ export function QuizEditor({
 	return (
 		<main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-8">
 			<div className="flex items-center justify-between gap-4">
-				<div>
-					<Link href="/host" className="text-sm text-muted-foreground hover:underline">
-						Quizlerim
-					</Link>
+				<div className="flex min-w-0 flex-col gap-1">
+					<Breadcrumbs
+						items={[
+							{ label: 'Quizlerim', href: '/host' },
+							{ label: id ? quiz.title || 'Adsız quiz' : 'Yeni quiz' },
+						]}
+					/>
 					<h1 className="text-3xl font-bold tracking-tight">
 						{id ? quiz.title || 'Adsız quiz' : 'Yeni quiz'}
 					</h1>

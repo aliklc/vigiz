@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { renderSVG } from 'uqr';
 
 import { CodeTiles, Wordmark } from '@/components/brand';
+import { Breadcrumbs } from '@/components/breadcrumbs';
 import {
 	BuzzerImage,
 	Choices,
@@ -91,13 +92,20 @@ export function HostScreen({ code }: { code: string }) {
 		<main className="stage flex flex-col">
 			<header className="border-b bg-white/80 backdrop-blur">
 				<div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
-					<Link href="/host" aria-label="Panele dön">
-						<Wordmark className="text-2xl" />
-					</Link>
 					<div className="flex min-w-0 items-center gap-4">
-						<p className="truncate font-medium text-muted-foreground">
-							{state.quiz.title}
-						</p>
+						<Link href="/host" aria-label="Panele dön" className="shrink-0">
+							<Wordmark className="text-2xl" />
+						</Link>
+						<Breadcrumbs
+							className="hidden sm:block"
+							items={[
+								{ label: 'Quizlerim', href: '/host' },
+								{ label: state.quiz.title },
+								{ label: `Oda ${code}` },
+							]}
+						/>
+					</div>
+					<div className="flex shrink-0 items-center gap-4">
 						{['question', 'reveal', 'leaderboard'].includes(game.phase) && (
 							<button
 								type="button"
