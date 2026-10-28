@@ -71,9 +71,12 @@ lobby ──Başlat──▶ question(i) ──süre bitti / herkes cevapladı�
   - `leaderboard`: ilk 5 gelir.
   - `finished`: tam liste gelir (podyum bundan çizilir).
 
-## Puanlama (`src/lib/scoring.ts`)
-`points = correct ? 500 + Math.round(500 * remainingMs / limitMs) : 0`. `remainingMs` 0 ile limit arasında tutulur. Hesap sunucuda yapılır ve zaman olarak sunucu saati (`Date.now()`) kullanılır. `deadline` sonrası gelen cevap 409 ile reddedilir.
-shortcut: ağ gecikmesi için tolerans yok. Son milisaniyede basan biri reddedilebilir. Şikâyet gelirse 300 ms tolerans eklenir.
+## Puanlama
+- Yanlış ya da boş: 0. Cevap kesin, değiştirilemez.
+- Doğru: **500 taban + en fazla 300 süre bonusu + en fazla 200 sıra bonusu** (toplamda en fazla 1000).
+  - Süre bonusu = `300 × kalan süre / toplam süre`. Cevap anında sunucuda hesaplanır (`src/lib/scoring.ts`) ve `answers.points`'e yazılır.
+  - Sıra bonusu: doğru bilenler arasında ilk olan 200, son olan 0, aradakiler doğrusal azalır. Saklanmaz; `answer_points` view'ında cevap zamanlarından hesaplanır, böylece eşzamanlı cevaplarda yarış olmaz.
+- Bitiş zamanından sonra gelen cevap reddedilir (300 ms tolerans).
 
 ## Sayfalar (`src/app`)
 | Yol | İçerik |

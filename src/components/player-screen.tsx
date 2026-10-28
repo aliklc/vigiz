@@ -154,7 +154,7 @@ export function PlayerScreen({ code }: { code: string }) {
 				/>
 				{!reveal && question?.myChoice != null && remaining > 0 && (
 					<p className="text-center text-sm text-muted-foreground">
-						Cevabın alındı. Süre bitene kadar değiştirebilirsin.
+						Cevabın alındı. Diğerleri bekleniyor…
 					</p>
 				)}
 				{error && <p className="text-center text-sm text-destructive">{error}</p>}

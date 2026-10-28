@@ -77,25 +77,18 @@ try {
 	);
 	log('soru fazı, doğru cevap ve açıklama yanıtta yok');
 
-	assert.equal((await answer(A, 0)).status, 200);
-	let { data: a1 } = await db
+	assert.equal((await answer(A, 1)).status, 200);
+	assert.equal((await answer(A, 0)).status, 409);
+	const { data: a1 } = await db
 		.from('answers')
 		.select('choice_index, points')
 		.eq('player_id', A)
 		.single();
-	assert.deepEqual(a1, { choice_index: 0, points: 0 });
-	await sleep(1000);
-	assert.equal((await answer(A, 1)).status, 200);
-	({ data: a1 } = await db
-		.from('answers')
-		.select('choice_index, points')
-		.eq('player_id', A)
-		.single());
 	assert.equal(a1.choice_index, 1);
-	assert.ok(a1.points > 500 && a1.points < 1000, `puan ${a1.points}`);
-	log('cevap değiştirildi, yeni puan', a1.points);
+	assert.ok(a1.points > 500 && a1.points <= 800, `puan ${a1.points}`);
+	log('cevap kilitli (ikinci cevap 409), süre puanı', a1.points);
 	assert.equal((await state(A)).question.myChoice, 1);
-	assert.equal((await answer(A, 9)).status, 400);
+	assert.equal((await answer(Bp, 9)).status, 400);
 	log('geçersiz şık 400');
 
 	await act('pause');
@@ -113,15 +106,25 @@ try {
 	);
 	log('duraklat: cevap 409; devam: süre', s.question.deadline - before, 'ms kaydı');
 
-	assert.equal((await answer(Bp, 2)).status, 200);
+	assert.equal((await answer(Bp, 1)).status, 200);
+	const { data: b1 } = await db.from('answers').select('points').eq('player_id', Bp).single();
 	s = await state(A);
 	assert.equal(s.game.phase, 'reveal', 'herkes cevaplayınca reveal');
 	assert.equal(s.reveal.correctIndex, 1);
-	assert.deepEqual(s.reveal.counts, [0, 1, 1]);
+	assert.deepEqual(s.reveal.counts, [0, 2, 0]);
 	assert.equal(s.reveal.explanation, 'açıklama 1');
-	assert.equal(s.reveal.myPoints, a1.points);
-	log('herkes cevapladı → reveal, dağılım', s.reveal.counts);
-	assert.equal((await answer(Bp, 1)).status, 409);
+	assert.equal(s.reveal.myPoints, a1.points + 200, 'ilk doğru bilen +200 sıra bonusu');
+	assert.equal((await state(Bp)).reveal.myPoints, b1.points, 'son doğru bilen +0 sıra bonusu');
+	log(
+		'herkes cevapladı → reveal, dağılım',
+		s.reveal.counts,
+		'| Ayşe',
+		a1.points,
+		'+200, Bora',
+		b1.points,
+		'+0',
+	);
+	assert.equal((await answer(Bp, 0)).status, 409);
 	log('reveal sonrası cevap 409');
 
 	await act('next');
@@ -130,8 +133,8 @@ try {
 	assert.deepEqual(
 		s.scores.map(x => [x.name, x.score]),
 		[
-			['Ayşe', a1.points],
-			['Bora', 0],
+			['Ayşe', a1.points + 200],
+			['Bora', b1.points],
 		],
 	);
 	log('sıralama (herkes, puanlı)', s.scores.map(x => `${x.name}:${x.score}`).join(' '));

@@ -213,6 +213,48 @@ export type Database = {
 			};
 		};
 		Views: {
+			answer_points: {
+				Row: {
+					answered_at: string;
+					choice_index: number;
+					game_id: string;
+					player_id: string;
+					points: number;
+					question_id: string;
+					total: number | null;
+				};
+				ComputedFields: never;
+				Relationships: [
+					{
+						foreignKeyName: 'answers_game_id_fkey';
+						columns: ['game_id'];
+						isOneToOne: false;
+						referencedRelation: 'games';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'answers_player_id_fkey';
+						columns: ['player_id'];
+						isOneToOne: false;
+						referencedRelation: 'game_scores';
+						referencedColumns: ['player_id'];
+					},
+					{
+						foreignKeyName: 'answers_player_id_fkey';
+						columns: ['player_id'];
+						isOneToOne: false;
+						referencedRelation: 'players';
+						referencedColumns: ['id'];
+					},
+					{
+						foreignKeyName: 'answers_question_id_fkey';
+						columns: ['question_id'];
+						isOneToOne: false;
+						referencedRelation: 'questions';
+						referencedColumns: ['id'];
+					},
+				];
+			};
 			game_scores: {
 				Row: {
 					game_id: string;

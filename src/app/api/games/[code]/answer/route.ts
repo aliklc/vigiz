@@ -7,7 +7,7 @@ import { db } from '@/lib/supabase/admin';
 
 const answerSchema = z.object({ playerId: z.uuid(), choiceIndex: z.number().int().min(0) });
 
-// Süre bitene kadar cevap değiştirilebilir; puan her seferinde yeni cevabın zamanına göre hesaplanır.
+// Cevap kesindir: aynı soruya ikinci cevap reddedilir (answers PK: player_id + question_id).
 export async function POST(request: Request, ctx: RouteContext<'/api/games/[code]/answer'>) {
 	const now = Date.now();
 	const game = await getGame((await ctx.params).code);
@@ -37,7 +37,7 @@ export async function POST(request: Request, ctx: RouteContext<'/api/games/[code
 
 	// shortcut: kontrol ile yazma arasında reveal'a geçilirse cevap yine kaydedilir (ms'lik pencere);
 	// sorun olursa kontrol + upsert tek bir SQL fonksiyonuna taşınır.
-	const { error } = await db.from('answers').upsert({
+	const { error } = await db.from('answers').insert({
 		game_id: game.id,
 		player_id: playerId,
 		question_id: question.id,
@@ -45,6 +45,9 @@ export async function POST(request: Request, ctx: RouteContext<'/api/games/[code
 		points: calcPoints(choiceIndex === question.correct_index, remainingMs, game.limitMs),
 		answered_at: new Date(now).toISOString(),
 	});
+	if (error?.code === '23505') {
+		return NextResponse.json({ error: 'Bu soruyu zaten cevapladın' }, { status: 409 });
+	}
 	if (error) return NextResponse.json({ error: 'Cevap kaydedilemedi' }, { status: 500 });
 
 	await maybeReveal(game, question.id);

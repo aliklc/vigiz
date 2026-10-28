@@ -90,8 +90,8 @@ export async function buildState(code: string, playerId: string | null): Promise
 		db.from('players').select('id, name').eq('game_id', game.id).order('joined_at'),
 		current
 			? db
-					.from('answers')
-					.select('player_id, choice_index, points')
+					.from('answer_points')
+					.select('player_id, choice_index, total')
 					.eq('question_id', current.id)
 					.eq('game_id', game.id)
 			: { data: null },
@@ -142,7 +142,7 @@ export async function buildState(code: string, playerId: string | null): Promise
 					(_, i) => answers?.filter(a => a.choice_index === i).length ?? 0,
 				),
 				explanation: current.explanation,
-				myPoints: mine ? mine.points : null,
+				myPoints: mine ? mine.total : null,
 			};
 		}
 	}

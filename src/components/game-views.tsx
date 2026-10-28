@@ -70,7 +70,7 @@ export function QuestionView({
 	const { question, reveal, game } = state;
 	if (!question) return null;
 	const paused = !!question.pausedAt;
-	const open = !reveal && !paused && remaining > 0;
+	const open = !reveal && !paused && remaining > 0 && question.myChoice == null;
 
 	return (
 		<div className="flex flex-col gap-4">
