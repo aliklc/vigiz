@@ -10,12 +10,17 @@ import { supabase } from '@/lib/supabase/browser';
 export function useGame(code: string, playerId: string | null) {
 	const [state, setState] = useState<GameState | null>(null);
 	const [notFound, setNotFound] = useState(false);
+	// sunucu saati - cihaz saati; geri sayım cihaz saatinden bağımsız olsun diye
+	const [offset, setOffset] = useState(0);
 
 	const refresh = useCallback(async () => {
 		const qs = playerId ? `?playerId=${playerId}` : '';
 		const res = await fetch(`/api/games/${code}/state${qs}`, { cache: 'no-store' });
 		if (res.status === 404) return setNotFound(true);
-		if (res.ok) setState(await res.json());
+		if (!res.ok) return;
+		const data: GameState = await res.json();
+		setOffset(data.serverNow - Date.now());
+		setState(data);
 	}, [code, playerId]);
 
 	const gameId = state?.game.id;
@@ -52,5 +57,5 @@ export function useGame(code: string, playerId: string | null) {
 		};
 	}, [gameId, refresh]);
 
-	return { state, notFound, refresh };
+	return { state, notFound, refresh, offset };
 }

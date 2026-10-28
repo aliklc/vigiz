@@ -11,7 +11,8 @@
 		"typecheck": "next typegen && tsc --noEmit",
 		"test": "node --test src/**/*.test.ts",
 		"seed": "node --env-file=.env.local scripts/seed.mjs",
-		"db:push": "sh scripts/db-push.sh"
+		"db:push": "sh scripts/db-push.sh",
+		"test:e2e": "node --env-file=.env.local scripts/e2e.mjs"
 	},
 	"dependencies": {
 		"@supabase/supabase-js": "^2.118.0",
