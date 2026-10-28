@@ -11,14 +11,6 @@ export function HostScreen({ code }: { code: string }) {
 	const [origin, setOrigin] = useState('');
 	useEffect(() => setOrigin(window.location.origin), []);
 
-	async function act(body: Record<string, string>) {
-		const res = await fetch(`/api/host/games/${code}/action`, {
-			method: 'POST',
-			body: JSON.stringify(body),
-		});
-		if (!res.ok) alert((await res.json()).error ?? 'İşlem başarısız');
-	}
-
 	if (notFound) return <Centered>Oda bulunamadı.</Centered>;
 	if (!state) return <Centered>Yükleniyor…</Centered>;
 
@@ -50,10 +42,7 @@ export function HostScreen({ code }: { code: string }) {
 							Linki kopyala
 						</button>
 					</div>
-					<PlayerList
-						players={state.players}
-						onKick={playerId => act({ action: 'kick', playerId })}
-					/>
+					<PlayerList players={state.players} />
 				</>
 			)}
 		</main>

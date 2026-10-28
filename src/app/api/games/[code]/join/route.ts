@@ -23,12 +23,10 @@ export async function POST(request: Request, ctx: RouteContext<'/api/games/[code
 	if (playerId) {
 		const { data: existing } = await db
 			.from('players')
-			.select('id, name, kicked')
+			.select('id, name')
 			.eq('id', playerId)
 			.eq('game_id', game.id)
 			.maybeSingle();
-		if (existing?.kicked)
-			return NextResponse.json({ error: 'Odadan çıkarıldın' }, { status: 403 });
 		if (existing) return NextResponse.json({ id: existing.id, name: existing.name });
 	}
 

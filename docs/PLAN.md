@@ -42,7 +42,7 @@ games      id uuid pk, quiz_id fk, code text unique (6 karakter, 0/O/1/I yok),
            current_index int default -1, question_started_at timestamptz null,
            paused_at timestamptz null, created_at, finished_at null
 players    id uuid pk (istemcide üretilir, localStorage'da), game_id fk cascade,
-           name text, kicked boolean default false, joined_at
+           name text, joined_at
            unique(game_id, lower(name))
 answers    game_id, player_id fk, question_id fk, choice_index int, points int, answered_at
            primary key (player_id, question_id)   -- tek cevap kuralını DB garanti eder
@@ -90,7 +90,7 @@ shortcut: ağ gecikmesi için tolerans yok. Son milisaniyede basan biri reddedil
 ## API route'ları (`src/app/api`)
 - `POST /api/host/login` → `ADMIN_PASSWORD` kontrol edilir, httpOnly cookie verilir (HMAC, Web Crypto). `src/proxy.ts` `/host/*` ve `/api/host/*` yollarını bu cookie ile korur.
 - `POST/PUT /api/host/quizzes[/id]`: quiz ve sorular birlikte kaydedilir. Kaydederken sorular silinip yeniden eklenir. zod ile doğrulanır.
-- `POST /api/host/games` (quizId → code), `POST /api/host/games/[code]/action` ile `{start|next|pause|resume|kick, playerId?}`
+- `POST /api/host/games` (quizId → code), `POST /api/host/games/[code]/action` ile `{start|next|pause|resume}`
 - `POST /api/games/[code]/join` `{playerId, name}`: `playerId` oyunda zaten varsa o oyuncu döner (yeniden bağlanma). Çıkarılmış oyuncu ise 403.
 - `GET /api/games/[code]/state?playerId=`: faza göre süzülmüş durum + `server_now` + oyuncunun bu soruya verdiği cevap
 - `POST /api/games/[code]/answer` `{playerId, choiceIndex}`: PK çakışırsa "zaten cevapladın" döner. Süre kontrolü ve puan hesabı burada yapılır.

@@ -29,7 +29,7 @@ export async function buildState(code: string, playerId: string | null): Promise
 
 	const { data: players } = await db
 		.from('players')
-		.select('id, name, kicked')
+		.select('id, name')
 		.eq('game_id', game.id)
 		.order('joined_at');
 	const me = players?.find(p => p.id === playerId) ?? null;
@@ -45,7 +45,7 @@ export async function buildState(code: string, playerId: string | null): Promise
 			timeLimitSec: quiz.time_limit_sec,
 		},
 		quiz: { title: quiz.title, topic: quiz.topic, authorName: quiz.author_name },
-		players: (players ?? []).filter(p => !p.kicked).map(({ id, name }) => ({ id, name })),
+		players: players ?? [],
 		me,
 	};
 }

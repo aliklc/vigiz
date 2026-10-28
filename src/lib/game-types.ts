@@ -12,5 +12,5 @@ export type GameState = {
 	};
 	quiz: { title: string; topic: string; authorName: string };
 	players: { id: string; name: string }[];
-	me: { id: string; name: string; kicked: boolean } | null;
+	me: { id: string; name: string } | null;
 };

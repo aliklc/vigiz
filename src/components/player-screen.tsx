@@ -41,8 +41,8 @@ export function PlayerScreen({ code }: { code: string }) {
 			setError('');
 			return;
 		}
-		if (res.status !== 403) writeStored(code, null);
-		setPlayerId(res.status === 403 ? (body.playerId ?? null) : null);
+		writeStored(code, null);
+		setPlayerId(null);
 		setError(data.error);
 	}
 
@@ -56,7 +56,6 @@ export function PlayerScreen({ code }: { code: string }) {
 
 	if (notFound) return <Centered>Oda bulunamadı. Kodu kontrol et.</Centered>;
 	if (playerId === undefined || !state) return <Centered>Yükleniyor…</Centered>;
-	if (state.me?.kicked) return <Centered>Host seni odadan çıkardı.</Centered>;
 
 	if (!state.me) {
 		return (
@@ -108,11 +107,9 @@ export function PlayerScreen({ code }: { code: string }) {
 export function PlayerList({
 	players,
 	meId,
-	onKick,
 }: {
 	players: { id: string; name: string }[];
 	meId?: string;
-	onKick?: (id: string) => void;
 }) {
 	return (
 		<div>
@@ -121,18 +118,9 @@ export function PlayerList({
 				{players.map(p => (
 					<li
 						key={p.id}
-						className={`flex items-center gap-1 rounded-full border px-3 py-1 ${p.id === meId ? 'border-primary font-semibold' : ''}`}
+						className={`rounded-full border px-3 py-1 ${p.id === meId ? 'border-primary font-semibold' : ''}`}
 					>
 						{p.name}
-						{onKick && (
-							<button
-								onClick={() => onKick(p.id)}
-								aria-label={`${p.name} oyuncusunu çıkar`}
-								className="ml-1 text-muted-foreground hover:text-destructive"
-							>
-								×
-							</button>
-						)}
 					</li>
 				))}
 			</ul>

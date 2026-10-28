@@ -110,7 +110,6 @@ export type Database = {
 					game_id: string;
 					id: string;
 					joined_at: string;
-					kicked: boolean;
 					name: string;
 				};
 				ComputedFields: never;
@@ -118,14 +117,12 @@ export type Database = {
 					game_id: string;
 					id: string;
 					joined_at?: string;
-					kicked?: boolean;
 					name: string;
 				};
 				Update: {
 					game_id?: string;
 					id?: string;
 					joined_at?: string;
-					kicked?: boolean;
 					name?: string;
 				};
 				Relationships: [
@@ -219,7 +216,6 @@ export type Database = {
 			game_scores: {
 				Row: {
 					game_id: string;
-					kicked: boolean;
 					name: string;
 					player_id: string;
 					score: number | null;
