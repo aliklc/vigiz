@@ -12,10 +12,7 @@ quiz.questions = quiz.questions.map(q => ({
 	...q,
 }));
 
-const db = createClient(
-	process.env.NEXT_PUBLIC_SUPABASE_URL,
-	process.env.SUPABASE_SERVICE_ROLE_KEY,
-);
+const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SECRET_KEY);
 const { data, error } = await db.rpc('save_quiz', { p_id: null, p_quiz: quiz });
 if (error) {
 	console.error('Seed başarısız:', error.message);

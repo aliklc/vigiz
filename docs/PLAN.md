@@ -116,9 +116,9 @@ shortcut: ağ gecikmesi için tolerans yok. Son milisaniyede basan biri reddedil
 ```
 # --- Public (tarayıcıya açık) ---
 NEXT_PUBLIC_SUPABASE_URL=https://dummy.supabase.co
-NEXT_PUBLIC_SUPABASE_ANON_KEY=dummy-anon-key
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=dummy-anon-key
 # --- Sunucu (asla NEXT_PUBLIC yapma) ---
-SUPABASE_SERVICE_ROLE_KEY=dummy-service-role
+SUPABASE_SECRET_KEY=dummy-service-role
 ADMIN_PASSWORD=dummy-password
 ADMIN_COOKIE_SECRET=dummy-random-32-chars
 ```
