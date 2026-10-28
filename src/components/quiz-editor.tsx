@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowDown, ArrowUp, Check, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, ImageUp, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -260,10 +260,9 @@ export function QuizEditor({
 							Doğru cevabı soldaki harfe basarak işaretle (yeşil olan doğru cevap).
 						</p>
 					</div>
-					<Input
-						placeholder="Görsel URL (isteğe bağlı)"
-						value={q.image_url ?? ''}
-						onChange={e => setQuestion(i, { image_url: e.target.value || null })}
+					<ImageField
+						value={q.image_url}
+						onChange={image_url => setQuestion(i, { image_url })}
 					/>
 					<Input
 						placeholder="Cevaptan sonra gösterilecek açıklama (isteğe bağlı)"
@@ -314,4 +313,79 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function IconButton({ label, ...props }: React.ComponentProps<typeof Button> & { label: string }) {
 	return <Button variant="ghost" size="icon-sm" aria-label={label} title={label} {...props} />;
+}
+
+// Görsel: URL yapıştır ya da dosya yükle (Supabase Storage, /api/host/uploads).
+function ImageField({
+	value,
+	onChange,
+}: {
+	value: string | null;
+	onChange: (url: string | null) => void;
+}) {
+	const [uploading, setUploading] = useState(false);
+	const [error, setError] = useState('');
+
+	async function upload(file: File) {
+		setUploading(true);
+		setError('');
+		try {
+			const form = new FormData();
+			form.append('file', file);
+			const res = await fetch('/api/host/uploads', { method: 'POST', body: form });
+			const body = await res.json();
+			if (!res.ok) return setError(body.error ?? 'Görsel yüklenemedi');
+			onChange(body.url);
+		} catch {
+			setError('Bağlantı koptu, görsel yüklenemedi. Tekrar dene.');
+		} finally {
+			setUploading(false);
+		}
+	}
+
+	return (
+		<div className="flex flex-col gap-2">
+			<div className="flex gap-2">
+				<Input
+					placeholder="Görsel URL (isteğe bağlı)"
+					value={value ?? ''}
+					onChange={e => onChange(e.target.value || null)}
+				/>
+				<label
+					className={cn(
+						'flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border bg-white px-3 text-sm font-medium hover:bg-muted has-focus-visible:ring-3 has-focus-visible:ring-ring',
+						uploading && 'pointer-events-none opacity-60',
+					)}
+				>
+					<input
+						type="file"
+						accept="image/jpeg,image/png,image/webp,image/gif"
+						className="sr-only"
+						disabled={uploading}
+						onChange={e => {
+							const file = e.target.files?.[0];
+							if (file) upload(file);
+							e.target.value = '';
+						}}
+					/>
+					<ImageUp className="size-4" />
+					{uploading ? 'Yükleniyor…' : 'Görsel yükle'}
+				</label>
+			</div>
+			{value && (
+				<div className="flex items-center gap-3">
+					{/* biome-ignore lint/performance/noImgElement: dış URL'ler için next/image domain ayarı gerekir */}
+					<img
+						src={value}
+						alt="Soru görseli önizleme"
+						className="h-20 rounded-lg border object-contain"
+					/>
+					<Button variant="ghost" size="sm" onClick={() => onChange(null)}>
+						Kaldır
+					</Button>
+				</div>
+			)}
+			{error && <p className="text-sm text-destructive">{error}</p>}
+		</div>
+	);
 }

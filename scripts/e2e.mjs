@@ -107,6 +107,37 @@ try {
 	assert.equal(stillA.title, 'E2E Test');
 	log("B, A'nın quizini göremedi, düzenleyemedi, silemedi, oda açamadı");
 
+	// Görsel yükleme: PNG yüklenir ve herkese açık URL'den indirilebilir; görsel olmayan 400, girişsiz 401.
+	const png = Buffer.from(
+		'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==',
+		'base64',
+	);
+	const uploadAs = (c, blob, name) => {
+		const form = new FormData();
+		form.append('file', blob, name);
+		return fetch(`${B}/api/host/uploads`, {
+			method: 'POST',
+			headers: c ? { cookie: c } : {},
+			body: form,
+		});
+	};
+	const up = await uploadAs(cookie, new Blob([png], { type: 'image/png' }), 'nokta.png');
+	assert.equal(up.status, 200);
+	const { url: imageUrl } = await up.json();
+	const img = await fetch(imageUrl);
+	assert.equal(img.status, 200);
+	assert.equal(img.headers.get('content-type'), 'image/png');
+	assert.equal(
+		(await uploadAs(cookie, new Blob(['merhaba'], { type: 'text/plain' }), 'a.txt')).status,
+		400,
+	);
+	assert.equal(
+		(await uploadAs(null, new Blob([png], { type: 'image/png' }), 'nokta.png')).status,
+		401,
+	);
+	await db.storage.from('question-images').remove([imageUrl.split('/question-images/')[1]]);
+	log('görsel yükleme: PNG yüklendi ve açıldı, metin dosyası 400, girişsiz 401');
+
 	// Taslak eksik kaydedilebilir; "Hazır" eksiksiz olmalı.
 	const draft = {
 		title: '',
