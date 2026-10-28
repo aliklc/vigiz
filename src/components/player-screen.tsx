@@ -101,23 +101,24 @@ export function PlayerScreen({ code }: { code: string }) {
 		if (state.game.phase === 'finished') {
 			return <Centered>Bu oyun bitti. Sonuçlar geçmiş quizlerde.</Centered>;
 		}
+		// Masaüstünde host lobisiyle aynı genişlik ve boyutlar
 		return (
-			<Stage className="justify-center">
-				<Card className="flex flex-col gap-6">
-					<div className="text-center">
-						<p className="text-muted-foreground">{state.quiz.topic}</p>
-						<h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+			<Stage wide className="justify-center gap-6 lg:gap-8">
+				<div className="flex flex-col items-center gap-6 rounded-3xl border bg-white px-6 py-8 text-center shadow-sm lg:gap-8 lg:py-12">
+					<div>
+						<p className="text-muted-foreground lg:text-xl">{state.quiz.topic}</p>
+						<h1 className="text-3xl font-bold tracking-tight lg:text-5xl">
 							{state.quiz.title}
 						</h1>
 					</div>
 					<form
-						className="flex flex-col gap-3"
+						className="flex w-full max-w-md flex-col gap-3 text-left"
 						onSubmit={e => {
 							e.preventDefault();
 							join({ name: String(new FormData(e.currentTarget).get('name')) });
 						}}
 					>
-						<label htmlFor="name" className="text-sm font-medium">
+						<label htmlFor="name" className="text-sm font-medium lg:text-base">
 							Sıralamada görünecek adın
 						</label>
 						<input
@@ -126,16 +127,18 @@ export function PlayerScreen({ code }: { code: string }) {
 							maxLength={30}
 							autoComplete="nickname"
 							required
-							className={FIELD}
+							className={cn(FIELD, 'lg:h-14 lg:text-lg')}
 						/>
 						{error && (
 							<p role="alert" className="text-sm text-destructive">
 								{error}
 							</p>
 						)}
-						<PrimaryButton type="submit">Katıl</PrimaryButton>
+						<PrimaryButton type="submit" className="lg:h-14 lg:text-lg">
+							Katıl
+						</PrimaryButton>
 					</form>
-				</Card>
+				</div>
 			</Stage>
 		);
 	}
@@ -151,21 +154,19 @@ export function PlayerScreen({ code }: { code: string }) {
 
 	if (phase === 'lobby') {
 		return (
-			<Stage className="justify-center">
-				<Card className="flex flex-col gap-6">
-					<div className="text-center">
-						<span className="inline-block rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-sm text-brand-ink">
-							{state.quiz.title}
-						</span>
-						<h1 className="mt-3 text-3xl font-bold tracking-tight">
-							Hazırsın, {me.name}
-						</h1>
-						<p className="text-muted-foreground">
-							Host başlatınca ilk soru burada belirecek.
-						</p>
-					</div>
-					<PlayerList players={state.players} meId={me.id} />
-				</Card>
+			<Stage wide className="gap-6 lg:gap-8">
+				<div className="flex flex-col items-center gap-3 rounded-3xl border bg-white px-6 py-8 text-center shadow-sm lg:py-12">
+					<span className="inline-block rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-sm text-brand-ink lg:text-base">
+						{state.quiz.title}
+					</span>
+					<h1 className="text-3xl font-bold tracking-tight lg:text-5xl">
+						Hazırsın, {me.name}
+					</h1>
+					<p className="text-muted-foreground lg:text-xl">
+						Host başlatınca ilk soru burada belirecek.
+					</p>
+				</div>
+				<PlayerList players={state.players} meId={me.id} />
 			</Stage>
 		);
 	}
@@ -272,23 +273,33 @@ export function PlayerScreen({ code }: { code: string }) {
 		const myScore = state.scores.find(s => s.id === me.id)?.score ?? 0;
 		const finished = phase === 'finished';
 		return (
-			<Stage className="gap-5 sm:gap-6">
-				<h1 className="text-3xl font-bold tracking-tight">
-					{finished ? 'Sonuçlar' : 'Sıralama'}
-				</h1>
+			<Stage wide className="gap-5 sm:gap-6 lg:gap-8">
+				{finished ? (
+					<h1 className="text-center text-3xl font-bold tracking-tight lg:text-5xl">
+						Sonuçlar
+					</h1>
+				) : (
+					<h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
+						{state.game.currentIndex + 1}. sorudan sonra sıralama
+					</h1>
+				)}
 				{finished && <Podium scores={state.scores} />}
 				{rank && (
-					<div className="flex items-center justify-between rounded-2xl bg-brand p-5 text-white">
+					<div className="flex items-center justify-between rounded-2xl bg-brand p-5 text-white lg:p-6">
 						<div>
-							<p className="text-4xl font-bold">{rank}.</p>
-							<p className="text-white/85">{state.scores.length} kişi arasında</p>
+							<p className="text-4xl font-bold lg:text-5xl">{rank}.</p>
+							<p className="text-white/85 lg:text-lg">
+								{state.scores.length} kişi arasında
+							</p>
 						</div>
-						<p className="text-3xl font-bold tabular-nums">{myScore}</p>
+						<p className="text-3xl font-bold tabular-nums lg:text-4xl">{myScore}</p>
 					</div>
 				)}
 				<Scoreboard scores={state.scores} meId={me.id} />
 				{!finished && (
-					<p className="text-center text-muted-foreground">Sıradaki soru birazdan…</p>
+					<p className="text-center text-muted-foreground lg:text-lg">
+						Sıradaki soru birazdan…
+					</p>
 				)}
 			</Stage>
 		);
