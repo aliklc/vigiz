@@ -1,10 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { myRank, Podium, QuestionView, Scoreboard, useRemaining } from '@/components/game-views';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+
+import { CHOICE_BG, CHOICE_TEXT, ChoiceShape, Wordmark } from '@/components/brand';
+import {
+	Choices,
+	Countdown,
+	myRank,
+	Podium,
+	QuestionImage,
+	Scoreboard,
+	useRemaining,
+} from '@/components/game-views';
 import { useGame } from '@/hooks/use-game';
+import { cn } from '@/lib/utils';
 
 const storageKey = (code: string) => `vigiz:player:${code}`;
 
@@ -70,120 +79,188 @@ export function PlayerScreen({ code }: { code: string }) {
 		else setPlayerId(null);
 	}, [code]);
 
-	if (notFound) return <Centered>Oda bulunamadı. Kodu kontrol et.</Centered>;
+	if (notFound) {
+		return (
+			<Centered>
+				<p className="font-display text-2xl font-extrabold">Bu kodla bir oda yok</p>
+				<p className="opacity-75">Kodu host'un ekranından kontrol edip tekrar dene.</p>
+				<a href="/" className="mt-4 underline">
+					Kodu yeniden gir
+				</a>
+			</Centered>
+		);
+	}
 	if (playerId === undefined || !state) return <Centered>Yükleniyor…</Centered>;
 
 	if (!state.me) {
+		if (state.game.phase === 'finished') {
+			return <Centered>Bu oyun bitti. Sonuçlar arşivde.</Centered>;
+		}
 		return (
-			<main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-4 p-4">
-				<div className="text-center">
-					<p className="text-sm text-muted-foreground">{state.quiz.topic}</p>
-					<h1 className="text-2xl font-bold">{state.quiz.title}</h1>
+			<Stage className="justify-center">
+				<div className="flex flex-col items-center gap-1 text-center">
+					<Wordmark className="mb-6 text-5xl" />
+					<p className="opacity-75">{state.quiz.topic}</p>
+					<h1 className="font-display text-3xl font-extrabold">{state.quiz.title}</h1>
 				</div>
 				<form
-					className="flex flex-col gap-3"
+					className="mt-8 flex flex-col gap-3"
 					onSubmit={e => {
 						e.preventDefault();
 						join({ name: String(new FormData(e.currentTarget).get('name')) });
 					}}
 				>
-					<Input
+					<label htmlFor="name" className="text-center opacity-75">
+						Sıralamada görünecek adın
+					</label>
+					<input
+						id="name"
 						name="name"
-						placeholder="Adın"
 						maxLength={30}
-						className="h-12 text-lg"
-						autoFocus
+						autoComplete="nickname"
 						required
+						className="h-14 rounded-2xl bg-white px-4 text-center text-xl font-semibold text-ink outline-none focus-visible:ring-4 focus-visible:ring-c3"
 					/>
-					{error && <p className="text-sm text-destructive">{error}</p>}
-					<Button type="submit" size="lg">
-						Katıl
-					</Button>
+					{error && (
+						<p role="alert" className="text-center text-c3">
+							{error}
+						</p>
+					)}
+					<BigButton type="submit">Katıl</BigButton>
 				</form>
-			</main>
-		);
-	}
-
-	if (state.game.phase === 'lobby') {
-		return (
-			<main className="mx-auto flex w-full max-w-md flex-1 flex-col gap-4 p-4">
-				<div className="text-center">
-					<p className="text-sm text-muted-foreground">Hoş geldin {state.me.name}</p>
-					<h1 className="text-2xl font-bold">{state.quiz.title}</h1>
-					<p className="mt-2">Host'un başlatması bekleniyor…</p>
-				</div>
-				<PlayerList players={state.players} meId={state.me.id} />
-			</main>
+			</Stage>
 		);
 	}
 
 	const { phase } = state.game;
 	const me = state.me;
-	const rank = myRank(state.scores, me.id);
+	const question = state.question && {
+		...state.question,
+		myChoice:
+			pending?.index === state.game.currentIndex ? pending.choice : state.question.myChoice,
+	};
+	const reveal = state.reveal;
 
-	if (phase === 'question' || phase === 'reveal') {
-		const question = state.question && {
-			...state.question,
-			myChoice:
-				pending?.index === state.game.currentIndex
-					? pending.choice
-					: state.question.myChoice,
-		};
-		const reveal = state.reveal;
+	if (phase === 'lobby') {
 		return (
-			<main className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4">
-				{reveal && (
+			<Stage>
+				<Wordmark className="text-3xl" />
+				<div className="my-auto flex flex-col items-center gap-2 py-10 text-center">
+					<p className="opacity-75">{state.quiz.title}</p>
+					<h1 className="font-display text-4xl font-extrabold">Hazırsın, {me.name}</h1>
+					<p className="max-w-xs opacity-75">
+						Host başlatınca ilk soru burada belirecek.
+					</p>
+				</div>
+				<PlayerList players={state.players} meId={me.id} />
+			</Stage>
+		);
+	}
+
+	if (phase === 'question' && question) {
+		const paused = !!question.pausedAt;
+		const chosen = question.myChoice;
+		if (chosen != null) {
+			return (
+				<main
+					className={cn(
+						'flex min-h-dvh flex-col items-center justify-center gap-4 p-6 text-center',
+						CHOICE_BG[chosen],
+						CHOICE_TEXT[chosen],
+					)}
+				>
+					<ChoiceShape index={chosen} className="size-24" />
+					<p className="font-display text-4xl font-extrabold">Cevabın alındı</p>
+					<p className="text-lg opacity-80">{question.choices[chosen]}</p>
+					<p className="mt-6 opacity-80">Diğerleri bekleniyor…</p>
+					{error && <p role="alert">{error}</p>}
+				</main>
+			);
+		}
+		return (
+			<Stage className="gap-4">
+				<div className="flex items-center justify-between gap-3">
+					<p className="font-display text-lg font-extrabold opacity-75">
+						{state.game.currentIndex + 1}/{state.game.questionCount}
+					</p>
+					<Countdown
+						remaining={remaining}
+						limitMs={state.game.timeLimitSec * 1000}
+						paused={paused}
+					/>
+				</div>
+				<h1 className="font-display text-2xl leading-tight font-extrabold">
+					{question.text}
+				</h1>
+				<QuestionImage src={question.imageUrl} className="max-h-40" />
+				{paused && (
 					<p
-						className={`rounded-xl p-3 text-center text-xl font-bold ${
-							reveal.myPoints
-								? 'bg-green-100 text-green-800'
-								: 'bg-red-100 text-red-800'
-						}`}
+						role="status"
+						className="rounded-xl bg-white/10 p-3 text-center font-semibold"
 					>
-						{reveal.myPoints
-							? `✅ Doğru! +${reveal.myPoints}`
-							: question?.myChoice == null
-								? '⌛ Cevap vermedin'
-								: '❌ Yanlış'}
+						Oyun duraklatıldı
 					</p>
 				)}
-				<QuestionView
+				<Choices
 					state={{ ...state, question }}
-					remaining={remaining}
+					open={!paused && remaining > 0}
 					onChoose={answer}
+					size="player"
 				/>
-				{!reveal && question?.myChoice != null && remaining > 0 && (
-					<p className="text-center text-sm text-muted-foreground">
-						Cevabın alındı. Diğerleri bekleniyor…
+				{error && (
+					<p role="alert" className="text-center text-c3">
+						{error}
 					</p>
 				)}
-				{error && <p className="text-center text-sm text-destructive">{error}</p>}
-			</main>
+			</Stage>
 		);
 	}
 
-	if (phase === 'leaderboard' && state.scores) {
+	if (phase === 'reveal' && question && reveal) {
+		const verdict = reveal.myPoints
+			? { bg: 'bg-c4 text-white', title: 'Doğru!', sub: `+${reveal.myPoints} puan` }
+			: question.myChoice == null
+				? { bg: 'bg-white/10', title: 'Süre doldu', sub: 'Bu soruya cevap vermedin' }
+				: { bg: 'bg-c1 text-white', title: 'Yanlış', sub: 'Bu sorudan puan yok' };
 		return (
-			<main className="mx-auto flex w-full max-w-md flex-col gap-4 p-4">
-				<h1 className="text-center text-2xl font-bold">Sıralama</h1>
-				{rank && <p className="text-center text-lg">Sen {rank}. sıradasın</p>}
-				<Scoreboard scores={state.scores} meId={me.id} />
-			</main>
+			<Stage className="gap-4">
+				<div className={cn('rounded-2xl p-5 text-center', verdict.bg)}>
+					<p className="font-display text-4xl font-extrabold">{verdict.title}</p>
+					<p className="text-lg opacity-90">{verdict.sub}</p>
+				</div>
+				<p className="font-semibold">{question.text}</p>
+				<Choices state={{ ...state, question }} open={false} size="player" />
+				{reveal.explanation && (
+					<p className="rounded-2xl bg-white/10 p-4">{reveal.explanation}</p>
+				)}
+			</Stage>
 		);
 	}
 
-	if (phase === 'finished' && state.scores) {
+	if ((phase === 'leaderboard' || phase === 'finished') && state.scores) {
+		const rank = myRank(state.scores, me.id);
+		const myScore = state.scores.find(s => s.id === me.id)?.score ?? 0;
+		const finished = phase === 'finished';
 		return (
-			<main className="mx-auto flex w-full max-w-md flex-col gap-6 p-4">
-				<h1 className="text-center text-2xl font-bold">Sonuçlar</h1>
-				<Podium scores={state.scores} />
+			<Stage className="gap-5">
+				<h1 className="font-display text-3xl font-extrabold">
+					{finished ? 'Sonuçlar' : 'Sıralama'}
+				</h1>
+				{finished && <Podium scores={state.scores} />}
 				{rank && (
-					<p className="text-center text-lg">
-						{state.scores.length} kişi arasında {rank}. oldun
-					</p>
+					<div className="flex items-center justify-between rounded-2xl bg-c3 p-5 text-ink">
+						<div>
+							<p className="font-display text-5xl font-extrabold">{rank}.</p>
+							<p>{state.scores.length} kişi arasında</p>
+						</div>
+						<p className="font-display text-3xl font-extrabold tabular-nums">
+							{myScore}
+						</p>
+					</div>
 				)}
 				<Scoreboard scores={state.scores} meId={me.id} />
-			</main>
+				{!finished && <p className="text-center opacity-75">Sıradaki soru birazdan…</p>}
+			</Stage>
 		);
 	}
 
@@ -198,26 +275,55 @@ export function PlayerList({
 	meId?: string;
 }) {
 	return (
-		<div>
-			<p className="mb-2 text-sm text-muted-foreground">{players.length} oyuncu</p>
+		<section aria-label="Oyuncular">
+			<p className="mb-3 font-display text-lg font-extrabold">
+				{players.length} kişi katıldı
+			</p>
 			<ul className="flex flex-wrap gap-2">
-				{players.map(p => (
+				{players.map((p, i) => (
 					<li
 						key={p.id}
-						className={`rounded-full border px-3 py-1 ${p.id === meId ? 'border-primary font-semibold' : ''}`}
+						className={cn(
+							'animate-in rounded-full px-4 py-1.5 font-semibold duration-300 fade-in zoom-in-75',
+							p.id === meId
+								? 'bg-white text-ink'
+								: cn(CHOICE_BG[i % 5], CHOICE_TEXT[i % 5]),
+						)}
 					>
 						{p.name}
 					</li>
 				))}
 			</ul>
-		</div>
+		</section>
+	);
+}
+
+export function Stage({ children, className }: { children: React.ReactNode; className?: string }) {
+	return (
+		<main className="stage flex flex-col p-4 sm:p-6">
+			<div className={cn('mx-auto flex w-full max-w-xl flex-1 flex-col', className)}>
+				{children}
+			</div>
+		</main>
 	);
 }
 
 export function Centered({ children }: { children: React.ReactNode }) {
 	return (
-		<main className="flex flex-1 items-center justify-center p-4 text-center text-lg">
+		<main className="stage flex flex-col items-center justify-center gap-2 p-6 text-center text-lg">
 			{children}
 		</main>
+	);
+}
+
+export function BigButton({ className, ...props }: React.ComponentProps<'button'>) {
+	return (
+		<button
+			className={cn(
+				'h-14 rounded-2xl bg-c3 font-display text-xl font-extrabold text-ink shadow-[0_5px_0_rgb(0_0_0/0.3)] transition outline-none focus-visible:ring-4 focus-visible:ring-white active:translate-y-1 active:shadow-none disabled:opacity-50',
+				className,
+			)}
+			{...props}
+		/>
 	);
 }

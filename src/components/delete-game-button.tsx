@@ -11,7 +11,12 @@ export function DeleteGameButton({ code }: { code: string }) {
 				if (!confirm('Bu oyun ve sonuçları kalıcı olarak silinsin mi?')) e.preventDefault();
 			}}
 		>
-			<Button type="submit" variant="ghost" size="sm" className="text-destructive">
+			<Button
+				type="submit"
+				variant="ghost"
+				size="sm"
+				className="text-c1 hover:bg-white/10 hover:text-c1"
+			>
 				Sil
 			</Button>
 		</form>

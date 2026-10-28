@@ -2,18 +2,10 @@
 
 import { useEffect, useState } from 'react';
 
+import { CHOICE_BG, CHOICE_TEXT, ChoiceShape } from '@/components/brand';
 import type { GameState } from '@/lib/game-types';
 import { GRACE_MS } from '@/lib/scoring';
 import { cn } from '@/lib/utils';
-
-const CHOICE_COLORS = [
-	'bg-red-600',
-	'bg-blue-600',
-	'bg-amber-500',
-	'bg-green-600',
-	'bg-purple-600',
-];
-const LETTERS = 'ABCDE';
 
 // Kalan süre (ms). Süre dolunca, sunucu reveal'a geçene kadar saniyede bir onExpire çağrılır
 // (cihaz saati sunucudan biraz öndeyse ilk istek erken kalabilir).
@@ -44,119 +36,185 @@ export function useRemaining(
 	return Math.max(remaining, 0);
 }
 
-export function Countdown({ remaining, paused }: { remaining: number; paused: boolean }) {
+export function Countdown({
+	remaining,
+	limitMs,
+	paused,
+	size = 'md',
+}: {
+	remaining: number;
+	limitMs: number;
+	paused: boolean;
+	size?: 'md' | 'lg';
+}) {
+	const r = 42;
+	const circumference = 2 * Math.PI * r;
+	const low = remaining <= 5000;
 	return (
 		<div
-			className={cn(
-				'mx-auto flex size-16 items-center justify-center rounded-full border-4 text-2xl font-bold tabular-nums',
-				remaining <= 5000 && 'border-destructive text-destructive',
-			)}
-			aria-live="polite"
+			className={cn('relative shrink-0', size === 'lg' ? 'size-28' : 'size-16')}
+			role="timer"
+			aria-label={paused ? 'Duraklatıldı' : `${Math.ceil(remaining / 1000)} saniye`}
 		>
-			{paused ? '⏸' : Math.ceil(remaining / 1000)}
+			<svg viewBox="0 0 100 100" className="size-full -rotate-90" aria-hidden>
+				<circle
+					cx="50"
+					cy="50"
+					r={r}
+					className="fill-none stroke-white/15"
+					strokeWidth="10"
+				/>
+				<circle
+					cx="50"
+					cy="50"
+					r={r}
+					strokeWidth="10"
+					strokeLinecap="round"
+					strokeDasharray={circumference}
+					strokeDashoffset={circumference * (1 - remaining / limitMs)}
+					className={cn(
+						'fill-none transition-[stroke-dashoffset] duration-300 ease-linear',
+						low ? 'stroke-c1' : 'stroke-c3',
+					)}
+				/>
+			</svg>
+			<span
+				aria-hidden
+				className={cn(
+					'absolute inset-0 flex items-center justify-center font-display font-extrabold tabular-nums',
+					size === 'lg' ? 'text-5xl' : 'text-2xl',
+				)}
+			>
+				{paused ? 'II' : Math.ceil(remaining / 1000)}
+			</span>
 		</div>
 	);
 }
 
-export function QuestionView({
+// Şık karoları. Cevap gösteriminde her karonun içinde seçen kişi sayısı kadar dolan bir çubuk var.
+export function Choices({
 	state,
-	remaining,
+	open,
 	onChoose,
+	size,
 }: {
 	state: GameState;
-	remaining: number;
+	open: boolean;
 	onChoose?: (index: number) => void;
+	size: 'host' | 'player';
 }) {
-	const { question, reveal, game } = state;
+	const { question, reveal } = state;
 	if (!question) return null;
-	const paused = !!question.pausedAt;
-	const open = !reveal && !paused && remaining > 0 && question.myChoice == null;
+	const total = reveal
+		? Math.max(
+				1,
+				reveal.counts.reduce((a, b) => a + b, 0),
+			)
+		: 1;
+	const twoCols = question.choices.length <= 4 && question.choices.every(c => c.length <= 28);
 
 	return (
-		<div className="flex flex-col gap-4">
-			<p className="text-center text-sm text-muted-foreground">
-				Soru {game.currentIndex + 1} / {game.questionCount}
-			</p>
-			<h2 className="text-center text-xl font-bold sm:text-3xl">{question.text}</h2>
-			{question.imageUrl && (
-				// biome-ignore lint/performance/noImgElement: dış URL'ler için next/image domain ayarı gerekir
-				<img
-					src={question.imageUrl}
-					alt=""
-					className="mx-auto max-h-56 rounded-lg object-contain sm:max-h-80"
-				/>
+		<div
+			className={cn(
+				'grid gap-2 sm:gap-3',
+				twoCols ? 'grid-cols-2' : 'grid-cols-1',
+				size === 'player' && 'flex-1 auto-rows-fr',
 			)}
-			{!reveal && <Countdown remaining={remaining} paused={paused} />}
-			{paused && !reveal && <p className="text-center font-medium">Oyun duraklatıldı</p>}
-			<div className="grid gap-2 sm:grid-cols-2">
-				{question.choices.map((choice, i) => {
-					const chosen = question.myChoice === i;
-					const correct = reveal?.correctIndex === i;
-					return (
-						<button
-							key={i}
-							disabled={!onChoose || !open}
-							onClick={() => onChoose?.(i)}
-							aria-pressed={chosen}
+		>
+			{question.choices.map((choice, i) => {
+				const chosen = question.myChoice === i;
+				const correct = reveal?.correctIndex === i;
+				const dimmed = reveal ? !correct : question.myChoice != null && !chosen;
+				return (
+					<button
+						key={i}
+						type="button"
+						disabled={!onChoose || !open}
+						onClick={() => onChoose?.(i)}
+						aria-pressed={onChoose ? chosen : undefined}
+						className={cn(
+							'relative flex items-center gap-3 overflow-hidden rounded-2xl p-4 text-left font-semibold shadow-[0_5px_0_rgb(0_0_0/0.3)] transition',
+							CHOICE_BG[i],
+							CHOICE_TEXT[i],
+							size === 'host'
+								? 'min-h-24 text-2xl sm:text-3xl'
+								: twoCols
+									? 'min-h-20 flex-col justify-center text-center text-xl'
+									: 'min-h-16 text-xl',
+							open && onChoose && 'active:translate-y-1 active:shadow-none',
+							dimmed && 'opacity-40',
+							chosen &&
+								!reveal &&
+								'ring-4 ring-white ring-offset-2 ring-offset-night',
+							correct && 'ring-4 ring-white ring-offset-2 ring-offset-night',
+						)}
+					>
+						{reveal && (
+							<span
+								aria-hidden
+								className="absolute inset-y-0 left-0 bg-black/20 transition-[width] duration-700 ease-out"
+								style={{ width: `${(reveal.counts[i] / total) * 100}%` }}
+							/>
+						)}
+						<ChoiceShape
+							index={i}
 							className={cn(
-								'flex min-h-16 items-center gap-3 rounded-xl p-4 text-left text-lg font-semibold text-white transition',
-								CHOICE_COLORS[i],
-								open && onChoose && 'active:scale-95',
-								chosen && !reveal && 'ring-4 ring-foreground ring-offset-2',
-								reveal && !correct && 'opacity-35',
-								reveal && correct && 'ring-4 ring-green-400 ring-offset-2',
+								'relative',
+								size === 'host' ? 'size-9' : twoCols ? 'size-12' : 'size-8',
 							)}
+						/>
+						<span
+							className={cn('relative', !(size === 'player' && twoCols) && 'flex-1')}
 						>
-							<span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white/25">
-								{LETTERS[i]}
+							{choice}
+						</span>
+						{reveal && (
+							<span className="relative font-display text-2xl font-extrabold tabular-nums">
+								{reveal.counts[i]}
+								<span className="sr-only"> kişi seçti</span>
 							</span>
-							<span className="flex-1">{choice}</span>
-							{reveal && (
-								<span className="rounded-full bg-white/25 px-2 text-base">
-									{reveal.counts[i]} kişi
-								</span>
-							)}
-							{reveal && correct && (
-								<span>
-									<span aria-hidden>✓</span>
-									<span className="sr-only">Doğru cevap</span>
-								</span>
-							)}
-						</button>
-					);
-				})}
-			</div>
-			{reveal?.explanation && (
-				<p className="rounded-lg bg-muted p-3 text-center">{reveal.explanation}</p>
-			)}
+						)}
+						{correct && <span className="sr-only">Doğru cevap</span>}
+					</button>
+				);
+			})}
 		</div>
+	);
+}
+
+export function QuestionImage({ src, className }: { src: string | null; className?: string }) {
+	if (!src) return null;
+	return (
+		// biome-ignore lint/performance/noImgElement: dış URL'ler için next/image domain ayarı gerekir
+		<img src={src} alt="" className={cn('mx-auto rounded-2xl object-contain', className)} />
 	);
 }
 
 export function Scoreboard({
 	scores,
 	meId,
-	from = 0,
+	limit,
 }: {
 	scores: NonNullable<GameState['scores']>;
 	meId?: string;
-	from?: number;
+	limit?: number;
 }) {
 	return (
-		<ol className="flex flex-col gap-1" start={from + 1}>
-			{scores.slice(from).map((s, i) => (
+		<ol className="flex flex-col gap-1.5">
+			{scores.slice(0, limit).map((s, i) => (
 				<li
 					key={s.id}
 					className={cn(
-						'flex items-center gap-3 rounded-lg border px-3 py-2',
-						s.id === meId && 'border-primary bg-primary/5 font-semibold',
+						'flex items-center gap-3 rounded-xl bg-white/8 px-4 py-2.5 text-lg',
+						i < 3 && 'bg-white/14',
+						s.id === meId && 'bg-c3 font-semibold text-ink',
 					)}
 				>
-					<span className="w-6 text-right text-muted-foreground tabular-nums">
-						{from + i + 1}
+					<span className="w-7 text-right font-display font-extrabold tabular-nums opacity-70">
+						{i + 1}
 					</span>
 					<span className="flex-1 truncate">{s.name}</span>
-					<span className="tabular-nums">{s.score}</span>
+					<span className="font-display font-extrabold tabular-nums">{s.score}</span>
 				</li>
 			))}
 		</ol>
@@ -166,19 +224,28 @@ export function Scoreboard({
 export function Podium({ scores }: { scores: NonNullable<GameState['scores']> }) {
 	// 2. - 1. - 3. sırasıyla yan yana
 	const order = [1, 0, 2].filter(i => scores[i]);
-	const heights = ['h-32', 'h-24', 'h-16'];
-	const medals = ['🥇', '🥈', '🥉'];
+	const blocks = ['h-40 bg-c3 text-ink', 'h-28 bg-c2 text-white', 'h-20 bg-c1 text-white'];
 	return (
-		<div className="flex items-end justify-center gap-2">
+		<div className="flex items-end justify-center gap-2 sm:gap-4">
 			{order.map(i => (
 				<div
 					key={scores[i].id}
-					className="flex w-28 flex-col items-center gap-1 text-center"
+					className="flex w-28 flex-col items-center gap-1 text-center sm:w-40"
 				>
-					<span className="text-3xl">{medals[i]}</span>
-					<span className="w-full truncate font-semibold">{scores[i].name}</span>
-					<span className="text-sm tabular-nums">{scores[i].score}</span>
-					<div className={cn('w-full rounded-t-lg bg-primary/80', heights[i])} />
+					<span className="w-full truncate text-lg font-semibold sm:text-2xl">
+						{scores[i].name}
+					</span>
+					<span className="font-display text-sm font-extrabold tabular-nums opacity-80 sm:text-lg">
+						{scores[i].score}
+					</span>
+					<div
+						className={cn(
+							'flex w-full items-start justify-center rounded-t-2xl pt-2 font-display text-4xl font-extrabold',
+							blocks[i],
+						)}
+					>
+						{i + 1}
+					</div>
 				</div>
 			))}
 		</div>

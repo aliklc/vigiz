@@ -241,7 +241,7 @@ try {
 	log('final; bitmiş oyunda Sonraki etkisiz');
 	const archive = await (await fetch(`${B}/archive`)).text();
 	assert.ok(
-		archive.includes(`/archive/${code}`) && archive.includes('🏆 Ayşe'),
+		archive.includes(`/archive/${code}`) && archive.includes('Kazanan Ayşe'),
 		'arşivde oyun ve kazanan',
 	);
 	assert.ok(

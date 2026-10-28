@@ -1,15 +1,17 @@
 'use client';
 
-import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Check, Plus, Trash2 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+import { CHOICE_BG, CHOICE_TEXT, ChoiceShape } from '@/components/brand';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import type { QuestionInput, QuizInput } from '@/lib/quiz';
+import { cn } from '@/lib/utils';
 
 const emptyQuestion = (): QuestionInput => ({
 	text: '',
@@ -83,19 +85,24 @@ export function QuizEditor({
 	}
 
 	return (
-		<main className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4 pb-32">
-			<div className="flex items-center justify-between">
-				<Link href="/host" className="text-sm underline">
-					← Quizler
-				</Link>
+		<main className="mx-auto flex w-full max-w-3xl flex-col gap-6 p-4 sm:p-8">
+			<div className="flex items-center justify-between gap-4">
+				<div>
+					<Link href="/host" className="text-sm text-muted-foreground hover:underline">
+						Quizlerim
+					</Link>
+					<h1 className="font-display text-3xl font-extrabold">
+						{id ? quiz.title || 'Adsız quiz' : 'Yeni quiz'}
+					</h1>
+				</div>
 				{id && (
-					<Button variant="ghost" size="sm" onClick={remove}>
-						Sil
+					<Button variant="ghost" size="sm" className="text-destructive" onClick={remove}>
+						Quizi sil
 					</Button>
 				)}
 			</div>
 
-			<section className="grid gap-3 sm:grid-cols-2">
+			<section className="grid gap-3 rounded-2xl bg-card p-4 shadow-sm sm:grid-cols-2">
 				<Field label="Başlık">
 					<Input value={quiz.title} onChange={e => set('title', e.target.value)} />
 				</Field>
@@ -127,9 +134,9 @@ export function QuizEditor({
 			</section>
 
 			{quiz.questions.map((q, i) => (
-				<section key={i} className="flex flex-col gap-3 rounded-lg border p-3">
+				<section key={i} className="flex flex-col gap-3 rounded-2xl bg-card p-4 shadow-sm">
 					<div className="flex items-center justify-between">
-						<h2 className="font-semibold">Soru {i + 1}</h2>
+						<h2 className="font-display text-lg font-extrabold">Soru {i + 1}</h2>
 						<div className="flex gap-1">
 							<IconButton
 								label="Yukarı"
@@ -166,14 +173,31 @@ export function QuizEditor({
 					<div className="flex flex-col gap-2" role="radiogroup" aria-label="Şıklar">
 						{q.choices.map((c, ci) => (
 							<div key={ci} className="flex items-center gap-2">
-								<input
-									type="radio"
-									name={`correct-${i}`}
-									aria-label={`Şık ${ci + 1} doğru`}
-									checked={q.correct_index === ci}
-									onChange={() => setQuestion(i, { correct_index: ci })}
-									className="size-5 accent-green-600"
-								/>
+								<label
+									title="Doğru cevap olarak işaretle"
+									className={cn(
+										'relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
+										CHOICE_BG[ci],
+										CHOICE_TEXT[ci],
+										q.correct_index === ci
+											? 'ring-3 ring-ink ring-offset-2'
+											: 'opacity-60 hover:opacity-100',
+									)}
+								>
+									<input
+										type="radio"
+										name={`correct-${i}`}
+										aria-label={`Şık ${ci + 1} doğru cevap`}
+										checked={q.correct_index === ci}
+										onChange={() => setQuestion(i, { correct_index: ci })}
+										className="sr-only"
+									/>
+									{q.correct_index === ci ? (
+										<Check className="size-5" strokeWidth={3} />
+									) : (
+										<ChoiceShape index={ci} className="size-4" />
+									)}
+								</label>
 								<Input
 									placeholder={`Şık ${ci + 1}`}
 									value={c}
@@ -215,7 +239,7 @@ export function QuizEditor({
 							</Button>
 						)}
 						<p className="text-xs text-muted-foreground">
-							Doğru şıkkı soldaki daireden seç.
+							Doğru cevabı soldaki renkli kutuya basarak işaretle.
 						</p>
 					</div>
 					<Input
@@ -238,8 +262,8 @@ export function QuizEditor({
 				<Plus /> Soru ekle
 			</Button>
 
-			<footer className="fixed inset-x-0 bottom-0 border-t bg-background p-3">
-				<div className="mx-auto flex max-w-2xl flex-col gap-2">
+			<footer className="sticky bottom-0 -mx-4 border-t bg-background/95 p-3 backdrop-blur sm:-mx-8 sm:px-8">
+				<div className="flex flex-col gap-2">
 					{error && <p className="text-sm text-destructive">{error}</p>}
 					{saved && <p className="text-sm text-green-700">{saved}</p>}
 					<div className="flex gap-2">
