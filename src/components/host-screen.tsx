@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { renderSVG } from 'uqr';
 
 import { CodeTiles, Wordmark } from '@/components/brand';
 import {
@@ -47,7 +48,7 @@ export function HostScreen({ code }: { code: string }) {
 	if (!state) return <Centered>Yükleniyor…</Centered>;
 
 	const { game, question, reveal, scores } = state;
-	const joinUrl = `${origin.replace(/^https?:\/\//, '')}/play/${code}`;
+	const joinUrl = `${origin}/play/${code}`;
 	const isLast = game.currentIndex >= game.questionCount - 1;
 	const playerCount = state.players.length;
 
@@ -75,21 +76,17 @@ export function HostScreen({ code }: { code: string }) {
 			<div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-8 pb-32 lg:gap-8">
 				{game.phase === 'lobby' && (
 					<>
-						<div className="flex flex-col items-center gap-5 rounded-3xl border bg-white px-6 py-8 text-center shadow-sm lg:py-12">
-							<p className="text-lg text-muted-foreground lg:text-xl">
-								Telefonundan{' '}
-								<span className="font-semibold text-ink">{joinUrl}</span> adresine
-								gir ya da ana sayfaya kodu yaz
-							</p>
-							<CodeTiles code={code} />
-							<button
-								className="text-sm font-medium text-brand-ink hover:underline"
-								onClick={() =>
-									navigator.clipboard?.writeText(`${origin}/play/${code}`)
-								}
-							>
-								Linki kopyala
-							</button>
+						<div className="flex flex-col items-center justify-center gap-8 rounded-3xl border bg-white px-6 py-8 shadow-sm sm:flex-row lg:gap-14 lg:py-12">
+							{origin && <JoinQr url={joinUrl} />}
+							<div className="flex flex-col items-center gap-4">
+								<CodeTiles code={code} />
+								<button
+									className="text-sm font-medium text-brand-ink hover:underline"
+									onClick={() => navigator.clipboard?.writeText(joinUrl)}
+								>
+									Linki kopyala
+								</button>
+							</div>
 						</div>
 						{playerCount ? (
 							<PlayerList players={state.players} />
@@ -200,5 +197,19 @@ function AnsweredBar({ answered, total }: { answered: number; total: number }) {
 				{answered}/{total} cevapladı
 			</p>
 		</div>
+	);
+}
+
+// Telefon kamerasıyla okutunca doğrudan oyuncu sayfası açılır.
+function JoinQr({ url }: { url: string }) {
+	const svg = useMemo(() => renderSVG(url, { border: 1 }), [url]);
+	return (
+		<div
+			role="img"
+			aria-label="Katılmak için QR kod"
+			className="size-48 shrink-0 rounded-2xl border p-2 lg:size-64 [&>svg]:size-full"
+			// biome-ignore lint/security/noDangerouslySetInnerHtml: SVG kendi ürettiğimiz oda linkinden, kullanıcı girdisi değil
+			dangerouslySetInnerHTML={{ __html: svg }}
+		/>
 	);
 }
