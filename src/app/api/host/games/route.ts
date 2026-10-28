@@ -1,15 +1,19 @@
 import { NextResponse } from 'next/server';
 
+import { getHost, unauthorized } from '@/lib/auth';
 import { makeCode } from '@/lib/game';
 import { db } from '@/lib/supabase/admin';
 
 // /host sayfasındaki "Oda aç" formu. Başarılıysa host ekranına yönlendirir.
 export async function POST(request: Request) {
+	const host = await getHost();
+	if (!host) return unauthorized();
 	const quizId = (await request.formData()).get('quizId');
 	const { data: quiz } = await db
 		.from('quizzes')
 		.select('id, status')
 		.eq('id', String(quizId))
+		.eq('owner_id', host.id)
 		.maybeSingle();
 	if (quiz?.status !== 'ready') {
 		return NextResponse.json(

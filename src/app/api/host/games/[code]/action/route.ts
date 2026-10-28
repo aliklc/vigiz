@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 
-import { type Game, getGame } from '@/lib/game';
+import { getHost, unauthorized } from '@/lib/auth';
+import { type Game, getOwnedGame } from '@/lib/game';
 import { db } from '@/lib/supabase/admin';
 import type { TablesUpdate } from '@/lib/supabase/types';
 
@@ -38,7 +39,9 @@ function nextUpdate(game: Game, action: z.infer<typeof actionSchema>['action']) 
 }
 
 export async function POST(request: Request, ctx: RouteContext<'/api/host/games/[code]/action'>) {
-	const game = await getGame((await ctx.params).code);
+	const host = await getHost();
+	if (!host) return unauthorized();
+	const game = await getOwnedGame((await ctx.params).code, host.id);
 	if (!game) return NextResponse.json({ error: 'Oda bulunamadı' }, { status: 404 });
 
 	const parsed = actionSchema.safeParse(await request.json().catch(() => null));

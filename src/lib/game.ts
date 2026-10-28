@@ -16,7 +16,7 @@ export async function getGame(code: string) {
 	const { data } = await db
 		.from('games')
 		.select(
-			'id, code, phase, current_index, question_started_at, paused_at, quiz_id, quizzes(title, topic, author_name, quiz_date, time_limit_sec, questions(count))',
+			'id, code, phase, current_index, question_started_at, paused_at, quiz_id, quizzes(owner_id, title, topic, author_name, quiz_date, time_limit_sec, questions(count))',
 		)
 		.eq('code', code.toUpperCase())
 		.maybeSingle();
@@ -32,6 +32,12 @@ export async function getGame(code: string) {
 }
 
 export type Game = NonNullable<Awaited<ReturnType<typeof getGame>>>;
+
+// Host işlemleri için: oyun yoksa ya da başka bir host'unsa null.
+export async function getOwnedGame(code: string, hostId: string) {
+	const game = await getGame(code);
+	return game?.quiz.owner_id === hostId ? game : null;
+}
 
 // Duraklatma süresi question_started_at ileri kaydırılarak düşülür.
 export function deadlineOf(game: Game): number {

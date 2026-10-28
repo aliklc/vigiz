@@ -9,35 +9,104 @@ const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABA
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const log = (...a) => console.log('✓', ...a);
 
-const { data: quizId, error: qe } = await db.rpc('save_quiz', {
-	p_id: null,
-	p_quiz: {
-		title: 'E2E Test',
-		topic: 'Test',
-		author_name: 'Bot',
-		quiz_date: '2026-10-28',
-		time_limit_sec: 15,
-		status: 'ready',
-		questions: [
-			{
-				text: 'S1',
-				choices: ['yanlış', 'doğru', 'x'],
-				correct_index: 1,
-				explanation: 'açıklama 1',
-			},
-			{ text: 'S2', choices: ['a', 'b'], correct_index: 0 },
-		],
-	},
-});
-assert.ifError(qe);
-let code;
-try {
-	const login = await fetch(`${B}/api/host/login`, {
+// İki geçici host hesabı: A oyunu yönetir, B, A'nın hiçbir şeyine erişememeli.
+const stamp = Date.now();
+const users = [];
+async function makeHost(label) {
+	const email = `e2e-${label}-${stamp}@example.com`;
+	const password = `pw-${stamp}-${label}`;
+	const { data, error } = await db.auth.admin.createUser({
+		email,
+		password,
+		email_confirm: true,
+		user_metadata: { name: `E2E ${label}` },
+	});
+	assert.ifError(error);
+	users.push(data.user.id);
+	const res = await fetch(`${B}/api/auth/login`, {
 		method: 'POST',
-		body: new URLSearchParams({ password: process.env.ADMIN_PASSWORD }),
+		body: new URLSearchParams({ email, password }),
 		redirect: 'manual',
 	});
-	const cookie = login.headers.get('set-cookie').split(';')[0];
+	assert.equal(res.headers.get('location'), `${B}/host`, `${label} girişi`);
+	const cookie = res.headers
+		.getSetCookie()
+		.map(c => c.split(';')[0])
+		.join('; ');
+	return { id: data.user.id, cookie };
+}
+
+let code;
+try {
+	const hostA = await makeHost('a');
+	const hostB = await makeHost('b');
+	const cookie = hostA.cookie;
+	const { data: quizId, error: qe } = await db.rpc('save_quiz', {
+		p_id: null,
+		p_owner: hostA.id,
+		p_quiz: {
+			title: 'E2E Test',
+			topic: 'Test',
+			author_name: 'Bot',
+			quiz_date: '2026-10-28',
+			time_limit_sec: 15,
+			status: 'ready',
+			questions: [
+				{
+					text: 'S1',
+					choices: ['yanlış', 'doğru', 'x'],
+					correct_index: 1,
+					explanation: 'açıklama 1',
+				},
+				{ text: 'S2', choices: ['a', 'b'], correct_index: 0 },
+			],
+		},
+	});
+	assert.ifError(qe);
+
+	const bad = await fetch(`${B}/api/auth/login`, {
+		method: 'POST',
+		body: new URLSearchParams({ email: 'yok@example.com', password: 'x' }),
+		redirect: 'manual',
+	});
+	assert.equal(bad.headers.get('location'), `${B}/login?error=1`);
+	const anonHost = await fetch(`${B}/host`, { redirect: 'manual' });
+	assert.equal(new URL(anonHost.headers.get('location'), B).pathname, '/login');
+	assert.equal(
+		(await fetch(`${B}/api/host/quizzes`, { method: 'POST', body: '{}' })).status,
+		401,
+	);
+	log('giriş: yanlış şifre reddedildi, girişsiz /host → /login, API 401');
+
+	const asB = (path, init = {}) =>
+		fetch(`${B}${path}`, { ...init, headers: { cookie: hostB.cookie }, redirect: 'manual' });
+	const hostBPage = await (await asB('/host')).text();
+	assert.ok(hostBPage.includes('Quizlerim'), 'B kendi paneline girebilmeli');
+	assert.ok(!hostBPage.includes('E2E Test'), "B, A'nın quizini listede görmemeli");
+	assert.equal((await asB(`/host/quizzes/${quizId}`)).status, 404);
+	const putB = await asB(`/api/host/quizzes/${quizId}`, {
+		method: 'PUT',
+		body: JSON.stringify({
+			title: 'ele geçirildi',
+			topic: 'x',
+			author_name: 'x',
+			quiz_date: '2026-10-28',
+			time_limit_sec: 20,
+			status: 'draft',
+			questions: [],
+		}),
+	});
+	assert.equal(putB.status, 404);
+	assert.equal((await asB(`/api/host/quizzes/${quizId}`, { method: 'DELETE' })).status, 404);
+	const roomB = await asB('/api/host/games', {
+		method: 'POST',
+		body: new URLSearchParams({ quizId }),
+	});
+	assert.notEqual(roomB.status, 303);
+	const { data: stillA } = await db.from('quizzes').select('title').eq('id', quizId).single();
+	assert.equal(stillA.title, 'E2E Test');
+	log("B, A'nın quizini göremedi, düzenleyemedi, silemedi, oda açamadı");
+
 	const room = await fetch(`${B}/api/host/games`, {
 		method: 'POST',
 		headers: { cookie },
@@ -46,6 +115,14 @@ try {
 	});
 	code = room.headers.get('location').split('/').pop();
 	log('oda', code);
+	assert.equal((await asB(`/host/games/${code}`)).status, 404);
+	const actB = await asB(`/api/host/games/${code}/action`, {
+		method: 'POST',
+		body: '{"action":"start"}',
+	});
+	assert.equal(actB.status, 404);
+	assert.equal((await asB(`/api/host/games/${code}/delete`, { method: 'POST' })).status, 404);
+	log("B, A'nın odasını açamadı, yönetemedi, silemedi");
 
 	const post = (path, body, headers = {}) =>
 		fetch(`${B}${path}`, { method: 'POST', headers, body: JSON.stringify(body) });
@@ -175,7 +252,9 @@ try {
 	assert.ok(detail.includes('Ayşe') && detail.includes('Bora'), 'detayda tüm oyuncular');
 	const adminArchive = await (await fetch(`${B}/archive`, { headers: { cookie } })).text();
 	assert.ok(adminArchive.includes(`/api/host/games/${code}/delete`), 'host için Sil butonu');
-	log('arşiv: kazanan, detay listesi, Sil sadece host için');
+	const bArchive = await (await asB('/archive')).text();
+	assert.ok(!bArchive.includes(`/api/host/games/${code}/delete`), 'başka host Sil görmemeli');
+	log('arşiv: kazanan, detay listesi, Sil sadece oyunun sahibine');
 
 	const delAnon = await fetch(`${B}/api/host/games/${code}/delete`, {
 		method: 'POST',
@@ -198,6 +277,6 @@ try {
 
 	console.log('\nTÜM KONTROLLER GEÇTİ');
 } finally {
-	if (code) await db.from('games').delete().eq('code', code);
-	await db.from('quizzes').delete().eq('id', quizId);
+	// Kullanıcı silinince quizleri, oyunları, oyuncuları ve cevapları cascade ile gider.
+	for (const id of users) await db.auth.admin.deleteUser(id);
 }

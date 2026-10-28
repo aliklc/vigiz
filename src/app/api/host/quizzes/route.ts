@@ -1,5 +1,8 @@
+import { getHost, unauthorized } from '@/lib/auth';
 import { saveQuiz } from '@/lib/save-quiz';
 
-export function POST(request: Request) {
-	return saveQuiz(request, null);
+export async function POST(request: Request) {
+	const host = await getHost();
+	if (!host) return unauthorized();
+	return saveQuiz(request, null, host.id);
 }

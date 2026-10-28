@@ -1,28 +1,37 @@
 import Link from 'next/link';
-import { connection } from 'next/server';
 
 import { Button } from '@/components/ui/button';
+import { requireHost } from '@/lib/auth';
 import { db } from '@/lib/supabase/admin';
 
 export default async function HostHome() {
-	await connection();
+	const host = await requireHost();
 	const { data: quizzes } = await db
 		.from('quizzes')
 		.select('id, title, topic, author_name, quiz_date, status, questions(count)')
+		.eq('owner_id', host.id)
 		.order('quiz_date', { ascending: false });
 	const { data: games } = await db
 		.from('games')
-		.select('code, phase, created_at, quizzes(title)')
+		.select('code, phase, created_at, quizzes!inner(title, owner_id)')
+		.eq('quizzes.owner_id', host.id)
 		.neq('phase', 'finished')
 		.order('created_at', { ascending: false });
 
 	return (
 		<main className="mx-auto flex w-full max-w-2xl flex-col gap-4 p-4">
 			<div className="flex items-center justify-between">
-				<h1 className="text-2xl font-bold">Quizler</h1>
-				<Button asChild>
-					<Link href="/host/quizzes/new">Yeni quiz</Link>
-				</Button>
+				<h1 className="text-2xl font-bold">Quizlerim</h1>
+				<div className="flex gap-2">
+					<Button asChild>
+						<Link href="/host/quizzes/new">Yeni quiz</Link>
+					</Button>
+					<form method="post" action="/api/auth/logout">
+						<Button type="submit" variant="ghost">
+							Çıkış
+						</Button>
+					</form>
+				</div>
 			</div>
 			{!!games?.length && (
 				<section className="flex flex-col gap-2">

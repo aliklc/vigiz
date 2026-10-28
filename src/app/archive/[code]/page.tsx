@@ -3,15 +3,15 @@ import { notFound } from 'next/navigation';
 
 import { DeleteGameButton } from '@/components/delete-game-button';
 import { Podium, Scoreboard } from '@/components/game-views';
+import { getHost } from '@/lib/auth';
 import { getGame, getScores } from '@/lib/game';
-import { isAdmin } from '@/lib/is-admin';
 import { formatDate } from '@/lib/utils';
 
 export default async function ArchiveGamePage({ params }: PageProps<'/archive/[code]'>) {
 	const { code } = await params;
 	const game = await getGame(code);
 	if (game?.phase !== 'finished') notFound();
-	const [scores, admin] = await Promise.all([getScores([game.id]), isAdmin()]);
+	const [scores, host] = await Promise.all([getScores([game.id]), getHost()]);
 	const { quiz } = game;
 
 	return (
@@ -20,7 +20,7 @@ export default async function ArchiveGamePage({ params }: PageProps<'/archive/[c
 				<Link href="/archive" className="text-sm underline">
 					← Arşiv
 				</Link>
-				{admin && <DeleteGameButton code={game.code} />}
+				{host?.id === quiz.owner_id && <DeleteGameButton code={game.code} />}
 			</div>
 			<div className="text-center">
 				<p className="text-sm text-muted-foreground">

@@ -19,19 +19,27 @@ const emptyQuestion = (): QuestionInput => ({
 	correct_index: 0,
 });
 
-const emptyQuiz = (): QuizInput => ({
+const emptyQuiz = (authorName = ''): QuizInput => ({
 	title: '',
 	topic: '',
-	author_name: '',
+	author_name: authorName,
 	quiz_date: new Date().toISOString().slice(0, 10),
 	time_limit_sec: 20,
 	status: 'draft',
 	questions: [emptyQuestion()],
 });
 
-export function QuizEditor({ id, initial }: { id?: string; initial?: QuizInput }) {
+export function QuizEditor({
+	id,
+	initial,
+	authorName,
+}: {
+	id?: string;
+	initial?: QuizInput;
+	authorName?: string;
+}) {
 	const router = useRouter();
-	const [quiz, setQuiz] = useState<QuizInput>(initial ?? emptyQuiz);
+	const [quiz, setQuiz] = useState<QuizInput>(() => initial ?? emptyQuiz(authorName));
 	const [error, setError] = useState('');
 	const [saved, setSaved] = useState('');
 	const [pending, setPending] = useState(false);

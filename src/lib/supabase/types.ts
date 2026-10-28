@@ -182,6 +182,7 @@ export type Database = {
 					author_name: string;
 					created_at: string;
 					id: string;
+					owner_id: string;
 					quiz_date: string;
 					status: string;
 					time_limit_sec: number;
@@ -193,6 +194,7 @@ export type Database = {
 					author_name: string;
 					created_at?: string;
 					id?: string;
+					owner_id: string;
 					quiz_date: string;
 					status?: string;
 					time_limit_sec?: number;
@@ -203,6 +205,7 @@ export type Database = {
 					author_name?: string;
 					created_at?: string;
 					id?: string;
+					owner_id?: string;
 					quiz_date?: string;
 					status?: string;
 					time_limit_sec?: number;
@@ -275,7 +278,7 @@ export type Database = {
 			};
 		};
 		Functions: {
-			save_quiz: { Args: { p_id: string; p_quiz: Json }; Returns: string };
+			save_quiz: { Args: { p_id: string; p_owner: string; p_quiz: Json }; Returns: string };
 		};
 		Enums: {
 			[_ in never]: never;

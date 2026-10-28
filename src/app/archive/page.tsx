@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { connection } from 'next/server';
 
 import { DeleteGameButton } from '@/components/delete-game-button';
+import { getHost } from '@/lib/auth';
 import { getScores } from '@/lib/game';
-import { isAdmin } from '@/lib/is-admin';
 import { db } from '@/lib/supabase/admin';
 import { formatDate } from '@/lib/utils';
 
@@ -11,13 +11,15 @@ export const metadata = { title: 'Arşiv · Vigiz' };
 
 export default async function ArchivePage() {
 	await connection();
-	const [{ data: games }, admin] = await Promise.all([
+	const [{ data: games }, host] = await Promise.all([
 		db
 			.from('games')
-			.select('id, code, finished_at, quizzes!inner(title, topic, author_name, quiz_date)')
+			.select(
+				'id, code, finished_at, quizzes!inner(owner_id, title, topic, author_name, quiz_date)',
+			)
 			.eq('phase', 'finished')
 			.order('finished_at', { ascending: false }),
-		isAdmin(),
+		getHost(),
 	]);
 	// Quiz tarihine göre yeniden eskiye (aynı quiz birden çok oynandıysa son oynanan önce).
 	games?.sort((a, b) => b.quizzes.quiz_date.localeCompare(a.quizzes.quiz_date));
@@ -50,7 +52,7 @@ export default async function ArchivePage() {
 									· {players.length} oyuncu
 								</p>
 							</Link>
-							{admin && <DeleteGameButton code={g.code} />}
+							{host?.id === g.quizzes.owner_id && <DeleteGameButton code={g.code} />}
 						</li>
 					);
 				})}

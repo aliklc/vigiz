@@ -1,5 +1,7 @@
 # Vigiz — Canlı Quiz Night (plan)
 
+> Not: Host girişi artık ortak şifre değil; her host Supabase Auth ile kendi hesabına (e-posta + şifre) giriş yapar ve sadece kendi quizlerini görür (`quizzes.owner_id`). Ayrıntı: `src/lib/auth.ts`, `src/proxy.ts`.
+
 ## Context
 Şirket içi aylık "quiz night" için Kahoot tarzı canlı quiz sitesi. 10–30 oyuncu, çoğu telefondan. Host ortam değişkenindeki tek şifreyle girer, quiz hazırlar ve oyunu yönetir. Oyuncular hesap açmadan oda linki + isimle katılır. Hedef: basit ve sağlam, gereksiz özellik yok.
 `/Users/kilic/vigiz` boş; ayrı (monorepo dışı) bir Next.js projesi olacak.
