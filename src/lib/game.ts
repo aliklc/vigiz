@@ -146,7 +146,21 @@ export async function buildState(code: string, playerId: string | null): Promise
 		}
 	}
 
-	if (scores) state.scores = scores;
+	if (scores && game.phase === 'leaderboard') {
+		// Son sorudan kazanılan puan: sıralamada çubuk önceki puandan yenisine uzar.
+		const lastQuestion = await getCurrentQuestion(game);
+		const { data: gains } = lastQuestion
+			? await db
+					.from('answer_points')
+					.select('player_id, total')
+					.eq('question_id', lastQuestion.id)
+					.eq('game_id', game.id)
+			: { data: [] };
+		const byPlayer = new Map(gains?.map(g => [g.player_id, g.total ?? 0]));
+		state.scores = scores.map(s => ({ ...s, gained: byPlayer.get(s.id) ?? 0 }));
+	} else if (scores) {
+		state.scores = scores;
+	}
 
 	return state;
 }

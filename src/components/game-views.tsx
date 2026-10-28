@@ -54,7 +54,7 @@ export function Countdown({
 		<div
 			className={cn(
 				'relative shrink-0',
-				size === 'lg' ? 'size-24 lg:size-28' : 'size-14 sm:size-16',
+				size === 'lg' ? 'size-24 lg:size-28' : 'size-14 sm:size-16 lg:size-28',
 			)}
 			role="timer"
 			aria-label={paused ? 'Duraklatıldı' : `${Math.ceil(remaining / 1000)} saniye`}
@@ -85,7 +85,7 @@ export function Countdown({
 				aria-hidden
 				className={cn(
 					'absolute inset-0 flex items-center justify-center font-bold tabular-nums',
-					size === 'lg' ? 'text-4xl' : 'text-xl sm:text-2xl',
+					size === 'lg' ? 'text-4xl' : 'text-xl sm:text-2xl lg:text-4xl',
 					low && 'text-destructive',
 				)}
 			>
@@ -133,7 +133,7 @@ export function Choices({
 							'relative flex items-center gap-3 overflow-hidden rounded-2xl border-2 bg-white p-3 text-left font-medium transition sm:p-4',
 							size === 'host'
 								? 'min-h-20 text-xl lg:min-h-24 lg:text-2xl'
-								: 'min-h-16 text-lg',
+								: 'min-h-16 text-lg lg:min-h-24 lg:text-2xl',
 							open && onChoose && 'hover:border-brand active:scale-[0.99]',
 							!reveal && chosen && 'border-brand bg-brand-tint',
 							!reveal && !chosen && 'border-border',
@@ -145,7 +145,7 @@ export function Choices({
 						<span
 							className={cn(
 								'flex size-9 shrink-0 items-center justify-center rounded-xl text-base font-bold',
-								size === 'host' && 'lg:size-11 lg:text-lg',
+								'lg:size-11 lg:text-lg',
 								correct
 									? 'bg-green-600 text-white'
 									: chosen
@@ -188,6 +188,8 @@ export function QuestionImage({ src, className }: { src: string | null; classNam
 	);
 }
 
+// Her satırın arkasında puanın lidere oranı kadar bir çubuk var. Sıralama fazında (gained dolu)
+// çubuk önceki puandan yeni puana uzar, puan yukarı sayar ve "+kazanılan" rozeti belirir.
 export function Scoreboard({
 	scores,
 	meId,
@@ -197,30 +199,79 @@ export function Scoreboard({
 	meId?: string;
 	limit?: number;
 }) {
+	const max = Math.max(1, ...scores.map(s => s.score));
+	const animated = scores.some(s => s.gained !== undefined);
+	const [grown, setGrown] = useState(!animated);
+	useEffect(() => {
+		if (!animated) return;
+		// İlk kare eski genişlikle çizilsin, sonra yeni genişliğe geçsin (CSS transition).
+		const id = requestAnimationFrame(() => requestAnimationFrame(() => setGrown(true)));
+		return () => cancelAnimationFrame(id);
+	}, [animated]);
+
 	return (
 		<ol className="flex flex-col gap-1.5">
-			{scores.slice(0, limit).map((s, i) => (
-				<li
-					key={s.id}
-					className={cn(
-						'flex items-center gap-3 rounded-xl border bg-white px-4 py-2.5 sm:text-lg',
-						s.id === meId && 'border-brand bg-brand-tint font-semibold',
-					)}
-				>
-					<span
+			{scores.slice(0, limit).map((s, i) => {
+				const gained = s.gained ?? 0;
+				const shown = grown ? s.score : s.score - gained;
+				return (
+					<li
+						key={s.id}
 						className={cn(
-							'w-7 text-right font-bold tabular-nums',
-							i < 3 ? 'text-brand-ink' : 'text-muted-foreground',
+							'relative flex items-center gap-3 overflow-hidden rounded-xl border bg-white px-4 py-2.5 sm:text-lg lg:py-3',
+							s.id === meId && 'border-brand font-semibold',
 						)}
 					>
-						{i + 1}
-					</span>
-					<span className="flex-1 truncate">{s.name}</span>
-					<span className="font-bold tabular-nums">{s.score}</span>
-				</li>
-			))}
+						<span
+							aria-hidden
+							className={cn(
+								'absolute inset-y-0 left-0 transition-[width] duration-1000 ease-out',
+								s.id === meId ? 'bg-brand/25' : 'bg-brand-tint',
+							)}
+							style={{ width: `${(shown / max) * 100}%` }}
+						/>
+						<span
+							className={cn(
+								'relative w-7 text-right font-bold tabular-nums',
+								i < 3 ? 'text-brand-ink' : 'text-muted-foreground',
+							)}
+						>
+							{i + 1}
+						</span>
+						<span className="relative flex-1 truncate">{s.name}</span>
+						{animated && gained > 0 && (
+							<span className="relative animate-in rounded-full bg-green-600 px-2 py-0.5 text-sm font-semibold text-white delay-300 duration-500 fill-mode-backwards fade-in slide-in-from-left-4">
+								+{gained}
+							</span>
+						)}
+						<span className="relative font-bold tabular-nums">
+							<CountUp from={s.score - gained} to={s.score} run={grown} />
+						</span>
+					</li>
+				);
+			})}
 		</ol>
 	);
+}
+
+function CountUp({ from, to, run }: { from: number; to: number; run: boolean }) {
+	const [value, setValue] = useState(from);
+	useEffect(() => {
+		if (!run || from === to || matchMedia('(prefers-reduced-motion: reduce)').matches) {
+			setValue(run ? to : from);
+			return;
+		}
+		const start = performance.now();
+		let id = 0;
+		const tick = (now: number) => {
+			const t = Math.min((now - start) / 1000, 1);
+			setValue(Math.round(from + (to - from) * (1 - (1 - t) ** 3)));
+			if (t < 1) id = requestAnimationFrame(tick);
+		};
+		id = requestAnimationFrame(tick);
+		return () => cancelAnimationFrame(id);
+	}, [from, to, run]);
+	return <>{value}</>;
 }
 
 export function Podium({ scores }: { scores: NonNullable<GameState['scores']> }) {

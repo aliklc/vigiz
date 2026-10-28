@@ -31,5 +31,6 @@ export type GameState = {
 		myPoints: number | null;
 	} | null;
 	// leaderboard / finished fazlarında: tüm oyuncular, puana göre sıralı
-	scores: { id: string; name: string; score: number }[] | null;
+	// gained: sıralama fazında son sorudan kazanılan puan (animasyon için)
+	scores: { id: string; name: string; score: number; gained?: number }[] | null;
 };

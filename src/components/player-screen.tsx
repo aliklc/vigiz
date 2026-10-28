@@ -189,20 +189,23 @@ export function PlayerScreen({ code }: { code: string }) {
 			);
 		}
 		return (
-			<Stage className="gap-4 sm:gap-6">
-				<div className="flex items-center justify-between gap-3">
-					<p className="font-semibold text-muted-foreground">
-						Soru {state.game.currentIndex + 1}/{state.game.questionCount}
-					</p>
+			<Stage wide className="gap-4 sm:gap-6 lg:gap-8">
+				{/* Masaüstünde host ekranıyla aynı yerleşim ve boyutlar */}
+				<div className="flex items-start justify-between gap-4 lg:gap-6">
+					<div className="flex flex-col gap-2">
+						<p className="font-semibold text-muted-foreground lg:text-lg">
+							Soru {state.game.currentIndex + 1}/{state.game.questionCount}
+						</p>
+						<h1 className="text-2xl leading-tight font-bold tracking-tight sm:text-3xl lg:text-5xl">
+							{question.text}
+						</h1>
+					</div>
 					<Countdown
 						remaining={remaining}
 						limitMs={state.game.timeLimitSec * 1000}
 						paused={paused}
 					/>
 				</div>
-				<h1 className="text-2xl leading-tight font-bold tracking-tight sm:text-3xl">
-					{question.text}
-				</h1>
 				<QuestionImage src={question.imageUrl} className="max-h-48 sm:max-h-72" />
 				{paused && (
 					<p
@@ -246,12 +249,14 @@ export function PlayerScreen({ code }: { code: string }) {
 						sub: 'Bu sorudan puan yok',
 					};
 		return (
-			<Stage className="gap-4 sm:gap-6">
+			<Stage wide className="gap-4 sm:gap-6 lg:gap-8">
 				<div className={cn('rounded-2xl border-2 p-5 text-center', verdict.cls)}>
 					<p className="text-3xl font-bold tracking-tight">{verdict.title}</p>
 					<p>{verdict.sub}</p>
 				</div>
-				<p className="text-lg font-semibold">{question.text}</p>
+				<p className="text-lg font-semibold lg:text-3xl lg:font-bold lg:tracking-tight">
+					{question.text}
+				</p>
 				<Choices state={{ ...state, question }} open={false} size="player" />
 				{reveal.explanation && (
 					<p className="rounded-2xl border bg-white p-4 text-muted-foreground">
@@ -319,10 +324,25 @@ export function PlayerList({
 	);
 }
 
-export function Stage({ children, className }: { children: React.ReactNode; className?: string }) {
+export function Stage({
+	children,
+	className,
+	wide,
+}: {
+	children: React.ReactNode;
+	className?: string;
+	// Soru ekranları masaüstünde host ekranı kadar geniş
+	wide?: boolean;
+}) {
 	return (
 		<main className="stage flex flex-col px-4 py-6 sm:px-8 sm:py-10">
-			<div className={cn('mx-auto flex w-full max-w-2xl flex-1 flex-col', className)}>
+			<div
+				className={cn(
+					'mx-auto flex w-full max-w-2xl flex-1 flex-col',
+					wide && 'lg:max-w-6xl',
+					className,
+				)}
+			>
 				{children}
 			</div>
 		</main>
