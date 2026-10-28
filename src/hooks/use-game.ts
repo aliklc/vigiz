@@ -1,0 +1,56 @@
+'use client';
+
+import { useCallback, useEffect, useState } from 'react';
+
+import type { GameState } from '@/lib/game-types';
+import { supabase } from '@/lib/supabase/browser';
+
+// Oyunun tek kaynağı sunucudaki state'tir. games/players satırı her değiştiğinde,
+// sekmeye geri dönüldüğünde ve bağlantı yeniden kurulduğunda state yeniden çekilir.
+export function useGame(code: string, playerId: string | null) {
+	const [state, setState] = useState<GameState | null>(null);
+	const [notFound, setNotFound] = useState(false);
+
+	const refresh = useCallback(async () => {
+		const qs = playerId ? `?playerId=${playerId}` : '';
+		const res = await fetch(`/api/games/${code}/state${qs}`, { cache: 'no-store' });
+		if (res.status === 404) return setNotFound(true);
+		if (res.ok) setState(await res.json());
+	}, [code, playerId]);
+
+	const gameId = state?.game.id;
+
+	useEffect(() => {
+		refresh();
+		const onVisible = () => document.visibilityState === 'visible' && refresh();
+		document.addEventListener('visibilitychange', onVisible);
+		window.addEventListener('online', refresh);
+		return () => {
+			document.removeEventListener('visibilitychange', onVisible);
+			window.removeEventListener('online', refresh);
+		};
+	}, [refresh]);
+
+	useEffect(() => {
+		if (!gameId) return;
+		const channel = supabase
+			.channel(`game:${gameId}`)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'games', filter: `id=eq.${gameId}` },
+				refresh,
+			)
+			.on(
+				'postgres_changes',
+				{ event: '*', schema: 'public', table: 'players', filter: `game_id=eq.${gameId}` },
+				refresh,
+			)
+			// Yeniden bağlanınca kaçırılmış değişiklikleri yakala.
+			.subscribe(status => status === 'SUBSCRIBED' && refresh());
+		return () => {
+			supabase.removeChannel(channel);
+		};
+	}, [gameId, refresh]);
+
+	return { state, notFound, refresh };
+}

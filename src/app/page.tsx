@@ -1,11 +1,30 @@
 import Link from 'next/link';
 
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+
 export default function Home() {
 	return (
 		<main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-6 p-4">
-			<h1 className="text-center text-4xl font-bold">Vigiz</h1>
-			<p className="text-center text-muted-foreground">Quiz Night</p>
-			<Link href="/host" className="text-center text-sm underline">
+			<div className="text-center">
+				<h1 className="text-4xl font-bold">Vigiz</h1>
+				<p className="text-muted-foreground">Quiz Night</p>
+			</div>
+			<form action="/play" className="flex flex-col gap-3">
+				<Input
+					name="code"
+					placeholder="Oda kodu"
+					autoComplete="off"
+					autoCapitalize="characters"
+					className="h-14 text-center text-2xl tracking-widest uppercase"
+					maxLength={6}
+					required
+				/>
+				<Button type="submit" size="lg">
+					Katıl
+				</Button>
+			</form>
+			<Link href="/host" className="text-center text-sm text-muted-foreground underline">
 				Host girişi
 			</Link>
 		</main>

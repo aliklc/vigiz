@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 
 import { QuizEditor } from '@/components/quiz-editor';
+import type { QuizInput } from '@/lib/quiz';
 import { db } from '@/lib/supabase/admin';
 
 export default async function EditQuizPage({ params }: PageProps<'/host/quizzes/[id]'>) {
@@ -19,7 +20,11 @@ export default async function EditQuizPage({ params }: PageProps<'/host/quizzes/
 	return (
 		<QuizEditor
 			id={id}
-			initial={{ ...rest, questions: questions.map(({ position, ...q }) => q) }}
+			initial={{
+				...rest,
+				status: rest.status as QuizInput['status'],
+				questions: questions.map(({ position, ...q }) => q),
+			}}
 		/>
 	);
 }
