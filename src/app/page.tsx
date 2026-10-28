@@ -9,9 +9,6 @@ export default function Home() {
 			<SiteHeader />
 			<main className="mx-auto grid w-full max-w-6xl flex-1 content-center items-center gap-10 px-4 py-10 sm:px-8 lg:grid-cols-2 lg:gap-16">
 				<div className="flex flex-col gap-4 text-center lg:text-left">
-					<span className="mx-auto inline-block rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-sm text-brand-ink lg:mx-0">
-						Her ay bir konu, bir sunucu
-					</span>
 					<h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
 						Ayın quiz gecesine katıl
 					</h1>
