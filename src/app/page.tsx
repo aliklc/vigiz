@@ -24,9 +24,14 @@ export default function Home() {
 					Katıl
 				</Button>
 			</form>
-			<Link href="/host" className="text-center text-sm text-muted-foreground underline">
-				Host girişi
-			</Link>
+			<div className="flex justify-center gap-4 text-sm text-muted-foreground">
+				<Link href="/archive" className="underline">
+					Arşiv
+				</Link>
+				<Link href="/host" className="underline">
+					Host girişi
+				</Link>
+			</div>
 		</main>
 	);
 }

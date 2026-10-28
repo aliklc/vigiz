@@ -162,6 +162,40 @@ try {
 	const r = await act('next');
 	assert.equal(r.changed, false);
 	log('final; bitmiş oyunda Sonraki etkisiz');
+	const archive = await (await fetch(`${B}/archive`)).text();
+	assert.ok(
+		archive.includes(`/archive/${code}`) && archive.includes('🏆 Ayşe'),
+		'arşivde oyun ve kazanan',
+	);
+	assert.ok(
+		!archive.includes(`/api/host/games/${code}/delete`),
+		'girişsiz Sil butonu görünmemeli',
+	);
+	const detail = await (await fetch(`${B}/archive/${code}`)).text();
+	assert.ok(detail.includes('Ayşe') && detail.includes('Bora'), 'detayda tüm oyuncular');
+	const adminArchive = await (await fetch(`${B}/archive`, { headers: { cookie } })).text();
+	assert.ok(adminArchive.includes(`/api/host/games/${code}/delete`), 'host için Sil butonu');
+	log('arşiv: kazanan, detay listesi, Sil sadece host için');
+
+	const delAnon = await fetch(`${B}/api/host/games/${code}/delete`, {
+		method: 'POST',
+		redirect: 'manual',
+	});
+	assert.equal(delAnon.status, 401);
+	const del = await fetch(`${B}/api/host/games/${code}/delete`, {
+		method: 'POST',
+		headers: { cookie },
+		redirect: 'manual',
+	});
+	assert.equal(del.status, 303);
+	const { count } = await db
+		.from('answers')
+		.select('*', { count: 'exact', head: true })
+		.eq('game_id', s.game.id);
+	assert.equal(count, 0, 'cevaplar da silinmeli');
+	assert.equal((await fetch(`${B}/archive/${code}`)).status, 404);
+	log('Sil: girişsiz 401, host ile oyun + cevaplar silindi');
+
 	console.log('\nTÜM KONTROLLER GEÇTİ');
 } finally {
 	if (code) await db.from('games').delete().eq('code', code);

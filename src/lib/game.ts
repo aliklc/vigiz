@@ -16,7 +16,7 @@ export async function getGame(code: string) {
 	const { data } = await db
 		.from('games')
 		.select(
-			'id, code, phase, current_index, question_started_at, paused_at, quiz_id, quizzes(title, topic, author_name, time_limit_sec, questions(count))',
+			'id, code, phase, current_index, question_started_at, paused_at, quiz_id, quizzes(title, topic, author_name, quiz_date, time_limit_sec, questions(count))',
 		)
 		.eq('code', code.toUpperCase())
 		.maybeSingle();
@@ -86,7 +86,7 @@ export async function buildState(code: string, playerId: string | null): Promise
 	}
 
 	// Birbirinden bağımsız sorgular paralel: her biri veritabanına ayrı bir gidiş-dönüş.
-	const [{ data: players }, { data: answers }, { data: scores }] = await Promise.all([
+	const [{ data: players }, { data: answers }, scores] = await Promise.all([
 		db.from('players').select('id, name').eq('game_id', game.id).order('joined_at'),
 		current
 			? db
@@ -95,14 +95,7 @@ export async function buildState(code: string, playerId: string | null): Promise
 					.eq('question_id', current.id)
 					.eq('game_id', game.id)
 			: { data: null },
-		game.phase === 'leaderboard' || game.phase === 'finished'
-			? db
-					.from('game_scores')
-					.select('player_id, name, score')
-					.eq('game_id', game.id)
-					.order('score', { ascending: false })
-					.order('name')
-			: { data: null },
+		game.phase === 'leaderboard' || game.phase === 'finished' ? getScores([game.id]) : null,
 	]);
 	const me = players?.find(p => p.id === playerId) ?? null;
 
@@ -147,13 +140,23 @@ export async function buildState(code: string, playerId: string | null): Promise
 		}
 	}
 
-	if (scores) {
-		state.scores = scores.map(s => ({
-			id: s.player_id ?? '',
-			name: s.name ?? '',
-			score: s.score ?? 0,
-		}));
-	}
+	if (scores) state.scores = scores;
 
 	return state;
+}
+
+// Oyun(lar)ın puan listesi, puana göre sıralı. Oyun bitince bu liste arşivde de kullanılır.
+export async function getScores(gameIds: string[]) {
+	const { data } = await db
+		.from('game_scores')
+		.select('game_id, player_id, name, score')
+		.in('game_id', gameIds)
+		.order('score', { ascending: false })
+		.order('name');
+	return (data ?? []).map(s => ({
+		gameId: s.game_id ?? '',
+		id: s.player_id ?? '',
+		name: s.name ?? '',
+		score: s.score ?? 0,
+	}));
 }
