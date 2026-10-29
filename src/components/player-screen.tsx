@@ -1,10 +1,12 @@
 'use client';
 
+import { Check, Lock, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { FIELD, LETTERS } from '@/components/brand';
+import { FIELD, LETTERS, Wordmark } from '@/components/brand';
+import { FORMATS } from '@/components/formats';
 import {
 	BuzzerImage,
 	Choices,
@@ -138,25 +140,32 @@ export function PlayerScreen({ code }: { code: string }) {
 
 	if (!state.me) {
 		if (state.game.phase === 'finished') return <Centered>Yükleniyor…</Centered>;
-		// Masaüstünde host lobisiyle aynı genişlik ve boyutlar
 		return (
-			<Stage wide className="justify-center gap-6 lg:gap-8">
-				<div className="flex flex-col items-center gap-6 rounded-3xl border bg-white px-6 py-8 text-center lg:gap-8 lg:py-12">
-					<div>
-						<p className="text-muted-foreground lg:text-xl">{state.quiz.topic}</p>
-						<h1 className="text-3xl font-bold tracking-tight lg:text-5xl">
-							{state.quiz.title}
-						</h1>
-					</div>
-					<form
-						className="flex w-full max-w-md flex-col gap-3 text-left"
-						onSubmit={e => {
-							e.preventDefault();
-							join({ name: String(new FormData(e.currentTarget).get('name')) });
-						}}
-					>
-						<label htmlFor="name" className="text-sm font-medium lg:text-base">
-							Sıralamada görünecek adın
+			<Stage>
+				<form
+					className="flex flex-1 flex-col gap-6"
+					onSubmit={e => {
+						e.preventDefault();
+						join({ name: String(new FormData(e.currentTarget).get('name')) });
+					}}
+				>
+					<Wordmark className="text-2xl" />
+					<Card className="flex flex-col gap-2">
+						<p className="eyebrow">Oda {state.game.code}</p>
+						<h1>{state.quiz.title}</h1>
+						<p className="text-ink-600">
+							{state.quiz.topic && `${state.quiz.topic}, `}
+							{state.game.questionCount} soru
+						</p>
+						{state.quiz.authorName && (
+							<p className="text-sm text-ink-600">
+								Hazırlayan: {state.quiz.authorName}
+							</p>
+						)}
+					</Card>
+					<div className="flex flex-col gap-2">
+						<label htmlFor="name" className="font-medium">
+							Adın
 						</label>
 						<input
 							id="name"
@@ -164,18 +173,19 @@ export function PlayerScreen({ code }: { code: string }) {
 							maxLength={30}
 							autoComplete="nickname"
 							required
-							className={cn(FIELD, 'lg:h-14 lg:text-lg')}
+							className={FIELD}
 						/>
+						<p className="text-sm text-ink-600">Sıralamada bu ad görünecek.</p>
 						{error && (
 							<p role="alert" className="text-sm text-destructive">
 								{error}
 							</p>
 						)}
-						<PrimaryButton type="submit" className="lg:h-14 lg:text-lg">
-							Katıl
-						</PrimaryButton>
-					</form>
-				</div>
+					</div>
+					<PrimaryButton type="submit" className="mt-auto w-full">
+						Oyuna katıl
+					</PrimaryButton>
+				</form>
 			</Stage>
 		);
 	}
@@ -191,19 +201,17 @@ export function PlayerScreen({ code }: { code: string }) {
 
 	if (phase === 'lobby') {
 		return (
-			<Stage wide className="gap-6 lg:gap-8">
-				<div className="flex flex-col items-center gap-3 rounded-3xl border bg-white px-6 py-8 text-center lg:py-12">
-					<span className="inline-block rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-sm text-brand-ink lg:text-base">
-						{state.quiz.title}
-					</span>
-					<h1 className="text-3xl font-bold tracking-tight lg:text-5xl">
-						Hazırsın, {me.name}
-					</h1>
-					<p className="text-muted-foreground lg:text-xl">
-						Host başlatınca ilk soru burada belirecek.
-					</p>
-				</div>
+			<Stage className="gap-6">
+				<Wordmark className="text-2xl" />
+				<Card className="flex flex-col items-center gap-3 text-center">
+					<Avatar name={me.name} className="size-20 text-3xl" />
+					<h1>Hazırsın, {me.name}</h1>
+					<p className="text-ink-600">Host başlatınca ilk soru burada belirecek.</p>
+				</Card>
 				<PlayerList players={state.players} meId={me.id} />
+				<p className="mt-auto text-center text-sm text-ink-600">
+					Sayfayı yenilersen kaldığın yerden devam edersin.
+				</p>
 			</Stage>
 		);
 	}
@@ -225,39 +233,13 @@ export function PlayerScreen({ code }: { code: string }) {
 		const paused = !!question.pausedAt;
 		const watching = remaining > state.game.timeLimitSec * 1000;
 		const chosen = question.myChoice;
-		if (chosen != null) {
-			return (
-				<Stage className="justify-center">
-					<Card className="flex flex-col items-center gap-3 text-center">
-						<span className="flex size-16 items-center justify-center rounded-2xl bg-brand text-3xl font-bold text-white">
-							{LETTERS[chosen]}
-						</span>
-						<p className="text-2xl font-bold tracking-tight">Cevabın alındı</p>
-						<p className="text-muted-foreground">{question.choices[chosen]}</p>
-						<p className="mt-4 text-sm text-muted-foreground">Diğerleri bekleniyor…</p>
-						{error && <p role="alert">{error}</p>}
-					</Card>
-				</Stage>
-			);
-		}
 		return (
-			<Stage wide className="gap-4 sm:gap-6 lg:gap-8">
-				{/* Masaüstünde host ekranıyla aynı yerleşim ve boyutlar */}
-				<div className="flex items-start justify-between gap-4 lg:gap-6">
-					<div className="flex flex-col gap-2">
-						<p className="font-semibold text-muted-foreground lg:text-lg">
-							Soru {state.game.currentIndex + 1}/{state.game.questionCount}
-						</p>
-						<h1 className="text-2xl leading-tight font-bold tracking-tight sm:text-3xl lg:text-5xl">
-							{question.text}
-						</h1>
-					</div>
-					<Countdown
-						remaining={remaining}
-						limitMs={state.game.timeLimitSec * 1000}
-						paused={paused}
-					/>
-				</div>
+			<Stage className="gap-4">
+				<QuestionHeader state={state} remaining={remaining} paused={paused} />
+				<Card className="flex flex-col gap-2 p-5 sm:p-6">
+					<p className="eyebrow">{FORMATS[question.type].label}</p>
+					<h2>{question.text}</h2>
+				</Card>
 				<QuestionImage src={question.imageUrl} className="max-h-48 sm:max-h-72" />
 				{(paused || watching) && (
 					<p
@@ -269,10 +251,19 @@ export function PlayerScreen({ code }: { code: string }) {
 				)}
 				<Choices
 					state={{ ...state, question }}
-					open={!paused && !watching && remaining > 0}
+					open={chosen == null && !paused && !watching && remaining > 0}
 					onChoose={answer}
 					size="player"
 				/>
+				{chosen != null && (
+					<p
+						role="status"
+						className="mt-auto flex items-center justify-center gap-2 rounded-xl border bg-white p-4 font-semibold"
+					>
+						<Lock className="size-4 text-teal-700" aria-hidden />
+						Cevabın kilitlendi, diğerleri bekleniyor
+					</p>
+				)}
 				{error && (
 					<p role="alert" className="text-center text-destructive">
 						{error}
@@ -283,38 +274,26 @@ export function PlayerScreen({ code }: { code: string }) {
 	}
 
 	if (phase === 'reveal' && question && reveal) {
-		const verdict = reveal.myPoints
-			? {
-					cls: 'border-teal-500 bg-teal-50 text-teal-800',
-					title: 'Doğru!',
-					sub: `+${reveal.myPoints} puan`,
-				}
-			: question.myChoice == null
-				? {
-						cls: 'border-border bg-white',
-						title: 'Süre doldu',
-						sub: 'Bu soruya cevap vermedin',
-					}
-				: {
-						cls: 'border-destructive bg-wrong-bg text-wrong',
-						title: 'Yanlış',
-						sub: 'Bu sorudan puan yok',
-					};
+		const right = !!reveal.myPoints;
+		const answered = question.myChoice != null;
+		const correctText = question.choices[reveal.correctIndex];
 		return (
-			<Stage wide className="gap-4 sm:gap-6 lg:gap-8">
-				<div className={cn('rounded-2xl border-2 p-5 text-center', verdict.cls)}>
-					<p className="text-3xl font-bold tracking-tight">{verdict.title}</p>
-					<p>{verdict.sub}</p>
-				</div>
-				<p className="text-lg font-semibold lg:text-3xl lg:font-bold lg:tracking-tight">
-					{question.text}
-				</p>
-				<Choices state={{ ...state, question }} open={false} size="player" />
-				{reveal.explanation && (
-					<p className="rounded-2xl border bg-white p-4 text-muted-foreground">
-						{reveal.explanation}
-					</p>
-				)}
+			<Stage className="gap-4">
+				<ResultCard
+					right={right}
+					title={right ? 'Doğru!' : answered ? 'Yanlış' : 'Süre doldu'}
+					sub={
+						right
+							? `+${reveal.myPoints} puan`
+							: `Doğru cevap: ${question.type === 'truefalse' ? correctText : `${LETTERS[reveal.correctIndex]}) ${correctText}`}`
+					}
+				/>
+				<Card className="flex flex-col gap-4 p-5 sm:p-6">
+					<h2>{question.text}</h2>
+					<Choices state={{ ...state, question }} open={false} size="player" />
+				</Card>
+				{reveal.explanation && <Explanation text={reveal.explanation} />}
+				<p className="mt-auto text-center text-ink-600">Sonraki soru bekleniyor…</p>
 			</Stage>
 		);
 	}
@@ -325,44 +304,127 @@ export function PlayerScreen({ code }: { code: string }) {
 		const finished = phase === 'finished';
 		return (
 			<Stage wide className="gap-5 sm:gap-6 lg:gap-8">
-				{finished ? (
-					<div className="flex items-center justify-between gap-4">
-						<h1 className="text-3xl font-bold tracking-tight lg:text-5xl">Sonuçlar</h1>
-						<Link
-							href="/"
-							className="flex h-11 shrink-0 items-center rounded-xl bg-teal-700 px-5 font-semibold text-white hover:bg-teal-600 lg:h-14 lg:px-8 lg:text-lg"
-						>
-							Ana sayfaya dön
-						</Link>
-					</div>
-				) : (
-					<h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
-						{state.game.currentIndex + 1}. sorudan sonra sıralama
-					</h1>
-				)}
+				<h1>
+					{finished
+						? 'Sonuçlar'
+						: `${state.game.currentIndex + 1}. sorudan sonra sıralama`}
+				</h1>
 				{finished && <Podium scores={state.scores} />}
 				{rank && (
-					<div className="flex items-center justify-between rounded-2xl bg-brand p-5 text-white lg:p-6">
+					<div className="flex items-center justify-between rounded-3xl border-2 border-teal-500 bg-white p-5 lg:p-6">
 						<div>
-							<p className="text-4xl font-bold lg:text-5xl">{rank}.</p>
-							<p className="text-white/85 lg:text-lg">
-								{state.scores.length} kişi arasında
-							</p>
+							<p className="eyebrow">Senin sonucun</p>
+							<p className="text-4xl font-bold tabular-nums">{rank}.</p>
+							<p className="text-ink-600">{state.scores.length} kişi arasında</p>
 						</div>
-						<p className="text-3xl font-bold tabular-nums lg:text-4xl">{myScore}</p>
+						<p className="text-3xl font-bold tabular-nums">
+							{myScore}
+							<span className="ml-1 text-base font-medium text-ink-600">puan</span>
+						</p>
 					</div>
 				)}
 				<Scoreboard scores={state.scores} meId={me.id} />
-				{!finished && (
-					<p className="text-center text-muted-foreground lg:text-lg">
-						Sıradaki soru birazdan…
-					</p>
+				{finished ? (
+					<Link
+						href="/"
+						className="mt-auto flex h-14 items-center justify-center rounded-xl bg-teal-500 px-6 text-lg font-bold text-white hover:bg-teal-600"
+					>
+						Ana sayfaya dön
+					</Link>
+				) : (
+					<p className="text-center text-ink-600">Sıradaki soru birazdan…</p>
 				)}
 			</Stage>
 		);
 	}
 
 	return <Centered>Yükleniyor…</Centered>;
+}
+
+// Soru X / Y, yuvarlak sayaç ve altında kalan süreyi gösteren ince çubuk.
+function QuestionHeader({
+	state,
+	remaining,
+	paused,
+}: {
+	state: GameState;
+	remaining: number;
+	paused: boolean;
+}) {
+	const limitMs = state.game.timeLimitSec * 1000;
+	return (
+		<div className="flex flex-col gap-3">
+			<div className="flex items-center justify-between gap-4">
+				<p className="font-semibold text-ink-600">
+					Soru {state.game.currentIndex + 1} / {state.game.questionCount}
+				</p>
+				<Countdown remaining={remaining} limitMs={limitMs} paused={paused} />
+			</div>
+			<div className="h-1.5 overflow-hidden rounded-full bg-ink-200" aria-hidden>
+				<div
+					className="h-full rounded-full bg-teal-500 transition-[width] duration-300 ease-linear"
+					style={{ width: `${(Math.min(remaining, limitMs) / limitMs) * 100}%` }}
+				/>
+			</div>
+		</div>
+	);
+}
+
+// Doğru: teal-800 kart ve tik. Yanlış ya da cevapsız: beyaz kart ve çarpı.
+function ResultCard({ right, title, sub }: { right: boolean; title: string; sub: string }) {
+	const Icon = right ? Check : X;
+	return (
+		<div
+			role="status"
+			className={cn(
+				'flex items-center gap-4 rounded-3xl border p-5 sm:p-6',
+				right ? 'border-teal-800 bg-teal-800 text-white' : 'bg-white',
+			)}
+		>
+			<span
+				className={cn(
+					'flex size-14 shrink-0 items-center justify-center rounded-full',
+					right ? 'bg-white/15' : 'bg-wrong-bg text-wrong',
+				)}
+			>
+				<Icon className="size-8" strokeWidth={3} aria-hidden />
+			</span>
+			<div>
+				<p className="text-2xl font-semibold tracking-tight">{title}</p>
+				<p className={right ? 'text-white/85' : 'text-ink-600'}>{sub}</p>
+			</div>
+		</div>
+	);
+}
+
+function Explanation({ text }: { text: string }) {
+	return (
+		<div className="rounded-3xl border bg-white p-5">
+			<p className="eyebrow mb-1">Açıklama</p>
+			<p className="text-ink-700">{text}</p>
+		</div>
+	);
+}
+
+export function Avatar({ name, className }: { name: string; className?: string }) {
+	const initials = name
+		.split(/\s+/)
+		.filter(Boolean)
+		.slice(0, 2)
+		.map(w => w[0])
+		.join('')
+		.toLocaleUpperCase('tr');
+	return (
+		<span
+			aria-hidden
+			className={cn(
+				'flex shrink-0 items-center justify-center rounded-full bg-teal-800 font-semibold text-white',
+				className,
+			)}
+		>
+			{initials}
+		</span>
+	);
 }
 
 export function PlayerList({
@@ -374,14 +436,16 @@ export function PlayerList({
 }) {
 	return (
 		<section aria-label="Oyuncular">
-			<p className="mb-3 font-semibold">{players.length} kişi katıldı</p>
+			<p className="mb-3 font-semibold">
+				Odadakiler <span className="font-normal text-ink-600">({players.length} kişi)</span>
+			</p>
 			<ul className="flex flex-wrap gap-2">
 				{players.map(p => (
 					<li
 						key={p.id}
 						className={cn(
 							'animate-in rounded-full border px-3.5 py-1.5 text-sm font-medium duration-300 fade-in zoom-in-90 sm:text-base',
-							p.id === meId ? 'border-brand bg-brand text-white' : 'bg-white',
+							p.id === meId ? 'border-teal-500 bg-teal-50 text-teal-800' : 'bg-white',
 						)}
 					>
 						{p.name}
@@ -406,7 +470,7 @@ export function Stage({
 		<main className="stage flex flex-col px-4 py-6 sm:px-8 sm:py-10">
 			<div
 				className={cn(
-					'mx-auto flex w-full max-w-2xl flex-1 flex-col',
+					'mx-auto flex w-full max-w-xl flex-1 flex-col',
 					wide && 'lg:max-w-6xl',
 					className,
 				)}
@@ -419,12 +483,7 @@ export function Stage({
 
 export function Card({ children, className }: { children: React.ReactNode; className?: string }) {
 	return (
-		<div
-			className={cn(
-				'mx-auto w-full max-w-md rounded-3xl border bg-white p-6 sm:p-8',
-				className,
-			)}
-		>
+		<div className={cn('w-full rounded-3xl border bg-white p-6 sm:p-8', className)}>
 			{children}
 		</div>
 	);
@@ -466,7 +525,7 @@ function BuzzerPlayerView({
 	onBuzz: () => void;
 	error: string;
 }) {
-	const { question, reveal, game } = state;
+	const { question, reveal } = state;
 	const queue = state.buzzer?.queue ?? [];
 	const pending = queue.filter(b => !b.verdict);
 	const mine = queue.find(b => b.id === meId);
@@ -474,98 +533,90 @@ function BuzzerPlayerView({
 	if (!question) return null;
 
 	if (reveal) {
-		const verdict = reveal.myPoints
-			? reveal.myPoints > 0
-				? {
-						cls: 'border-teal-500 bg-teal-50 text-teal-800',
-						title: 'Doğru!',
-						sub: `+${reveal.myPoints} puan`,
-					}
-				: {
-						cls: 'border-destructive bg-wrong-bg text-wrong',
-						title: 'Yanlış',
-						sub: `${reveal.myPoints} puan`,
-					}
-			: {
-					cls: 'border-border bg-white',
-					title: reveal.winner ? `${reveal.winner.name} bildi` : 'Kimse bilemedi',
-					sub: reveal.winner ? `+${reveal.winner.points} puan` : 'Bu soruda puan yok',
-				};
+		const mineRight = (reveal.myPoints ?? 0) > 0;
 		return (
-			<Stage wide className="gap-4 sm:gap-6">
-				<div className={cn('rounded-2xl border-2 p-5 text-center', verdict.cls)}>
-					<p className="text-3xl font-bold tracking-tight">{verdict.title}</p>
-					<p>{verdict.sub}</p>
-				</div>
-				<BuzzerImage
-					code={code}
-					level={10}
-					src={question.imageUrl}
-					className="max-h-[45vh]"
-				/>
-				<p className="text-center text-3xl font-bold tracking-tight lg:text-5xl">
-					{reveal.answerText}
-				</p>
-				{reveal.explanation && (
-					<p className="rounded-2xl border bg-white p-4 text-muted-foreground">
-						{reveal.explanation}
-					</p>
+			<Stage className="gap-4">
+				{reveal.myPoints ? (
+					<ResultCard
+						right={mineRight}
+						title={mineRight ? 'Doğru!' : 'Yanlış'}
+						sub={mineRight ? `+${reveal.myPoints} puan` : `${reveal.myPoints} puan`}
+					/>
+				) : (
+					<ResultCard
+						right={false}
+						title={reveal.winner ? `${reveal.winner.name} bildi` : 'Kimse bilemedi'}
+						sub={
+							reveal.winner
+								? `+${reveal.winner.points} puan aldı`
+								: 'Bu soruda puan yok'
+						}
+					/>
 				)}
+				<Card className="flex flex-col gap-3 p-5 sm:p-6">
+					<p className="eyebrow">Doğru cevap</p>
+					<h2>{reveal.answerText}</h2>
+					<BuzzerImage
+						code={code}
+						level={10}
+						src={question.imageUrl}
+						className="max-h-[40vh]"
+					/>
+				</Card>
+				{reveal.explanation && <Explanation text={reveal.explanation} />}
+				<p className="mt-auto text-center text-ink-600">Sonraki soru bekleniyor…</p>
 			</Stage>
 		);
 	}
 
 	const answering = pending[0];
 	return (
-		<Stage wide className="gap-4 sm:gap-6">
-			<div className="flex items-center justify-between gap-4">
-				<div>
-					<p className="font-semibold text-muted-foreground lg:text-lg">
-						Soru {game.currentIndex + 1}/{game.questionCount}
-					</p>
-					<h1 className="text-2xl font-bold tracking-tight lg:text-4xl">
-						{question.text || 'Bu ne?'}
-					</h1>
-				</div>
-				<Countdown
-					remaining={remaining}
-					limitMs={game.timeLimitSec * 1000}
-					paused={!!question.pausedAt}
+		<Stage className="gap-4">
+			<QuestionHeader state={state} remaining={remaining} paused={!!question.pausedAt} />
+			<h2>{question.text || 'Bu ne?'}</h2>
+			<div className="relative">
+				<BuzzerImage
+					code={code}
+					level={question.blurLevel}
+					src={null}
+					className="max-h-[45vh]"
 				/>
+				<span className="absolute top-3 left-3 rounded-full bg-white px-3 py-1 text-sm font-semibold">
+					Netlik %{(question.blurLevel ?? 0) * 10}
+				</span>
 			</div>
-			<BuzzerImage
-				code={code}
-				level={question.blurLevel}
-				src={null}
-				className="max-h-[45vh]"
-			/>
+			<p className="text-ink-600">
+				Görsel netleşiyor. Bildiğin an bas, cevabını sesli söyle.
+			</p>
 			{answering && answering.id !== meId && (
 				<p role="status" className="rounded-xl border bg-white p-3 text-center font-medium">
 					{answering.name} cevaplıyor…
 				</p>
 			)}
-			{mine?.verdict === 'wrong' ? (
-				<p className="rounded-2xl border-2 border-destructive bg-wrong-bg p-4 text-center text-lg font-semibold text-wrong">
-					Yanlış, −300. Bu soruda hakkın bitti.
-				</p>
-			) : myTurn === 0 ? (
-				<p className="rounded-2xl bg-brand p-5 text-center text-2xl font-bold text-white">
-					Sıra sende! Cevabını söyle.
-				</p>
-			) : myTurn > 0 ? (
-				<p className="rounded-2xl border-2 border-brand bg-brand-tint p-5 text-center text-2xl font-bold text-brand-ink">
-					Sıran: {myTurn + 1}
-				</p>
-			) : (
-				<button
-					type="button"
-					onClick={onBuzz}
-					disabled={remaining <= 0}
-					className="h-24 rounded-3xl bg-brand text-3xl font-extrabold tracking-tight text-white shadow-[0_6px_0_var(--color-brand-ink)] transition outline-none focus-visible:ring-4 focus-visible:ring-brand/40 active:translate-y-1 active: disabled:opacity-40 lg:h-28 lg:text-4xl"
-				>
-					{remaining > 0 ? 'BİLDİM!' : 'Süre doldu'}
-				</button>
-			)}
+			<div className="mt-auto">
+				{mine?.verdict === 'wrong' ? (
+					<p className="rounded-3xl border bg-white p-5 text-center text-lg font-semibold text-wrong">
+						Yanlış, −300. Bu soruda hakkın bitti.
+					</p>
+				) : myTurn === 0 ? (
+					<p className="rounded-3xl bg-teal-800 p-6 text-center text-2xl font-bold text-white">
+						Sıra sende! Cevabını söyle.
+					</p>
+				) : myTurn > 0 ? (
+					<p className="rounded-3xl border-2 border-teal-500 bg-teal-50 p-6 text-center text-2xl font-bold text-teal-800">
+						Sıran: {myTurn + 1}
+					</p>
+				) : (
+					<button
+						type="button"
+						onClick={onBuzz}
+						disabled={remaining <= 0}
+						className="h-24 w-full rounded-3xl bg-teal-500 text-3xl font-bold tracking-tight text-white transition outline-none hover:bg-teal-600 focus-visible:ring-4 focus-visible:ring-teal-500/40 active:translate-y-0.5 disabled:opacity-40"
+					>
+						{remaining > 0 ? 'BİLDİM!' : 'Süre doldu'}
+					</button>
+				)}
+			</div>
 			{error && (
 				<p role="alert" className="text-center text-destructive">
 					{error}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, Flame, X, Zap } from 'lucide-react';
+import { Check, ChevronDown, ChevronUp, Flame, X, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { LETTERS } from '@/components/brand';
@@ -67,7 +67,7 @@ export function Countdown({
 					cx="50"
 					cy="50"
 					r={r}
-					className="fill-white stroke-border"
+					className="fill-white stroke-ink-200"
 					strokeWidth="8"
 				/>
 				<circle
@@ -80,7 +80,7 @@ export function Countdown({
 					strokeDashoffset={circumference * (1 - remaining / limitMs)}
 					className={cn(
 						'fill-none transition-[stroke-dashoffset] duration-300 ease-linear',
-						low ? 'stroke-destructive' : 'stroke-brand',
+						low ? 'stroke-wrong' : 'stroke-teal-500',
 					)}
 				/>
 			</svg>
@@ -89,7 +89,7 @@ export function Countdown({
 				className={cn(
 					'absolute inset-0 flex items-center justify-center font-bold tabular-nums',
 					size === 'lg' ? 'text-4xl' : 'text-xl sm:text-2xl lg:text-4xl',
-					low && 'text-destructive',
+					low && 'text-wrong',
 				)}
 			>
 				{paused ? 'II' : Math.ceil(remaining / 1000)}
@@ -120,11 +120,12 @@ export function Choices({
 		: 1;
 
 	return (
-		<div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
+		<div className={cn('grid gap-2.5', size === 'host' && 'sm:grid-cols-2 sm:gap-3')}>
 			{question.choices.map((choice, i) => {
 				const chosen = question.myChoice === i;
 				const correct = reveal?.correctIndex === i;
-				const wrongPick = reveal && chosen && !correct;
+				const wrongPick = !!reveal && chosen && !correct;
+				const Mark = correct ? Check : wrongPick ? X : null;
 				return (
 					<button
 						key={i}
@@ -136,24 +137,24 @@ export function Choices({
 							'relative flex items-center gap-3 overflow-hidden rounded-2xl border-2 bg-white p-3 text-left font-medium transition sm:p-4',
 							size === 'host'
 								? 'min-h-20 text-xl lg:min-h-24 lg:text-2xl'
-								: 'min-h-16 text-lg lg:min-h-24 lg:text-2xl',
-							open && onChoose && 'hover:border-brand active:scale-[0.99]',
-							!reveal && chosen && 'border-brand bg-brand-tint',
-							!reveal && !chosen && 'border-border',
-							reveal && correct && 'border-teal-500 bg-teal-50',
-							wrongPick && 'border-destructive bg-wrong-bg',
-							reveal && !correct && !wrongPick && 'border-border opacity-60',
+								: 'min-h-16 text-lg',
+							open && onChoose && 'hover:border-teal-300 active:scale-[0.99]',
+							!reveal && chosen && 'border-teal-500 bg-teal-50',
+							!reveal && !chosen && 'border-ink-200',
+							correct && 'border-teal-500 bg-teal-50',
+							wrongPick && 'border-wrong bg-wrong-bg',
+							reveal && !correct && !wrongPick && 'border-ink-200 text-ink-600',
 						)}
 					>
 						<span
 							className={cn(
-								'flex size-9 shrink-0 items-center justify-center rounded-xl text-base font-bold',
-								'lg:size-11 lg:text-lg',
-								correct
+								'flex size-10 shrink-0 items-center justify-center rounded-xl text-base font-bold',
+								size === 'host' && 'lg:size-12 lg:text-lg',
+								correct || (!reveal && chosen)
 									? 'bg-teal-500 text-white'
-									: chosen
-										? 'bg-brand text-white'
-										: 'bg-brand-tint text-brand-ink',
+									: wrongPick
+										? 'bg-wrong text-white'
+										: 'bg-ink-100 text-ink-700',
 							)}
 						>
 							{question.type === 'truefalse' ? (
@@ -168,18 +169,27 @@ export function Choices({
 						</span>
 						<span className="flex-1">{choice}</span>
 						{reveal && (
-							<span className="font-bold tabular-nums">
+							<span className="font-semibold tabular-nums">
 								{reveal.counts[i]}
 								<span className="sr-only"> kişi seçti</span>
 							</span>
 						)}
-						{correct && <span className="sr-only">Doğru cevap</span>}
+						{Mark && (
+							<Mark
+								className={cn(
+									'size-6 shrink-0',
+									correct ? 'text-teal-700' : 'text-wrong',
+								)}
+								strokeWidth={3}
+								aria-label={correct ? 'Doğru cevap' : 'Senin yanlış cevabın'}
+							/>
+						)}
 						{reveal && (
 							<span
 								aria-hidden
 								className={cn(
 									'absolute bottom-0 left-0 h-1.5 transition-[width] duration-700 ease-out',
-									correct ? 'bg-teal-500' : 'bg-brand/50',
+									correct ? 'bg-teal-500' : 'bg-ink-300',
 								)}
 								style={{ width: `${(reveal.counts[i] / total) * 100}%` }}
 							/>
@@ -235,6 +245,14 @@ export function Scoreboard({
 }) {
 	const max = Math.max(1, ...scores.map(s => s.score));
 	const animated = scores.some(s => s.gained !== undefined);
+	// Sıra değişimi: önceki puanlara göre (score − gained) eski sıra.
+	const before = animated
+		? new Map(
+				[...scores]
+					.sort((a, b) => b.score - (b.gained ?? 0) - (a.score - (a.gained ?? 0)))
+					.map((s, i) => [s.id, i]),
+			)
+		: null;
 	const [grown, setGrown] = useState(!animated);
 	useEffect(() => {
 		if (!animated) return;
@@ -247,27 +265,28 @@ export function Scoreboard({
 		<ol className="flex flex-col gap-1.5">
 			{scores.slice(0, limit).map((s, i) => {
 				const gained = s.gained ?? 0;
+				const moved = before ? (before.get(s.id) ?? i) - i : 0;
 				const shown = grown ? s.score : s.score - gained;
 				return (
 					<li
 						key={s.id}
 						className={cn(
 							'relative flex items-center gap-3 overflow-hidden rounded-xl border bg-white px-4 py-2.5 sm:text-lg lg:py-3',
-							s.id === meId && 'border-brand font-semibold',
+							s.id === meId && 'border-teal-500 font-semibold',
 						)}
 					>
 						<span
 							aria-hidden
 							className={cn(
 								'absolute inset-y-0 left-0 transition-[width] duration-1000 ease-out',
-								s.id === meId ? 'bg-brand/25' : 'bg-brand-tint',
+								s.id === meId ? 'bg-teal-100' : 'bg-teal-50',
 							)}
 							style={{ width: `${(Math.max(shown, 0) / max) * 100}%` }}
 						/>
 						<span
 							className={cn(
 								'relative w-7 text-right font-bold tabular-nums',
-								i < 3 ? 'text-brand-ink' : 'text-muted-foreground',
+								i < 3 ? 'text-teal-700' : 'text-ink-600',
 							)}
 						>
 							{i + 1}
@@ -281,7 +300,7 @@ export function Scoreboard({
 									title={`${s.streak} soru üst üste doğru`}
 								>
 									<Flame
-										className="absolute size-8 fill-orange-500 stroke-orange-600"
+										className="absolute size-8 fill-teal-700 stroke-teal-800"
 										aria-hidden
 									/>
 									<span className="relative mt-2 text-xs font-extrabold text-white">
@@ -292,11 +311,11 @@ export function Scoreboard({
 							)}
 							{s.fastest && (
 								<span
-									className="flex shrink-0 items-center rounded-full bg-brand-tint p-1 text-brand-ink"
+									className="flex shrink-0 items-center rounded-full bg-teal-50 p-1 text-teal-700"
 									title="Bu turun en hızlısı"
 								>
 									<Zap
-										className="size-4 fill-brand stroke-brand-ink"
+										className="size-4 fill-teal-500 stroke-teal-700"
 										aria-hidden
 									/>
 									<span className="sr-only">Bu turun en hızlısı</span>
@@ -307,10 +326,33 @@ export function Scoreboard({
 							<span
 								className={cn(
 									'relative animate-in rounded-full px-2 py-0.5 text-sm font-semibold text-white delay-300 duration-500 fill-mode-backwards fade-in slide-in-from-left-4',
-									gained > 0 ? 'bg-teal-500' : 'bg-destructive',
+									gained > 0 ? 'bg-teal-700' : 'bg-wrong',
 								)}
 							>
 								{gained > 0 ? `+${gained}` : `−${-gained}`}
+							</span>
+						)}
+						{moved !== 0 && (
+							<span
+								className={cn(
+									'relative flex items-center text-sm font-semibold tabular-nums',
+									moved > 0 ? 'text-teal-700' : 'text-ink-600',
+								)}
+								title={
+									moved > 0
+										? `${moved} basamak yükseldi`
+										: `${-moved} basamak düştü`
+								}
+							>
+								{moved > 0 ? (
+									<ChevronUp className="size-4" aria-hidden />
+								) : (
+									<ChevronDown className="size-4" aria-hidden />
+								)}
+								{Math.abs(moved)}
+								<span className="sr-only">
+									{moved > 0 ? ' basamak yükseldi' : ' basamak düştü'}
+								</span>
 							</span>
 						)}
 						<span className="relative font-bold tabular-nums">
@@ -347,9 +389,9 @@ export function Podium({ scores }: { scores: NonNullable<GameState['scores']> })
 	// 2. - 1. - 3. sırasıyla yan yana
 	const order = [1, 0, 2].filter(i => scores[i]);
 	const blocks = [
-		'h-36 bg-brand text-white',
-		'h-24 bg-brand/60 text-white',
-		'h-16 bg-brand/30 text-brand-ink',
+		'h-36 bg-teal-800 text-white',
+		'h-24 bg-teal-400 text-ink-900',
+		'h-16 bg-teal-200 text-teal-900',
 	];
 	return (
 		<div className="flex items-end justify-center gap-2 sm:gap-4">
@@ -361,7 +403,7 @@ export function Podium({ scores }: { scores: NonNullable<GameState['scores']> })
 					<span className="w-full truncate font-semibold sm:text-xl">
 						{scores[i].name}
 					</span>
-					<span className="text-sm text-muted-foreground tabular-nums sm:text-base">
+					<span className="text-sm text-ink-600 tabular-nums sm:text-base">
 						{scores[i].score}
 					</span>
 					<div
