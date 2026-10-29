@@ -1,6 +1,8 @@
 import { ImageResponse } from 'next/og';
 
-// Uygulama simgesi: teal-500 yuvarlak köşeli kare içinde beyaz "v.".
+import { LogoMark } from '@/components/brand';
+
+// Uygulama simgesi: teal-500 yuvarlak köşeli kare içinde koyu balon ve açık teal soru işareti.
 export function appIcon(size: number) {
 	return new ImageResponse(
 		<div
@@ -12,14 +14,9 @@ export function appIcon(size: number) {
 				justifyContent: 'center',
 				background: '#049cb9',
 				borderRadius: size * 0.22,
-				color: '#ffffff',
-				fontSize: size * 0.62,
-				fontWeight: 700,
-				letterSpacing: '-0.05em',
-				paddingBottom: size * 0.08,
 			}}
 		>
-			v.
+			<LogoMark bubble="#161b1e" mark="#5fcee2" size={size * 0.74} />
 		</div>,
 		{ width: size, height: size },
 	);

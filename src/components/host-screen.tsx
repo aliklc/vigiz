@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { renderSVG } from 'uqr';
 
-import { Wordmark } from '@/components/brand';
+import { CONTAINER, Wordmark } from '@/components/brand';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import {
 	BuzzerImage,
@@ -114,7 +114,7 @@ export function HostScreen({
 	return (
 		<main className="stage flex flex-col">
 			<header className="border-b bg-white">
-				<div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+				<div className={cn(CONTAINER, 'flex items-center justify-between gap-4 py-3')}>
 					<div className="flex min-w-0 items-center gap-4">
 						<Link href="/host" aria-label="Panele dön" className="shrink-0">
 							<Wordmark className="text-2xl" />
@@ -170,7 +170,7 @@ export function HostScreen({
 				</div>
 			</header>
 
-			<div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-6 py-8 pb-32 lg:gap-8">
+			<div className={cn(CONTAINER, 'flex flex-1 flex-col gap-6 py-8 pb-32 lg:gap-8')}>
 				{viewing ? (
 					<PastQuestionView state={state} past={viewing} />
 				) : (
@@ -300,7 +300,7 @@ export function HostScreen({
 			</div>
 
 			<footer className="fixed inset-x-0 bottom-0 border-t bg-white/90 py-3 backdrop-blur lg:py-4">
-				<div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6">
+				<div className={cn(CONTAINER, 'flex items-center justify-between gap-4')}>
 					{viewing ? (
 						<p className="font-medium text-ink-600">
 							Önceki soruya bakıyorsun; oyun devam ediyor.

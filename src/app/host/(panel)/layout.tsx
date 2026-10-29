@@ -1,16 +1,17 @@
 import { LogOut } from 'lucide-react';
 import Link from 'next/link';
 
-import { Wordmark } from '@/components/brand';
+import { CONTAINER, Wordmark } from '@/components/brand';
 import { Avatar } from '@/components/player-screen';
 import { requireHost } from '@/lib/auth';
+import { cn } from '@/lib/utils';
 
 export default async function PanelLayout({ children }: LayoutProps<'/host'>) {
 	const host = await requireHost();
 	return (
 		<div className="flex min-h-dvh flex-col">
 			<header className="sticky top-0 z-10 border-b bg-white">
-				<div className="mx-auto flex max-w-6xl items-center gap-2 px-4 py-3 sm:gap-6 sm:px-8">
+				<div className={cn(CONTAINER, 'flex items-center gap-2 py-3 sm:gap-6')}>
 					<Link href="/host" aria-label="Quizlerim" className="py-2">
 						<Wordmark className="text-2xl" />
 					</Link>

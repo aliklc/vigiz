@@ -1,7 +1,7 @@
 import { Check, Clapperboard, Pause, QrCode, Trophy, UserRound, X } from 'lucide-react';
 import Link from 'next/link';
 
-import { FIELD, LETTERS, Wordmark } from '@/components/brand';
+import { CONTAINER, FIELD, LETTERS, Wordmark } from '@/components/brand';
 import { FORMATS } from '@/components/formats';
 import { PrimaryButton } from '@/components/player-screen';
 import { SiteHeader } from '@/components/site-header';
@@ -20,7 +20,12 @@ export default async function Home() {
 		<div className="stage flex flex-col">
 			<SiteHeader />
 			<main className="flex flex-col">
-				<section className="mx-auto grid w-full max-w-6xl items-center gap-10 px-4 py-12 sm:px-8 lg:grid-cols-2 lg:gap-16 lg:py-20">
+				<section
+					className={cn(
+						CONTAINER,
+						'grid grid-cols-1 items-center gap-10 py-12 lg:grid-cols-2 lg:gap-16 lg:py-20',
+					)}
+				>
 					<div className="flex flex-col gap-5">
 						<p className="eyebrow">Aylık quiz gecesi</p>
 						<h1 className="text-4xl leading-tight font-bold sm:text-5xl">
@@ -47,7 +52,9 @@ export default async function Home() {
 										'min-w-0 flex-1 text-xl font-semibold tracking-[0.2em] uppercase placeholder:tracking-[0.2em] placeholder:text-ink-300',
 									)}
 								/>
-								<PrimaryButton type="submit">Katıl</PrimaryButton>
+								<PrimaryButton type="submit" className="shrink-0 px-5">
+									Katıl
+								</PrimaryButton>
 							</div>
 							<p className="flex items-center gap-2 text-sm text-ink-600">
 								<QrCode className="size-4" aria-hidden />
@@ -59,7 +66,7 @@ export default async function Home() {
 				</section>
 
 				<div className="bg-white">
-					<div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-4 py-16 sm:px-8">
+					<div className={cn(CONTAINER, 'flex flex-col gap-16 py-16')}>
 						<section aria-labelledby="how" className="flex flex-col gap-6">
 							<h2 id="how">Nasıl oynanır</h2>
 							<ol className="grid gap-3 sm:grid-cols-3">
@@ -172,7 +179,12 @@ export default async function Home() {
 				</div>
 
 				<section className="bg-teal-50">
-					<div className="mx-auto flex w-full max-w-6xl flex-col items-start gap-5 px-4 py-12 sm:flex-row sm:items-center sm:justify-between sm:px-8">
+					<div
+						className={cn(
+							CONTAINER,
+							'flex flex-col items-start gap-5 py-12 sm:flex-row sm:items-center sm:justify-between',
+						)}
+					>
 						<div className="flex flex-col gap-1">
 							<h2>Kendi quizini hazırla</h2>
 							<p className="text-ink-700">
@@ -202,7 +214,12 @@ export default async function Home() {
 				</section>
 			</main>
 			<footer className="border-t bg-white">
-				<div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-6 text-sm text-ink-600 sm:px-8">
+				<div
+					className={cn(
+						CONTAINER,
+						'flex items-center justify-between gap-4 py-6 text-sm text-ink-600',
+					)}
+				>
 					<Wordmark className="text-lg" />
 					<span>Canlı quiz gecesi</span>
 				</div>
@@ -219,7 +236,7 @@ function SampleQuestion() {
 	return (
 		<div
 			aria-hidden
-			className="mx-auto flex w-full max-w-sm flex-col gap-4 rounded-3xl border bg-white p-6"
+			className="flex w-full flex-col gap-4 rounded-3xl border bg-white p-6 lg:max-w-md lg:justify-self-end"
 		>
 			<div className="flex items-center justify-between">
 				<span className="text-sm font-semibold text-ink-600">Soru 3 / 10</span>

@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
-import { LETTERS } from '@/components/brand';
+import { CONTAINER, LETTERS } from '@/components/brand';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { FORMATS } from '@/components/formats';
 import { Button } from '@/components/ui/button';
@@ -155,7 +155,7 @@ export function QuizEditor({
 	};
 
 	return (
-		<main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-8">
+		<main className={cn(CONTAINER, 'flex flex-col gap-6 py-6')}>
 			<div className="flex flex-wrap items-end justify-between gap-4">
 				<div className="flex min-w-0 flex-col gap-1">
 					<Breadcrumbs

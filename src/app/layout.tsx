@@ -6,7 +6,7 @@ import './globals.css';
 const inter = Inter({
 	variable: '--font-sans',
 	subsets: ['latin', 'latin-ext'],
-	weight: ['400', '500', '600', '700'],
+	weight: ['400', '500', '600', '700', '800'], // 800 sadece logo
 });
 
 export const metadata: Metadata = {

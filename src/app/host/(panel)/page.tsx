@@ -1,7 +1,7 @@
 import { Clapperboard, Plus } from 'lucide-react';
 import Link from 'next/link';
 
-import { CodeTiles } from '@/components/brand';
+import { CONTAINER, CodeTiles } from '@/components/brand';
 import { FORMATS } from '@/components/formats';
 import { Button } from '@/components/ui/button';
 import { requireHost } from '@/lib/auth';
@@ -40,7 +40,7 @@ export default async function HostHome() {
 	const totalPlayers = played.reduce((sum, g) => sum + (g.players[0]?.count ?? 0), 0);
 
 	return (
-		<main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-8 sm:py-10">
+		<main className={cn(CONTAINER, 'flex flex-col gap-8 py-8 sm:py-10')}>
 			<header className="flex flex-wrap items-center justify-between gap-4">
 				<div>
 					<h1>Quizlerim</h1>

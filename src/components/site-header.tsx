@@ -1,7 +1,8 @@
 import Link from 'next/link';
 
-import { Wordmark } from '@/components/brand';
+import { CONTAINER, Wordmark } from '@/components/brand';
 import { getHost } from '@/lib/auth';
+import { cn } from '@/lib/utils';
 
 // Herkese açık sayfaların üst menüsü: logo solda, aksiyonlar sağda.
 // Sayfanın birincil aksiyonu içerikte; buradakiler ikincil.
@@ -9,7 +10,7 @@ export async function SiteHeader() {
 	const host = await getHost();
 	return (
 		<header className="border-b bg-white">
-			<div className="mx-auto flex max-w-6xl items-center justify-between gap-2 px-4 py-3 sm:px-8">
+			<div className={cn(CONTAINER, 'flex items-center justify-between gap-2 py-3')}>
 				<Link href="/" aria-label="Ana sayfa" className="py-2">
 					<Wordmark className="text-2xl" />
 				</Link>
