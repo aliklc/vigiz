@@ -1,4 +1,4 @@
-import { Check, QrCode, Trophy, UserRound, X } from 'lucide-react';
+import { Check, Clapperboard, Pause, QrCode, Trophy, UserRound, X } from 'lucide-react';
 import Link from 'next/link';
 
 import { FIELD, LETTERS } from '@/components/brand';
@@ -88,7 +88,7 @@ export default async function Home() {
 					<h2 id="formats" className="text-2xl font-bold tracking-tight">
 						Soru formatları
 					</h2>
-					<ul className="grid gap-3 sm:grid-cols-3">
+					<ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
 						<FormatCard type="choice">
 							<div className="grid grid-cols-2 gap-1.5">
 								{LETTERS.slice(0, 4)
@@ -136,6 +136,31 @@ export default async function Home() {
 								</span>
 							</div>
 						</FormatCard>
+						{/* Video ayrı bir format değil, şıklı sorulara ek; kartı elle */}
+						<li className="flex flex-col gap-4 rounded-2xl border bg-white p-5">
+							<div className="relative flex h-[4.25rem] flex-col justify-end overflow-hidden rounded-lg bg-ink p-2">
+								<Pause
+									className="absolute top-1/2 left-1/2 size-6 -translate-1/2 text-white"
+									fill="currentColor"
+									aria-hidden
+								/>
+								<span className="relative h-1 rounded-full bg-white/25">
+									<span className="absolute inset-y-0 left-0 w-3/5 rounded-full bg-brand" />
+								</span>
+							</div>
+							<div className="flex items-start gap-3">
+								<Clapperboard
+									className="mt-0.5 size-5 shrink-0 text-brand-ink"
+									aria-hidden
+								/>
+								<span>
+									<span className="block font-semibold">Sonra ne oldu?</span>
+									<span className="block text-sm text-muted-foreground">
+										Video en kritik anda durur, tahmin et
+									</span>
+								</span>
+							</div>
+						</li>
 					</ul>
 				</section>
 

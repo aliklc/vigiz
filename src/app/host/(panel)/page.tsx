@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react';
+import { Clapperboard, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 import { CodeTiles } from '@/components/brand';
@@ -24,7 +24,7 @@ export default async function HostHome() {
 	const [{ data: quizzes }, { data: games }] = await Promise.all([
 		db
 			.from('quizzes')
-			.select('id, title, topic, quiz_date, status, questions(type)')
+			.select('id, title, topic, quiz_date, status, questions(type, video_id)')
 			.eq('owner_id', host.id)
 			.order('quiz_date', { ascending: false }),
 		db
@@ -117,6 +117,7 @@ export default async function HostHome() {
 							count: q.questions.filter(x => (x.type as QuestionType) === type)
 								.length,
 						})).filter(t => t.count);
+						const videos = q.questions.filter(x => x.video_id).length;
 						return (
 							<li
 								key={q.id}
@@ -153,6 +154,16 @@ export default async function HostHome() {
 											})
 										) : (
 											<span>Soru yok</span>
+										)}
+										{videos > 0 && (
+											<span
+												className="flex items-center gap-1"
+												title="Videolu soru"
+											>
+												<Clapperboard className="size-3.5" aria-hidden />
+												{videos}
+												<span className="sr-only"> videolu soru</span>
+											</span>
 										)}
 										<span>
 											{runs.length
