@@ -110,6 +110,8 @@ pnpm test:e2e                               # çalışan bir sunucuya karşı t�
 E2E_URL=https://<site>.vercel.app pnpm test:e2e   # canlı siteye karşı
 ```
 
+GitHub Actions (`.github/workflows/ci.yml`) her push'ta tipleri, Biome'u ve birim testlerini çalıştırır. Derleme Vercel'de yapılır.
+
 `test:e2e` gerçek Supabase projesini kullanır, ama kendi geçici host hesaplarını, quizini ve odasını oluşturup sonunda siler. Kontrol ettikleri:
 - Tam oyun akışı.
 - Puanlama ve sıra bonusu.
