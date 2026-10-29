@@ -198,6 +198,33 @@ html:has(.snap-start) {
 	scroll-snap-type: y proximity;
 }
 
+/* Ana sayfa: kaydırınca öğeler bulanıktan netleşerek ve hafif yukarı kayarak gelir.
+   Sadece JS hazırken gizlenir (reveal-ready); JS yoksa içerik hep görünür. */
+.reveal-ready .reveal {
+	opacity: 0;
+	transform: translateY(28px);
+	filter: blur(8px);
+	transition:
+		opacity 0.8s ease-out,
+		transform 0.8s cubic-bezier(0.2, 0.7, 0.2, 1),
+		filter 0.8s ease-out;
+}
+.reveal-ready .reveal.is-visible {
+	opacity: 1;
+	transform: none;
+	filter: none;
+}
+/* Kart listelerinde sırayla */
+:where(ol, ul) > .reveal:nth-child(2) {
+	transition-delay: 120ms;
+}
+:where(ol, ul) > .reveal:nth-child(3) {
+	transition-delay: 240ms;
+}
+:where(ol, ul) > .reveal:nth-child(4) {
+	transition-delay: 360ms;
+}
+
 /* Ana sayfa: dev logo bulanık ve grenli başlar, netleşir (bulanık görsel formatına gönderme) */
 .hero-mark {
 	position: relative;
@@ -241,5 +268,10 @@ html:has(.snap-start) {
 	} /* Sonsuz döngü 0.01 ms'de titrerdi: balonlar tamamen dursun */
 	.bubble {
 		animation: none;
+	}
+	.reveal-ready .reveal {
+		opacity: 1;
+		transform: none;
+		filter: none;
 	}
 }

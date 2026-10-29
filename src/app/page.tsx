@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { CONTAINER, FIELD, LETTERS, LogoMark, Wordmark } from '@/components/brand';
 import { FORMATS } from '@/components/formats';
 import { PrimaryButton } from '@/components/player-screen';
+import { ScrollEffects } from '@/components/scroll-effects';
 import { SiteHeader } from '@/components/site-header';
 import { getHost } from '@/lib/auth';
 import { cn } from '@/lib/utils';
@@ -26,8 +27,17 @@ const STEPS = [
 export default async function Home() {
 	const host = await getHost();
 	return (
-		<div className="stage flex flex-col">
-			<div className="snap-start relative flex min-h-dvh flex-col overflow-hidden bg-accent-400">
+		// Zemin rengi kaydırdıkça bölüme göre yumuşakça değişir (ScrollEffects, data-bg).
+		<div
+			data-home
+			className="flex min-h-dvh flex-col transition-[background-color] duration-700 ease-out"
+			style={{ backgroundColor: '#ffc83d' }}
+		>
+			<ScrollEffects />
+			<div
+				data-bg="#ffc83d"
+				className="relative flex min-h-dvh snap-start flex-col overflow-hidden"
+			>
 				<FloatingBubbles />
 				<SiteHeader tone="accent" />
 				<section
@@ -44,7 +54,10 @@ export default async function Home() {
 							Aylık quiz gecesi
 						</p>
 					</div>
-					<div className="flex flex-col gap-6">
+					<div
+						className="reveal flex flex-col gap-6"
+						style={{ transitionDelay: '500ms' }}
+					>
 						<p className="text-2xl leading-tight font-semibold tracking-tight text-ink-900 sm:text-3xl">
 							Kodu gir, adını yaz, oyna. Hesap gerekmez.
 						</p>
@@ -91,15 +104,18 @@ export default async function Home() {
 
 			<main className="flex flex-col">
 				{/* 2. ekran: nasıl oynanır + formatlar */}
-				<div className="snap-start flex min-h-dvh items-center bg-white">
+				<div data-bg="#ffffff" className="flex min-h-dvh snap-start items-center">
 					<div className={cn(CONTAINER, 'flex flex-col gap-14 py-16')}>
 						<section aria-labelledby="how" className="flex flex-col gap-6">
-							<h2 id="how">Nasıl oynanır</h2>
+							<h2 id="how" className="reveal">
+								Nasıl oynanır
+							</h2>
 							<ol className="grid gap-3 sm:grid-cols-3">
 								{STEPS.map(({ Icon, title, text }, i) => (
 									<li
 										key={title}
-										className="flex items-center gap-4 rounded-3xl border bg-white p-5"
+										className="reveal flex items-center gap-4 rounded-3xl border bg-white p-5"
+										style={{ transitionDelay: `${(i + 1) * 120}ms` }}
 									>
 										<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent-50 text-accent-800">
 											<Icon className="size-6" aria-hidden />
@@ -118,7 +134,7 @@ export default async function Home() {
 						</section>
 
 						<section aria-labelledby="formats" className="flex flex-col gap-6">
-							<h2 id="formats" className="text-2xl font-bold tracking-tight">
+							<h2 id="formats" className="reveal">
 								Soru formatları
 							</h2>
 							<ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -173,7 +189,7 @@ export default async function Home() {
 									</div>
 								</FormatCard>
 								{/* Video ayrı bir format değil, şıklı sorulara ek; kartı elle */}
-								<li className="flex flex-col gap-4 rounded-3xl border bg-white p-5">
+								<li className="reveal flex flex-col gap-4 rounded-3xl border bg-white p-5">
 									<div className="relative flex h-[4.25rem] flex-col justify-end overflow-hidden rounded-lg bg-ink p-2">
 										<Pause
 											className="absolute top-1/2 left-1/2 size-6 -translate-1/2 text-white"
@@ -204,58 +220,67 @@ export default async function Home() {
 					</div>
 				</div>
 
-				<section className="snap-start relative flex min-h-[calc(100dvh-4.5rem)] items-center overflow-hidden bg-ink-900 text-cream">
-					{/* Buzz'daki gibi arkada dev ve bulanık logo; sadece dekor */}
+				{/* 3. ekran: kapanış + footer, tek lacivert ekran */}
+				<div
+					data-bg="#181430"
+					className="relative flex min-h-dvh snap-start flex-col overflow-hidden text-cream"
+				>
+					{/* Buzz'daki gibi arkada dev ve bulanık logo; sayfanın sonunda ekranın ortasında */}
 					<p
 						aria-hidden
-						className="pointer-events-none absolute -bottom-[0.3em] left-1/2 -translate-x-1/2 text-[clamp(8rem,30vw,26rem)] leading-none font-extrabold tracking-[-0.06em] text-accent-400 opacity-10 blur-md select-none"
+						className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[clamp(8rem,30vw,26rem)] leading-none font-extrabold tracking-[-0.06em] text-accent-400 opacity-10 blur-md select-none"
 					>
 						vigiz
 					</p>
-					<div
-						className={cn(
-							CONTAINER,
-							'relative flex flex-col items-start gap-8 py-16 sm:flex-row sm:items-center sm:justify-between',
-						)}
-					>
-						<div className="flex flex-col gap-2">
-							<h2 className="text-4xl leading-tight sm:text-5xl">
-								Kendi quizini hazırla
-							</h2>
-							<p className="text-lg text-ink-200">
-								Sorularını yaz, oda aç, herkesi davet et.
-							</p>
-						</div>
-						<div className="flex flex-wrap items-center gap-2">
-							<Link
-								href={host ? '/host' : '/register'}
-								className="flex h-12 items-center rounded-full bg-accent-400 px-6 font-semibold text-ink-900 hover:bg-accent-300"
-							>
-								{host ? 'Panele git' : 'Hesap oluştur'}
-							</Link>
-							{!host && (
-								<Link
-									href="/login"
-									className="flex h-12 items-center rounded-full px-4 font-semibold text-cream underline-offset-4 hover:underline"
-								>
-									Giriş yap
-								</Link>
+					<section className="relative flex flex-1 items-center">
+						<div
+							className={cn(
+								CONTAINER,
+								'relative flex flex-col items-start gap-8 py-16 sm:flex-row sm:items-center sm:justify-between',
 							)}
+						>
+							<div className="reveal flex flex-col gap-2">
+								<h2 className="text-4xl leading-tight sm:text-5xl">
+									Kendi quizini hazırla
+								</h2>
+								<p className="text-lg text-ink-200">
+									Sorularını yaz, oda aç, herkesi davet et.
+								</p>
+							</div>
+							<div
+								className="reveal flex flex-wrap items-center gap-2"
+								style={{ transitionDelay: '200ms' }}
+							>
+								<Link
+									href={host ? '/host' : '/register'}
+									className="flex h-12 items-center rounded-full bg-accent-400 px-6 font-semibold text-ink-900 hover:bg-accent-300"
+								>
+									{host ? 'Panele git' : 'Hesap oluştur'}
+								</Link>
+								{!host && (
+									<Link
+										href="/login"
+										className="flex h-12 items-center rounded-full px-4 font-semibold text-cream underline-offset-4 hover:underline"
+									>
+										Giriş yap
+									</Link>
+								)}
+							</div>
 						</div>
-					</div>
-				</section>
-			</main>
-			<footer className="border-t bg-white">
-				<div
-					className={cn(
-						CONTAINER,
-						'flex items-center justify-between gap-4 py-6 text-sm text-ink-600',
-					)}
-				>
-					<Wordmark className="text-lg" />
-					<span>Canlı quiz gecesi</span>
+					</section>
+					<footer className="relative">
+						<div
+							className={cn(
+								CONTAINER,
+								'flex items-center justify-between gap-4 py-6 text-sm text-ink-300',
+							)}
+						>
+							<Wordmark dark className="text-lg" />
+							<span>Canlı quiz gecesi</span>
+						</div>
+					</footer>
 				</div>
-			</footer>
+			</main>
 		</div>
 	);
 }
@@ -317,7 +342,7 @@ function FloatingBubbles() {
 function FormatCard({ type, children }: { type: keyof typeof FORMATS; children: React.ReactNode }) {
 	const { label, short, Icon } = FORMATS[type];
 	return (
-		<li className="flex flex-col gap-4 rounded-3xl border bg-white p-5">
+		<li className="reveal flex flex-col gap-4 rounded-3xl border bg-white p-5">
 			{children}
 			<div className="flex items-start gap-3">
 				<Icon className="mt-0.5 size-5 shrink-0 text-brand-ink" aria-hidden />
