@@ -19,7 +19,7 @@ export default async function PanelLayout({ children }: LayoutProps<'/host'>) {
 						<Link
 							href="/host"
 							aria-current="page"
-							className="flex h-11 items-center rounded-xl bg-teal-50 px-4 font-semibold text-teal-700"
+							className="flex h-11 items-center rounded-full bg-accent-50 px-4 font-semibold text-accent-800"
 						>
 							Quizlerim
 						</Link>
@@ -33,7 +33,7 @@ export default async function PanelLayout({ children }: LayoutProps<'/host'>) {
 					<form method="post" action="/api/auth/logout">
 						<button
 							type="submit"
-							className="flex h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-ink-700 hover:bg-ink-50"
+							className="flex h-11 items-center gap-2 rounded-full px-3 text-sm font-semibold text-ink-700 hover:bg-ink-50"
 						>
 							<LogOut className="size-4" />
 							<span className="sr-only sm:not-sr-only">Çıkış yap</span>

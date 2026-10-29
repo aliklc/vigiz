@@ -262,7 +262,7 @@ export function PlayerScreen({ code }: { code: string }) {
 						role="status"
 						className="mt-auto flex items-center justify-center gap-2 rounded-xl border bg-white p-4 font-semibold"
 					>
-						<Lock className="size-4 text-teal-700" aria-hidden />
+						<Lock className="size-4 text-accent-800" aria-hidden />
 						Cevabın kilitlendi, diğerleri bekleniyor
 					</p>
 				)}
@@ -313,7 +313,7 @@ export function PlayerScreen({ code }: { code: string }) {
 				</h1>
 				{finished && <Podium scores={state.scores} />}
 				{rank && (
-					<div className="flex items-center justify-between rounded-3xl border-2 border-teal-500 bg-white p-5 lg:p-6">
+					<div className="flex items-center justify-between rounded-3xl border-2 border-ink-900 bg-white p-5 lg:p-6">
 						<div>
 							<p className="eyebrow">Senin sonucun</p>
 							<p className="text-4xl font-bold tabular-nums">{rank}.</p>
@@ -329,7 +329,7 @@ export function PlayerScreen({ code }: { code: string }) {
 				{finished ? (
 					<Link
 						href="/"
-						className="mt-auto flex h-14 items-center justify-center rounded-xl bg-teal-500 px-6 text-lg font-bold text-white hover:bg-teal-600"
+						className="mt-auto flex h-14 items-center justify-center rounded-full bg-ink-900 px-6 text-lg font-bold text-accent-400 hover:bg-ink-700"
 					>
 						Ana sayfaya dön
 					</Link>
@@ -357,14 +357,14 @@ function QuestionHeader({
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex items-center justify-between gap-4">
-				<p className="font-semibold text-ink-600">
+				<p className="font-mono text-sm font-medium text-ink-600 uppercase">
 					Soru {state.game.currentIndex + 1} / {state.game.questionCount}
 				</p>
 				<Countdown remaining={remaining} limitMs={limitMs} paused={paused} />
 			</div>
 			<div className="h-1.5 overflow-hidden rounded-full bg-ink-200" aria-hidden>
 				<div
-					className="h-full rounded-full bg-teal-500 transition-[width] duration-300 ease-linear"
+					className="h-full rounded-full bg-accent-400 transition-[width] duration-300 ease-linear"
 					style={{ width: `${(Math.min(remaining, limitMs) / limitMs) * 100}%` }}
 				/>
 			</div>
@@ -372,7 +372,7 @@ function QuestionHeader({
 	);
 }
 
-// Doğru: teal-800 kart ve tik. Yanlış ya da cevapsız: beyaz kart ve çarpı.
+// Doğru: lacivert kart ve sarı tik. Yanlış ya da cevapsız: beyaz kart ve çarpı.
 function ResultCard({ right, title, sub }: { right: boolean; title: string; sub: string }) {
 	const Icon = right ? Check : X;
 	return (
@@ -380,20 +380,20 @@ function ResultCard({ right, title, sub }: { right: boolean; title: string; sub:
 			role="status"
 			className={cn(
 				'flex items-center gap-4 rounded-3xl border p-5 sm:p-6',
-				right ? 'border-teal-800 bg-teal-800 text-white' : 'bg-white',
+				right ? 'border-ink-900 bg-ink-900 text-cream' : 'bg-white',
 			)}
 		>
 			<span
 				className={cn(
 					'flex size-14 shrink-0 items-center justify-center rounded-full',
-					right ? 'bg-white/15' : 'bg-wrong-bg text-wrong',
+					right ? 'bg-accent-400 text-ink-900' : 'bg-wrong-bg text-wrong',
 				)}
 			>
 				<Icon className="size-8" strokeWidth={3} aria-hidden />
 			</span>
 			<div>
 				<p className="text-2xl font-semibold tracking-tight">{title}</p>
-				<p className={right ? 'text-white/85' : 'text-ink-600'}>{sub}</p>
+				<p className={right ? 'text-accent-200' : 'text-ink-600'}>{sub}</p>
 			</div>
 		</div>
 	);
@@ -420,7 +420,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
 		<span
 			aria-hidden
 			className={cn(
-				'flex shrink-0 items-center justify-center rounded-full bg-teal-800 font-semibold text-white',
+				'flex shrink-0 items-center justify-center rounded-full bg-ink-900 font-semibold text-accent-400',
 				className,
 			)}
 		>
@@ -447,7 +447,7 @@ export function PlayerList({
 						key={p.id}
 						className={cn(
 							'animate-in rounded-full border px-3.5 py-1.5 text-sm font-medium duration-300 fade-in zoom-in-90 sm:text-base',
-							p.id === meId ? 'border-teal-500 bg-teal-50 text-teal-800' : 'bg-white',
+							p.id === meId ? 'border-ink-900 bg-accent-50 text-ink-900' : 'bg-white',
 						)}
 					>
 						{p.name}
@@ -499,12 +499,12 @@ export function Centered({ children }: { children: React.ReactNode }) {
 	);
 }
 
-// Ekrandaki tek birincil aksiyon: teal-500 üzerinde beyaz yazı en az 18px/700 olmalı.
+// Ekrandaki tek birincil aksiyon: lacivert hap üzerinde sarı yazı.
 export function PrimaryButton({ className, ...props }: React.ComponentProps<'button'>) {
 	return (
 		<button
 			className={cn(
-				'h-14 rounded-xl bg-teal-500 px-6 text-lg font-bold text-white transition outline-none hover:bg-teal-600 focus-visible:ring-3 focus-visible:ring-teal-500/40 disabled:opacity-50',
+				'h-14 rounded-full bg-ink-900 px-6 text-lg font-bold text-accent-400 transition outline-none hover:bg-ink-700 focus-visible:ring-3 focus-visible:ring-ink-900/40 disabled:opacity-50',
 				className,
 			)}
 			{...props}
@@ -601,11 +601,11 @@ function BuzzerPlayerView({
 						Yanlış, −300. Bu soruda hakkın bitti.
 					</p>
 				) : myTurn === 0 ? (
-					<p className="rounded-3xl bg-teal-800 p-6 text-center text-2xl font-bold text-white">
+					<p className="rounded-3xl bg-ink-900 p-6 text-center text-2xl font-bold text-white">
 						Sıra sende! Cevabını söyle.
 					</p>
 				) : myTurn > 0 ? (
-					<p className="rounded-3xl border-2 border-teal-500 bg-teal-50 p-6 text-center text-2xl font-bold text-teal-800">
+					<p className="rounded-3xl border-2 border-ink-900 bg-accent-50 p-6 text-center text-2xl font-bold text-ink-900">
 						Sıran: {myTurn + 1}
 					</p>
 				) : (
@@ -613,7 +613,7 @@ function BuzzerPlayerView({
 						type="button"
 						onClick={onBuzz}
 						disabled={remaining <= 0}
-						className="h-24 w-full rounded-3xl bg-teal-500 text-3xl font-bold tracking-tight text-white transition outline-none hover:bg-teal-600 focus-visible:ring-4 focus-visible:ring-teal-500/40 active:translate-y-0.5 disabled:opacity-40"
+						className="h-24 w-full rounded-full bg-accent-400 text-3xl font-bold tracking-tight text-ink-900 transition outline-none hover:bg-accent-300 focus-visible:ring-4 focus-visible:ring-ink-900/40 active:translate-y-0.5 disabled:opacity-40"
 					>
 						{remaining > 0 ? 'BİLDİM!' : 'Süre doldu'}
 					</button>

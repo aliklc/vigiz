@@ -80,14 +80,14 @@ export function Countdown({
 					strokeDashoffset={circumference * (1 - remaining / limitMs)}
 					className={cn(
 						'fill-none transition-[stroke-dashoffset] duration-300 ease-linear',
-						low ? 'stroke-wrong' : 'stroke-teal-500',
+						low ? 'stroke-wrong' : 'stroke-accent-500',
 					)}
 				/>
 			</svg>
 			<span
 				aria-hidden
 				className={cn(
-					'absolute inset-0 flex items-center justify-center font-bold tabular-nums',
+					'absolute inset-0 flex items-center justify-center font-mono font-medium tabular-nums',
 					size === 'lg' ? 'text-4xl' : 'text-xl sm:text-2xl lg:text-4xl',
 					low && 'text-wrong',
 				)}
@@ -138,10 +138,10 @@ export function Choices({
 							size === 'host'
 								? 'min-h-20 text-xl lg:min-h-24 lg:text-2xl'
 								: 'min-h-16 text-lg',
-							open && onChoose && 'hover:border-teal-300 active:scale-[0.99]',
-							!reveal && chosen && 'border-teal-500 bg-teal-50',
+							open && onChoose && 'hover:border-accent-600 active:scale-[0.99]',
+							!reveal && chosen && 'border-ink-900 bg-accent-50',
 							!reveal && !chosen && 'border-ink-200',
-							correct && 'border-teal-500 bg-teal-50',
+							correct && 'border-ink-900 bg-accent-50',
 							wrongPick && 'border-wrong bg-wrong-bg',
 							reveal && !correct && !wrongPick && 'border-ink-200 text-ink-600',
 						)}
@@ -151,7 +151,7 @@ export function Choices({
 								'flex size-10 shrink-0 items-center justify-center rounded-xl text-base font-bold',
 								size === 'host' && 'lg:size-12 lg:text-lg',
 								correct || (!reveal && chosen)
-									? 'bg-teal-500 text-white'
+									? 'bg-accent-400 text-ink-900'
 									: wrongPick
 										? 'bg-wrong text-white'
 										: 'bg-ink-100 text-ink-700',
@@ -178,7 +178,7 @@ export function Choices({
 							<Mark
 								className={cn(
 									'size-6 shrink-0',
-									correct ? 'text-teal-700' : 'text-wrong',
+									correct ? 'text-accent-800' : 'text-wrong',
 								)}
 								strokeWidth={3}
 								aria-label={correct ? 'Doğru cevap' : 'Senin yanlış cevabın'}
@@ -189,7 +189,7 @@ export function Choices({
 								aria-hidden
 								className={cn(
 									'absolute bottom-0 left-0 h-1.5 transition-[width] duration-700 ease-out',
-									correct ? 'bg-teal-500' : 'bg-ink-300',
+									correct ? 'bg-accent-400' : 'bg-ink-300',
 								)}
 								style={{ width: `${(reveal.counts[i] / total) * 100}%` }}
 							/>
@@ -272,21 +272,21 @@ export function Scoreboard({
 						key={s.id}
 						className={cn(
 							'relative flex items-center gap-3 overflow-hidden rounded-xl border bg-white px-4 py-2.5 sm:text-lg lg:py-3',
-							s.id === meId && 'border-teal-500 font-semibold',
+							s.id === meId && 'border-ink-900 font-semibold',
 						)}
 					>
 						<span
 							aria-hidden
 							className={cn(
 								'absolute inset-y-0 left-0 transition-[width] duration-1000 ease-out',
-								s.id === meId ? 'bg-teal-100' : 'bg-teal-50',
+								s.id === meId ? 'bg-accent-100' : 'bg-accent-50',
 							)}
 							style={{ width: `${(Math.max(shown, 0) / max) * 100}%` }}
 						/>
 						<span
 							className={cn(
 								'relative w-7 text-right font-bold tabular-nums',
-								i < 3 ? 'text-teal-700' : 'text-ink-600',
+								i < 3 ? 'text-accent-800' : 'text-ink-600',
 							)}
 						>
 							{i + 1}
@@ -300,7 +300,7 @@ export function Scoreboard({
 									title={`${s.streak} soru üst üste doğru`}
 								>
 									<Flame
-										className="absolute size-8 fill-teal-700 stroke-teal-800"
+										className="absolute size-8 fill-accent-400 stroke-ink-900"
 										aria-hidden
 									/>
 									<span className="relative mt-2 text-xs font-extrabold text-white">
@@ -311,11 +311,11 @@ export function Scoreboard({
 							)}
 							{s.fastest && (
 								<span
-									className="flex shrink-0 items-center rounded-full bg-teal-50 p-1 text-teal-700"
+									className="flex shrink-0 items-center rounded-full bg-accent-50 p-1 text-accent-800"
 									title="Bu turun en hızlısı"
 								>
 									<Zap
-										className="size-4 fill-teal-500 stroke-teal-700"
+										className="size-4 fill-accent-400 stroke-ink-900"
 										aria-hidden
 									/>
 									<span className="sr-only">Bu turun en hızlısı</span>
@@ -326,7 +326,7 @@ export function Scoreboard({
 							<span
 								className={cn(
 									'relative animate-in rounded-full px-2 py-0.5 text-sm font-semibold text-white delay-300 duration-500 fill-mode-backwards fade-in slide-in-from-left-4',
-									gained > 0 ? 'bg-teal-700' : 'bg-wrong',
+									gained > 0 ? 'bg-ink-900' : 'bg-wrong',
 								)}
 							>
 								{gained > 0 ? `+${gained}` : `−${-gained}`}
@@ -336,7 +336,7 @@ export function Scoreboard({
 							<span
 								className={cn(
 									'relative flex items-center text-sm font-semibold tabular-nums',
-									moved > 0 ? 'text-teal-700' : 'text-ink-600',
+									moved > 0 ? 'text-accent-800' : 'text-ink-600',
 								)}
 								title={
 									moved > 0
@@ -389,9 +389,9 @@ export function Podium({ scores }: { scores: NonNullable<GameState['scores']> })
 	// 2. - 1. - 3. sırasıyla yan yana
 	const order = [1, 0, 2].filter(i => scores[i]);
 	const blocks = [
-		'h-36 bg-teal-800 text-white',
-		'h-24 bg-teal-400 text-ink-900',
-		'h-16 bg-teal-200 text-teal-900',
+		'h-36 bg-ink-900 text-white',
+		'h-24 bg-accent-400 text-ink-900',
+		'h-16 bg-accent-200 text-ink-900',
 	];
 	return (
 		<div className="flex items-end justify-center gap-2 sm:gap-4">

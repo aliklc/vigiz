@@ -6,10 +6,11 @@ import { cn } from '@/lib/utils';
 
 // Herkese açık sayfaların üst menüsü: logo solda, aksiyonlar sağda.
 // Sayfanın birincil aksiyonu içerikte; buradakiler ikincil.
-export async function SiteHeader() {
+export async function SiteHeader({ tone }: { tone?: 'accent' }) {
 	const host = await getHost();
 	return (
-		<header className="border-b bg-white">
+		// tone="accent": ana sayfada sarı hero'nun içinde, zeminsiz ve çizgisiz.
+		<header className={cn('relative', tone ? '' : 'border-b bg-white')}>
 			<div className={cn(CONTAINER, 'flex items-center justify-between gap-2 py-3')}>
 				<Link href="/" aria-label="Ana sayfa" className="py-2">
 					<Wordmark className="text-2xl" />
@@ -26,7 +27,10 @@ export async function SiteHeader() {
 							</Link>
 							<Link
 								href="/login"
-								className="flex h-11 items-center rounded-xl px-3 text-sm font-semibold text-teal-700 hover:bg-teal-50"
+								className={cn(
+									'flex h-11 items-center rounded-full px-3 text-sm font-semibold hover:underline',
+									tone ? 'text-ink-900' : 'text-accent-800',
+								)}
 							>
 								Giriş yap
 							</Link>
@@ -39,4 +43,4 @@ export async function SiteHeader() {
 }
 
 const SECONDARY =
-	'flex h-11 items-center rounded-xl border-[1.5px] border-ink-300 bg-white px-4 text-sm font-semibold text-ink-900 hover:bg-ink-50';
+	'flex h-11 items-center rounded-full border-[1.5px] border-ink-300 bg-white px-4 text-sm font-semibold text-ink-900 hover:bg-ink-50';

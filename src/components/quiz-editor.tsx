@@ -196,7 +196,7 @@ export function QuizEditor({
 						type="button"
 						disabled={pending}
 						onClick={() => save('ready')}
-						className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+						className="h-11 rounded-full bg-ink-900 px-5 text-sm font-semibold text-accent-400 hover:bg-ink-700 disabled:opacity-50"
 					>
 						Hazır olarak kaydet
 					</button>
@@ -266,7 +266,7 @@ export function QuizEditor({
 											className={cn(
 												'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm',
 												j === active
-													? 'bg-teal-50 text-teal-800'
+													? 'bg-accent-50 text-ink-900'
 													: 'hover:bg-ink-50',
 											)}
 										>
@@ -388,7 +388,7 @@ export function QuizEditor({
 												className={cn(
 													'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 py-3 font-semibold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 													q.correct_index === ci
-														? 'border-teal-500 bg-teal-50 text-teal-800'
+														? 'border-ink-900 bg-accent-50 text-ink-900'
 														: 'border-border hover:bg-muted',
 												)}
 											>
@@ -421,8 +421,8 @@ export function QuizEditor({
 													className={cn(
 														'relative flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl text-sm font-bold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 														q.correct_index === ci
-															? 'bg-teal-500 text-white'
-															: 'bg-ink-100 text-ink-700 hover:bg-teal-50',
+															? 'bg-accent-400 text-ink-900'
+															: 'bg-ink-100 text-ink-700 hover:bg-accent-50',
 													)}
 												>
 													<input
@@ -685,7 +685,7 @@ function ImageField({
 				/>
 				<label
 					className={cn(
-						'flex min-h-13 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-dashed border-ink-300 bg-ink-50 px-4 text-sm font-semibold text-ink-700 hover:border-teal-500 hover:bg-teal-50 has-focus-visible:ring-3 has-focus-visible:ring-ring',
+						'flex min-h-13 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-dashed border-ink-300 bg-ink-50 px-4 text-sm font-semibold text-ink-700 hover:border-ink-900 hover:bg-accent-50 has-focus-visible:ring-3 has-focus-visible:ring-ring',
 						uploading && 'pointer-events-none opacity-60',
 					)}
 				>

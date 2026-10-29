@@ -1,7 +1,16 @@
-import { Check, Clapperboard, Pause, QrCode, Trophy, UserRound, X } from 'lucide-react';
+import {
+	Check,
+	ChevronDown,
+	Clapperboard,
+	Pause,
+	QrCode,
+	Trophy,
+	UserRound,
+	X,
+} from 'lucide-react';
 import Link from 'next/link';
 
-import { CONTAINER, FIELD, LETTERS, Wordmark } from '@/components/brand';
+import { CONTAINER, FIELD, LETTERS, LogoMark, Wordmark } from '@/components/brand';
 import { FORMATS } from '@/components/formats';
 import { PrimaryButton } from '@/components/player-screen';
 import { SiteHeader } from '@/components/site-header';
@@ -18,24 +27,32 @@ export default async function Home() {
 	const host = await getHost();
 	return (
 		<div className="stage flex flex-col">
-			<SiteHeader />
-			<main className="flex flex-col">
+			<div className="snap-start relative flex min-h-dvh flex-col overflow-hidden bg-accent-400">
+				<FloatingBubbles />
+				<SiteHeader tone="accent" />
 				<section
 					className={cn(
 						CONTAINER,
-						'grid grid-cols-1 items-center gap-10 py-12 lg:grid-cols-2 lg:gap-16 lg:py-20',
+						'relative grid flex-1 grid-cols-1 content-center items-center gap-8 py-10 lg:grid-cols-[1.15fr_1fr] lg:gap-12',
 					)}
 				>
-					<div className="flex flex-col gap-5">
-						<p className="eyebrow">Aylık quiz gecesi</p>
-						<h1 className="text-4xl leading-tight font-bold sm:text-5xl">
-							Kodu gir, adını yaz, oyna
+					<div>
+						<h1 className="hero-mark text-[clamp(5.5rem,19vw,15rem)] leading-[0.85] font-extrabold tracking-[-0.06em] text-ink-900">
+							vigiz
 						</h1>
-						<p className="max-w-md text-lg text-ink-600">
-							Host'un ekranındaki 6 karakterlik kodla odaya katıl. Hesap gerekmez.
+						<p className="mt-5 font-mono text-xs tracking-[0.12em] text-ink-900 uppercase sm:text-sm">
+							Aylık quiz gecesi
 						</p>
-						<form action="/play" className="flex max-w-md flex-col gap-2">
-							<label htmlFor="code" className="text-sm font-medium">
+					</div>
+					<div className="flex flex-col gap-6">
+						<p className="text-2xl leading-tight font-semibold tracking-tight text-ink-900 sm:text-3xl">
+							Kodu gir, adını yaz, oyna. Hesap gerekmez.
+						</p>
+						<form action="/play" className="flex flex-col gap-2">
+							<label
+								htmlFor="code"
+								className="font-mono text-xs tracking-[0.12em] text-ink-900 uppercase"
+							>
 								Oda kodu
 							</label>
 							<div className="flex gap-2">
@@ -49,24 +66,33 @@ export default async function Home() {
 									required
 									className={cn(
 										FIELD,
-										'min-w-0 flex-1 text-xl font-semibold tracking-[0.2em] uppercase placeholder:tracking-[0.2em] placeholder:text-ink-300',
+										'min-w-0 flex-1 rounded-full border-ink-900 px-5 font-mono text-xl tracking-[0.2em] uppercase placeholder:tracking-[0.2em] placeholder:text-ink-300',
 									)}
 								/>
-								<PrimaryButton type="submit" className="shrink-0 px-5">
+								<PrimaryButton type="submit" className="shrink-0 px-6">
 									Katıl
 								</PrimaryButton>
 							</div>
-							<p className="flex items-center gap-2 text-sm text-ink-600">
-								<QrCode className="size-4" aria-hidden />
+							<p className="flex items-center gap-2 text-sm text-ink-900">
+								<QrCode className="size-4 shrink-0" aria-hidden />
 								Ya da host'un ekranındaki QR kodu telefonunla okut.
 							</p>
 						</form>
 					</div>
-					<SampleQuestion />
 				</section>
+				<a
+					href="#how"
+					aria-label="Nasıl oynanır bölümüne in"
+					className="relative mx-auto mb-6 flex size-11 items-center justify-center rounded-full text-ink-900 hover:bg-ink-900/10"
+				>
+					<ChevronDown className="size-6" aria-hidden />
+				</a>
+			</div>
 
-				<div className="bg-white">
-					<div className={cn(CONTAINER, 'flex flex-col gap-16 py-16')}>
+			<main className="flex flex-col">
+				{/* 2. ekran: nasıl oynanır + formatlar */}
+				<div className="snap-start flex min-h-dvh items-center bg-white">
+					<div className={cn(CONTAINER, 'flex flex-col gap-14 py-16')}>
 						<section aria-labelledby="how" className="flex flex-col gap-6">
 							<h2 id="how">Nasıl oynanır</h2>
 							<ol className="grid gap-3 sm:grid-cols-3">
@@ -75,7 +101,7 @@ export default async function Home() {
 										key={title}
 										className="flex items-center gap-4 rounded-3xl border bg-white p-5"
 									>
-										<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-teal-700">
+										<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent-50 text-accent-800">
 											<Icon className="size-6" aria-hidden />
 										</span>
 										<span>
@@ -106,7 +132,7 @@ export default async function Home() {
 													className={cn(
 														'flex h-8 items-center gap-2 rounded-lg border px-2 text-xs font-bold',
 														i === 1
-															? 'border-teal-500 bg-teal-50 text-teal-700'
+															? 'border-ink-900 bg-accent-50 text-accent-800'
 															: 'text-brand-ink',
 													)}
 												>
@@ -118,7 +144,7 @@ export default async function Home() {
 								</FormatCard>
 								<FormatCard type="truefalse">
 									<div className="grid grid-cols-2 gap-1.5">
-										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border border-teal-500 bg-teal-50 text-teal-700">
+										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border border-ink-900 bg-accent-50 text-accent-800">
 											<Check className="size-6" strokeWidth={3} />
 										</span>
 										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border text-muted-foreground">
@@ -141,7 +167,7 @@ export default async function Home() {
 												fill="#0b7b93"
 											/>
 										</svg>
-										<span className="absolute right-1.5 bottom-1.5 rounded-md bg-teal-700 px-2 py-0.5 text-[10px] font-bold text-white">
+										<span className="absolute right-1.5 bottom-1.5 rounded-md bg-ink-900 px-2 py-0.5 text-[10px] font-bold text-white">
 											BİLDİM!
 										</span>
 									</div>
@@ -178,36 +204,42 @@ export default async function Home() {
 					</div>
 				</div>
 
-				<section className="bg-teal-50">
+				<section className="snap-start relative flex min-h-[calc(100dvh-4.5rem)] items-center overflow-hidden bg-ink-900 text-cream">
+					{/* Buzz'daki gibi arkada dev ve bulanık logo; sadece dekor */}
+					<p
+						aria-hidden
+						className="pointer-events-none absolute -bottom-[0.3em] left-1/2 -translate-x-1/2 text-[clamp(8rem,30vw,26rem)] leading-none font-extrabold tracking-[-0.06em] text-accent-400 opacity-10 blur-md select-none"
+					>
+						vigiz
+					</p>
 					<div
 						className={cn(
 							CONTAINER,
-							'flex flex-col items-start gap-5 py-12 sm:flex-row sm:items-center sm:justify-between',
+							'relative flex flex-col items-start gap-8 py-16 sm:flex-row sm:items-center sm:justify-between',
 						)}
 					>
-						<div className="flex flex-col gap-1">
-							<h2>Kendi quizini hazırla</h2>
-							<p className="text-ink-700">
+						<div className="flex flex-col gap-2">
+							<h2 className="text-4xl leading-tight sm:text-5xl">
+								Kendi quizini hazırla
+							</h2>
+							<p className="text-lg text-ink-200">
 								Sorularını yaz, oda aç, herkesi davet et.
 							</p>
 						</div>
-						<div className="flex flex-wrap gap-2">
-							{host ? (
-								<Link href="/host" className={SECONDARY}>
-									Panele git
+						<div className="flex flex-wrap items-center gap-2">
+							<Link
+								href={host ? '/host' : '/register'}
+								className="flex h-12 items-center rounded-full bg-accent-400 px-6 font-semibold text-ink-900 hover:bg-accent-300"
+							>
+								{host ? 'Panele git' : 'Hesap oluştur'}
+							</Link>
+							{!host && (
+								<Link
+									href="/login"
+									className="flex h-12 items-center rounded-full px-4 font-semibold text-cream underline-offset-4 hover:underline"
+								>
+									Giriş yap
 								</Link>
-							) : (
-								<>
-									<Link href="/register" className={SECONDARY}>
-										Hesap oluştur
-									</Link>
-									<Link
-										href="/login"
-										className="flex h-12 items-center rounded-xl px-4 font-semibold text-teal-700 hover:underline"
-									>
-										Giriş yap
-									</Link>
-								</>
 							)}
 						</div>
 					</div>
@@ -228,50 +260,56 @@ export default async function Home() {
 	);
 }
 
-const SECONDARY =
-	'flex h-12 items-center rounded-xl border-[1.5px] border-ink-300 bg-white px-5 font-semibold text-ink-900 hover:bg-ink-50';
+// Hero'da yavaşça süzülen soru balonları (dekor). Konum, boyut ve hız sabit: sunucu ve
+// istemci aynı çizer. Mobilde ilk onu görünür.
+const BUBBLES = [
+	{ x: '6%', y: '16%', size: 28, dur: 26, dark: true },
+	{ x: '44%', y: '9%', size: 22, dur: 34, dark: false },
+	{ x: '88%', y: '20%', size: 34, dur: 30, dark: true },
+	{ x: '72%', y: '80%', size: 24, dur: 38, dark: false },
+	{ x: '16%', y: '86%', size: 20, dur: 32, dark: false },
+	{ x: '58%', y: '62%', size: 18, dur: 28, dark: true },
+	{ x: '93%', y: '58%', size: 22, dur: 36, dark: false },
+	{ x: '30%', y: '34%', size: 16, dur: 40, dark: true },
+	{ x: '80%', y: '42%', size: 26, dur: 33, dark: true },
+	{ x: '3%', y: '52%', size: 22, dur: 29, dark: false },
+	{ x: '24%', y: '64%', size: 30, dur: 35, dark: true },
+	{ x: '64%', y: '28%', size: 20, dur: 31, dark: false },
+	{ x: '50%', y: '88%', size: 26, dur: 27, dark: true },
+	{ x: '36%', y: '74%', size: 14, dur: 39, dark: false },
+	{ x: '97%', y: '88%', size: 18, dur: 37, dark: true },
+	{ x: '12%', y: '38%', size: 16, dur: 41, dark: false },
+	{ x: '70%', y: '6%', size: 16, dur: 30, dark: true },
+	{ x: '86%', y: '70%', size: 14, dur: 34, dark: false },
+	{ x: '48%', y: '46%', size: 14, dur: 42, dark: false },
+	{ x: '20%', y: '8%', size: 18, dur: 28, dark: true },
+];
 
-// Hero'nun sağındaki örnek soru: oyuncunun telefonda ne göreceğini gösterir (tıklanamaz).
-function SampleQuestion() {
+function FloatingBubbles() {
 	return (
-		<div
-			aria-hidden
-			className="flex w-full flex-col gap-4 rounded-3xl border bg-white p-6 lg:max-w-md lg:justify-self-end"
-		>
-			<div className="flex items-center justify-between">
-				<span className="text-sm font-semibold text-ink-600">Soru 3 / 10</span>
-				<span className="flex size-10 items-center justify-center rounded-full border-4 border-teal-500 text-sm font-bold">
-					14
+		<div aria-hidden className="pointer-events-none absolute inset-0">
+			{BUBBLES.map((b, i) => (
+				<span
+					key={`${b.x}${b.y}`}
+					className={cn(
+						'bubble absolute',
+						i >= 10 && 'hidden sm:block',
+						b.dark ? 'opacity-25' : 'opacity-80',
+					)}
+					style={{
+						left: b.x,
+						top: b.y,
+						animationDuration: `${b.dur}s`,
+						animationDelay: `-${i * 3}s`,
+					}}
+				>
+					<LogoMark
+						bubble={b.dark ? '#181430' : '#ffffff'}
+						mark={b.dark ? '#ffc83d' : '#181430'}
+						size={b.size}
+					/>
 				</span>
-			</div>
-			<div className="h-1.5 rounded-full bg-ink-200">
-				<div className="h-full w-3/5 rounded-full bg-teal-500" />
-			</div>
-			<p className="eyebrow">Çoktan seçmeli</p>
-			<p className="text-xl font-semibold tracking-tight">
-				Güneş sistemindeki en büyük gezegen hangisi?
-			</p>
-			<div className="flex flex-col gap-2">
-				{['Satürn', 'Jüpiter', 'Neptün'].map((c, i) => (
-					<span
-						key={c}
-						className={cn(
-							'flex items-center gap-3 rounded-2xl border-2 p-2.5 font-medium',
-							i === 1 ? 'border-teal-500 bg-teal-50' : 'border-ink-200',
-						)}
-					>
-						<span
-							className={cn(
-								'flex size-8 items-center justify-center rounded-lg text-sm font-bold',
-								i === 1 ? 'bg-teal-500 text-white' : 'bg-ink-100 text-ink-700',
-							)}
-						>
-							{LETTERS[i]}
-						</span>
-						{c}
-					</span>
-				))}
-			</div>
+			))}
 		</div>
 	);
 }

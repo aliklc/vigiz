@@ -3,14 +3,13 @@ import { cn } from '@/lib/utils';
 // Şıklar renk yerine harfle ayrılır (tek vurgu renkli sade dil).
 export const LETTERS = 'ABCDE';
 
-// Ortak input stili (sunucu bileşenlerinde de kullanılır; 'use client' dosyasında olmamalı).
 // Menü ve sayfa içeriği aynı yatay kabı kullanır; kenarlar her genişlikte hizalı kalır.
 export const CONTAINER = 'mx-auto w-full max-w-6xl px-4 sm:px-8';
 
+// Ortak input stili (sunucu bileşenlerinde de kullanılır; 'use client' dosyasında olmamalı).
 export const FIELD =
-	'h-14 rounded-xl border-[1.5px] border-ink-300 bg-white px-4 text-base text-ink outline-none placeholder:text-ink-500 focus-visible:border-teal-500 focus-visible:ring-3 focus-visible:ring-teal-500/20';
+	'h-14 rounded-xl border-[1.5px] border-ink-300 bg-white px-4 text-base text-ink outline-none placeholder:text-ink-500 focus-visible:border-ink-900 focus-visible:ring-3 focus-visible:ring-ink-900/20';
 
-// Kelime markası: küçük harf, sıkı aralık, teal nokta.
 // Logo işareti: konuşma balonu içinde soru işareti. Uygulama ikonu da aynı çizimi kullanır.
 export function LogoMark({
 	bubble,
@@ -39,7 +38,7 @@ export function LogoMark({
 	);
 }
 
-// Logo: balon işareti + kalın "vigiz". Koyu zeminde yazı beyaz, balon açık teal.
+// Logo: balon işareti + kalın "vigiz". Koyu zeminde yazı krem, balon sarı.
 export function Wordmark({ className, dark }: { className?: string; dark?: boolean }) {
 	return (
 		<span
@@ -47,13 +46,13 @@ export function Wordmark({ className, dark }: { className?: string; dark?: boole
 			aria-label="vigiz"
 			className={cn(
 				'inline-flex items-center gap-[0.22em] leading-none font-extrabold tracking-[-0.05em]',
-				dark ? 'text-white' : 'text-ink-900',
+				dark ? 'text-cream' : 'text-ink-900',
 				className,
 			)}
 		>
 			<LogoMark
-				bubble={dark ? '#5fcee2' : '#161b1e'}
-				mark={dark ? '#161b1e' : '#049cb9'}
+				bubble={dark ? '#ffc83d' : '#181430'}
+				mark={dark ? '#181430' : '#ffc83d'}
 				className="size-[1.15em] shrink-0"
 			/>
 			<span aria-hidden className="pb-[0.12em]">
@@ -76,7 +75,7 @@ export function CodeTiles({ code, size = 'lg' }: { code: string; size?: 'md' | '
 					key={i}
 					aria-hidden
 					className={cn(
-						'flex items-center justify-center rounded-xl border border-brand/30 bg-brand-tint font-bold text-brand-ink',
+						'flex items-center justify-center rounded-xl border border-accent-600/40 bg-accent-50 font-mono font-medium text-ink-900',
 						size === 'lg'
 							? 'h-16 w-12 text-4xl sm:h-28 sm:w-20 sm:text-7xl'
 							: 'h-10 w-8 text-2xl',

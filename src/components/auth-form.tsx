@@ -35,7 +35,7 @@ export function AuthForm({
 					{notice && (
 						<p
 							role="status"
-							className="rounded-xl bg-teal-50 p-3 text-sm text-teal-700"
+							className="rounded-xl bg-accent-50 p-3 text-sm text-accent-800"
 						>
 							{notice}
 						</p>
@@ -88,7 +88,7 @@ export function AuthForm({
 						{isLogin ? 'Hesabın yok mu? ' : 'Zaten hesabın var mı? '}
 						<Link
 							href={isLogin ? '/register' : '/login'}
-							className="font-semibold text-teal-700 underline-offset-4 hover:underline"
+							className="font-semibold text-accent-800 underline-offset-4 hover:underline"
 						>
 							{isLogin ? 'Hesap oluştur' : 'Giriş yap'}
 						</Link>

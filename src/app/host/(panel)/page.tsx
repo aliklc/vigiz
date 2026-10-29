@@ -48,7 +48,7 @@ export default async function HostHome() {
 				</div>
 				<Link
 					href="/host/quizzes/new"
-					className="flex h-14 items-center gap-2 rounded-xl bg-teal-500 px-6 text-lg font-bold text-white hover:bg-teal-600"
+					className="flex h-14 items-center gap-2 rounded-full bg-ink-900 px-6 text-lg font-bold text-accent-400 hover:bg-ink-700"
 				>
 					<Plus className="size-5" aria-hidden /> Yeni quiz
 				</Link>
@@ -74,7 +74,7 @@ export default async function HostHome() {
 						<Link
 							key={g.code}
 							href={`/host/games/${g.code}`}
-							className="flex flex-wrap items-center gap-4 rounded-3xl border bg-white p-4 hover:border-teal-500"
+							className="flex flex-wrap items-center gap-4 rounded-3xl border bg-white p-4 hover:border-ink-900"
 						>
 							<CodeTiles code={g.code} size="md" />
 							<div className="min-w-0 flex-1">
@@ -83,7 +83,7 @@ export default async function HostHome() {
 									{PHASE_LABEL[g.phase]}, {g.players[0]?.count ?? 0} oyuncu
 								</p>
 							</div>
-							<span className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white">
+							<span className="rounded-xl bg-ink-900 px-4 py-2 text-sm font-semibold text-white">
 								Ekrana dön
 							</span>
 						</Link>
@@ -125,7 +125,7 @@ export default async function HostHome() {
 							>
 								<span
 									aria-hidden
-									className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-xl font-semibold text-teal-700 sm:size-14"
+									className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent-50 text-xl font-semibold text-accent-800 sm:size-14"
 								>
 									{(q.title || '?')[0].toLocaleUpperCase('tr')}
 								</span>
@@ -204,7 +204,7 @@ export default async function HostHome() {
 }
 
 const BADGES = {
-	ready: ['Hazır', 'bg-teal-50 text-teal-700'],
+	ready: ['Hazır', 'bg-accent-50 text-accent-800'],
 	draft: ['Taslak', 'bg-ink-100 text-ink-700'],
 	played: ['Oynandı', 'bg-ink-50 text-ink-600 border'],
 } as const;
