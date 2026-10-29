@@ -27,19 +27,12 @@ const STEPS = [
 export default async function Home() {
 	const host = await getHost();
 	return (
-		// Zemin rengi kaydırdıkça bölüme göre yumuşakça değişir (ScrollEffects, data-bg).
-		<div
-			data-home
-			className="flex min-h-dvh flex-col transition-[background-color] duration-700 ease-out"
-			style={{ backgroundColor: '#ffc83d' }}
-		>
+		// Renkler kaydırdıkça akar: bölüm zeminleri ve aradaki bant dikey gradient (JS yok).
+		<div className="flex min-h-dvh flex-col bg-shell text-cocoa">
 			<ScrollEffects />
-			<div
-				data-bg="#ffc83d"
-				className="relative flex min-h-dvh snap-start flex-col overflow-hidden"
-			>
+			<div className="relative flex min-h-dvh snap-start flex-col overflow-hidden bg-[linear-gradient(to_bottom,var(--color-coral)_62%,var(--color-peach))]">
 				<FloatingBubbles />
-				<SiteHeader tone="accent" />
+				<SiteHeader tone="hero" />
 				<section
 					className={cn(
 						CONTAINER,
@@ -47,23 +40,23 @@ export default async function Home() {
 					)}
 				>
 					<div>
-						<h1 className="hero-mark text-[clamp(5.5rem,17vw,12rem)] leading-[0.85] font-extrabold tracking-[-0.06em] text-ink-900">
+						<h1 className="hero-mark text-[clamp(5.5rem,17vw,12rem)] leading-[0.85] font-extrabold tracking-[-0.06em] text-cocoa">
 							vigiz
 						</h1>
-						<p className="mt-5 font-mono text-xs tracking-[0.12em] text-ink-900 uppercase sm:text-sm">
+						<p className="mt-5 font-mono text-xs tracking-[0.12em] text-cocoa uppercase sm:text-sm">
 							Aylık quiz gecesi
 						</p>
 						<div
 							className="reveal mt-10 flex max-w-lg flex-col gap-6"
 							style={{ transitionDelay: '500ms' }}
 						>
-							<p className="text-2xl leading-tight font-semibold tracking-tight text-ink-900 sm:text-3xl">
+							<p className="text-2xl leading-tight font-semibold tracking-tight text-cocoa sm:text-3xl">
 								Kodu gir, adını yaz, oyna. Hesap gerekmez.
 							</p>
 							<form action="/play" className="flex flex-col gap-2">
 								<label
 									htmlFor="code"
-									className="font-mono text-xs tracking-[0.12em] text-ink-900 uppercase"
+									className="font-mono text-xs tracking-[0.12em] text-cocoa uppercase"
 								>
 									Oda kodu
 								</label>
@@ -78,14 +71,17 @@ export default async function Home() {
 										required
 										className={cn(
 											FIELD,
-											'min-w-0 flex-1 rounded-full border-ink-900 px-5 font-mono text-xl tracking-[0.2em] uppercase placeholder:tracking-[0.2em] placeholder:text-ink-300',
+											'min-w-0 flex-1 rounded-full border-cocoa px-5 font-mono text-xl tracking-[0.2em] uppercase placeholder:tracking-[0.2em] placeholder:text-ink-300',
 										)}
 									/>
-									<PrimaryButton type="submit" className="shrink-0 px-6">
+									<PrimaryButton
+										type="submit"
+										className="shrink-0 bg-cocoa px-6 text-peach hover:bg-cocoa/90"
+									>
 										Katıl
 									</PrimaryButton>
 								</div>
-								<p className="flex items-center gap-2 text-sm text-ink-900">
+								<p className="flex items-center gap-2 text-sm text-cocoa">
 									<QrCode className="size-4 shrink-0" aria-hidden />
 									Ya da host'un ekranındaki QR kodu telefonunla okut.
 								</p>
@@ -97,7 +93,7 @@ export default async function Home() {
 				<a
 					href="#how"
 					aria-label="Nasıl oynanır bölümüne in"
-					className="relative mx-auto mb-6 flex size-11 items-center justify-center rounded-full text-ink-900 hover:bg-ink-900/10"
+					className="relative mx-auto mb-6 flex size-11 items-center justify-center rounded-full text-cocoa hover:bg-cocoa/10"
 				>
 					<ChevronDown className="size-6" aria-hidden />
 				</a>
@@ -105,7 +101,7 @@ export default async function Home() {
 
 			<main className="flex flex-col">
 				{/* 2. ekran: nasıl oynanır + formatlar */}
-				<div data-bg="#ffffff" className="flex min-h-dvh snap-start items-center">
+				<div className="flex min-h-dvh snap-start items-center bg-[linear-gradient(to_bottom,var(--color-peach),var(--color-shell)_22%)]">
 					<div className={cn(CONTAINER, 'flex flex-col gap-14 py-16')}>
 						<section aria-labelledby="how" className="flex flex-col gap-6">
 							<h2 id="how" className="reveal">
@@ -115,17 +111,17 @@ export default async function Home() {
 								{STEPS.map(({ Icon, title, text }, i) => (
 									<li
 										key={title}
-										className="reveal flex items-center gap-4 rounded-3xl border bg-white p-5"
+										className="reveal flex items-center gap-4 rounded-3xl border border-cocoa/10 bg-white p-5"
 										style={{ transitionDelay: `${(i + 1) * 120}ms` }}
 									>
-										<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent-50 text-accent-800">
+										<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-peach/50 text-forest">
 											<Icon className="size-6" aria-hidden />
 										</span>
 										<span>
 											<span className="block font-semibold">
 												{i + 1}. {title}
 											</span>
-											<span className="block text-sm text-ink-600">
+											<span className="block text-sm text-cocoa/75">
 												{text}
 											</span>
 										</span>
@@ -149,8 +145,8 @@ export default async function Home() {
 													className={cn(
 														'flex h-8 items-center gap-2 rounded-lg border px-2 text-xs font-bold',
 														i === 1
-															? 'border-ink-900 bg-accent-50 text-accent-800'
-															: 'text-brand-ink',
+															? 'border-forest bg-forest/10 text-forest'
+															: 'text-cocoa/70',
 													)}
 												>
 													{l}
@@ -161,56 +157,56 @@ export default async function Home() {
 								</FormatCard>
 								<FormatCard type="truefalse">
 									<div className="grid grid-cols-2 gap-1.5">
-										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border border-ink-900 bg-accent-50 text-accent-800">
+										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border border-forest bg-forest/10 text-forest">
 											<Check className="size-6" strokeWidth={3} />
 										</span>
-										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border text-muted-foreground">
+										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border text-cocoa/60">
 											<X className="size-6" strokeWidth={3} />
 										</span>
 									</div>
 								</FormatCard>
 								<FormatCard type="buzzer">
-									<div className="relative h-[4.25rem] overflow-hidden rounded-lg bg-brand-tint">
+									<div className="relative h-[4.25rem] overflow-hidden rounded-lg bg-peach/50">
 										{/* Gerçekten bulanık küçük bir örnek: ne olduğunu açıklamadan gösterir */}
 										<svg
 											viewBox="0 0 120 60"
 											className="size-full scale-110 blur-[6px]"
 											aria-hidden
 										>
-											<rect width="120" height="60" fill="#9fd8e6" />
-											<circle cx="92" cy="16" r="9" fill="#f5b400" />
+											<rect width="120" height="60" fill="#ffd7c7" />
+											<circle cx="92" cy="16" r="9" fill="#ff7a59" />
 											<path
 												d="M0 60 L30 26 L52 44 L74 18 L120 60Z"
-												fill="#0b7b93"
+												fill="#1f5c4a"
 											/>
 										</svg>
-										<span className="absolute right-1.5 bottom-1.5 rounded-md bg-ink-900 px-2 py-0.5 text-[10px] font-bold text-white">
+										<span className="absolute right-1.5 bottom-1.5 rounded-md bg-cocoa px-2 py-0.5 text-[10px] font-bold text-shell">
 											BİLDİM!
 										</span>
 									</div>
 								</FormatCard>
 								{/* Video ayrı bir format değil, şıklı sorulara ek; kartı elle */}
-								<li className="reveal flex flex-col gap-4 rounded-3xl border bg-white p-5">
-									<div className="relative flex h-[4.25rem] flex-col justify-end overflow-hidden rounded-lg bg-ink p-2">
+								<li className="reveal flex flex-col gap-4 rounded-3xl border border-cocoa/10 bg-white p-5">
+									<div className="relative flex h-[4.25rem] flex-col justify-end overflow-hidden rounded-lg bg-cocoa p-2">
 										<Pause
 											className="absolute top-1/2 left-1/2 size-6 -translate-1/2 text-white"
 											fill="currentColor"
 											aria-hidden
 										/>
 										<span className="relative h-1 rounded-full bg-white/25">
-											<span className="absolute inset-y-0 left-0 w-3/5 rounded-full bg-brand" />
+											<span className="absolute inset-y-0 left-0 w-3/5 rounded-full bg-coral" />
 										</span>
 									</div>
 									<div className="flex items-start gap-3">
 										<Clapperboard
-											className="mt-0.5 size-5 shrink-0 text-brand-ink"
+											className="mt-0.5 size-5 shrink-0 text-forest"
 											aria-hidden
 										/>
 										<span>
 											<span className="block font-semibold">
 												Sonra ne oldu?
 											</span>
-											<span className="block text-sm text-muted-foreground">
+											<span className="block text-sm text-cocoa/75">
 												Video en kritik anda durur, tahmin et
 											</span>
 										</span>
@@ -221,15 +217,18 @@ export default async function Home() {
 					</div>
 				</div>
 
-				{/* 3. ekran: kapanış + footer, tek lacivert ekran */}
+				{/* Krem → kahve geçiş bandı: renk kaydırdıkça akar, üstünde içerik yok */}
 				<div
-					data-bg="#181430"
-					className="relative flex min-h-dvh snap-start flex-col overflow-hidden text-cream"
-				>
+					aria-hidden
+					className="h-[35vh] bg-[linear-gradient(to_bottom,var(--color-shell),var(--color-cocoa))]"
+				/>
+
+				{/* 3. ekran: kapanış + footer, tek koyu ekran */}
+				<div className="relative flex min-h-dvh snap-start flex-col overflow-hidden bg-cocoa text-shell">
 					{/* Buzz'daki gibi arkada dev ve bulanık logo; sayfanın sonunda ekranın ortasında */}
 					<p
 						aria-hidden
-						className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[clamp(8rem,30vw,26rem)] leading-none font-extrabold tracking-[-0.06em] text-accent-400 opacity-10 blur-md select-none"
+						className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[clamp(8rem,30vw,26rem)] leading-none font-extrabold tracking-[-0.06em] text-coral opacity-15 blur-md select-none"
 					>
 						vigiz
 					</p>
@@ -244,7 +243,7 @@ export default async function Home() {
 								<h2 className="text-4xl leading-tight sm:text-5xl">
 									Kendi quizini hazırla
 								</h2>
-								<p className="text-lg text-ink-200">
+								<p className="text-lg text-peach">
 									Sorularını yaz, oda aç, herkesi davet et.
 								</p>
 							</div>
@@ -254,14 +253,14 @@ export default async function Home() {
 							>
 								<Link
 									href={host ? '/host' : '/register'}
-									className="flex h-12 items-center rounded-full bg-accent-400 px-6 font-semibold text-ink-900 hover:bg-accent-300"
+									className="flex h-12 items-center rounded-full bg-coral px-6 font-semibold text-cocoa hover:bg-peach"
 								>
 									{host ? 'Panele git' : 'Hesap oluştur'}
 								</Link>
 								{!host && (
 									<Link
 										href="/login"
-										className="flex h-12 items-center rounded-full px-4 font-semibold text-cream underline-offset-4 hover:underline"
+										className="flex h-12 items-center rounded-full px-4 font-semibold text-shell underline-offset-4 hover:underline"
 									>
 										Giriş yap
 									</Link>
@@ -273,10 +272,13 @@ export default async function Home() {
 						<div
 							className={cn(
 								CONTAINER,
-								'flex items-center justify-between gap-4 py-6 text-sm text-ink-300',
+								'flex items-center justify-between gap-4 py-6 text-sm text-peach',
 							)}
 						>
-							<Wordmark dark className="text-lg" />
+							<Wordmark
+								className="text-lg text-shell"
+								colors={{ bubble: '#ff7a59', mark: '#3b1e1a' }}
+							/>
 							<span>Canlı quiz gecesi</span>
 						</div>
 					</footer>
@@ -330,8 +332,8 @@ function FloatingBubbles() {
 					}}
 				>
 					<LogoMark
-						bubble={b.dark ? '#181430' : '#ffffff'}
-						mark={b.dark ? '#ffc83d' : '#181430'}
+						bubble={b.dark ? '#3b1e1a' : '#fff8f2'}
+						mark={b.dark ? '#ff7a59' : '#3b1e1a'}
 						size={b.size}
 					/>
 				</span>
@@ -343,13 +345,13 @@ function FloatingBubbles() {
 function FormatCard({ type, children }: { type: keyof typeof FORMATS; children: React.ReactNode }) {
 	const { label, short, Icon } = FORMATS[type];
 	return (
-		<li className="reveal flex flex-col gap-4 rounded-3xl border bg-white p-5">
+		<li className="reveal flex flex-col gap-4 rounded-3xl border border-cocoa/10 bg-white p-5">
 			{children}
 			<div className="flex items-start gap-3">
-				<Icon className="mt-0.5 size-5 shrink-0 text-brand-ink" aria-hidden />
+				<Icon className="mt-0.5 size-5 shrink-0 text-forest" aria-hidden />
 				<span>
 					<span className="block font-semibold">{label}</span>
-					<span className="block text-sm text-muted-foreground">{short}</span>
+					<span className="block text-sm text-cocoa/75">{short}</span>
 				</span>
 			</div>
 		</li>
@@ -361,21 +363,21 @@ function SampleQuestion() {
 	return (
 		<div
 			aria-hidden
-			className="reveal flex w-full flex-col gap-4 rounded-3xl border-2 border-ink-900 bg-white p-6 lg:max-w-md lg:justify-self-end"
+			className="reveal flex w-full flex-col gap-4 rounded-3xl border-2 border-cocoa bg-white p-6 lg:max-w-md lg:justify-self-end"
 			style={{ transitionDelay: '800ms' }}
 		>
 			<div className="flex items-center justify-between">
-				<span className="font-mono text-sm font-medium text-ink-600 uppercase">
+				<span className="font-mono text-sm font-medium text-cocoa/70 uppercase">
 					Soru 3 / 10
 				</span>
-				<span className="flex size-10 items-center justify-center rounded-full border-4 border-accent-400 font-mono text-sm font-medium">
+				<span className="flex size-10 items-center justify-center rounded-full border-4 border-coral font-mono text-sm font-medium">
 					14
 				</span>
 			</div>
-			<div className="h-1.5 rounded-full bg-ink-200">
-				<div className="h-full w-3/5 rounded-full bg-accent-400" />
+			<div className="h-1.5 rounded-full bg-peach/60">
+				<div className="h-full w-3/5 rounded-full bg-coral" />
 			</div>
-			<p className="eyebrow">Çoktan seçmeli</p>
+			<p className="eyebrow text-forest">Çoktan seçmeli</p>
 			<p className="text-xl font-semibold tracking-tight">
 				Güneş sistemindeki en büyük gezegen hangisi?
 			</p>
@@ -385,13 +387,13 @@ function SampleQuestion() {
 						key={c}
 						className={cn(
 							'flex items-center gap-3 rounded-2xl border-2 p-2.5 font-medium',
-							i === 1 ? 'border-ink-900 bg-accent-50' : 'border-ink-200',
+							i === 1 ? 'border-cocoa bg-peach/40' : 'border-cocoa/15',
 						)}
 					>
 						<span
 							className={cn(
 								'flex size-8 items-center justify-center rounded-lg text-sm font-bold',
-								i === 1 ? 'bg-accent-400 text-ink-900' : 'bg-ink-100 text-ink-700',
+								i === 1 ? 'bg-coral text-cocoa' : 'bg-shell text-cocoa/80',
 							)}
 						>
 							{LETTERS[i]}

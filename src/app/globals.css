@@ -32,6 +32,12 @@
 	--color-ink-700: #3a3550;
 	--color-ink-900: #181430;
 	--color-cream: #f5f4ef;
+	/* Sadece ana sayfa: mercan + krem paleti */
+	--color-coral: #ff7a59;
+	--color-peach: #ffd7c7;
+	--color-shell: #fff8f2;
+	--color-cocoa: #3b1e1a;
+	--color-forest: #1f5c4a;
 	--color-wrong: #b4400f;
 	--color-wrong-bg: #fdf0e9;
 	--color-brand: var(--color-accent-400);

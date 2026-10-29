@@ -39,7 +39,16 @@ export function LogoMark({
 }
 
 // Logo: balon işareti + kalın "vigiz". Koyu zeminde yazı krem, balon sarı.
-export function Wordmark({ className, dark }: { className?: string; dark?: boolean }) {
+export function Wordmark({
+	className,
+	dark,
+	colors,
+}: {
+	className?: string;
+	dark?: boolean;
+	// Ana sayfanın kendi paleti için balon ve "?" rengi; yazı rengi className'den
+	colors?: { bubble: string; mark: string };
+}) {
 	return (
 		<span
 			role="img"
@@ -51,8 +60,8 @@ export function Wordmark({ className, dark }: { className?: string; dark?: boole
 			)}
 		>
 			<LogoMark
-				bubble={dark ? '#ffc83d' : '#181430'}
-				mark={dark ? '#181430' : '#ffc83d'}
+				bubble={colors?.bubble ?? (dark ? '#ffc83d' : '#181430')}
+				mark={colors?.mark ?? (dark ? '#181430' : '#ffc83d')}
 				className="size-[1.15em] shrink-0"
 			/>
 			<span aria-hidden className="pb-[0.12em]">
