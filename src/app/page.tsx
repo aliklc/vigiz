@@ -43,55 +43,56 @@ export default async function Home() {
 				<section
 					className={cn(
 						CONTAINER,
-						'relative grid flex-1 grid-cols-1 content-center items-center gap-8 py-10 lg:grid-cols-[1.15fr_1fr] lg:gap-12',
+						'relative grid flex-1 grid-cols-1 content-center items-center gap-10 py-10 lg:grid-cols-[1.2fr_1fr] lg:gap-12',
 					)}
 				>
 					<div>
-						<h1 className="hero-mark text-[clamp(5.5rem,19vw,15rem)] leading-[0.85] font-extrabold tracking-[-0.06em] text-ink-900">
+						<h1 className="hero-mark text-[clamp(5.5rem,17vw,12rem)] leading-[0.85] font-extrabold tracking-[-0.06em] text-ink-900">
 							vigiz
 						</h1>
 						<p className="mt-5 font-mono text-xs tracking-[0.12em] text-ink-900 uppercase sm:text-sm">
 							Aylık quiz gecesi
 						</p>
-					</div>
-					<div
-						className="reveal flex flex-col gap-6"
-						style={{ transitionDelay: '500ms' }}
-					>
-						<p className="text-2xl leading-tight font-semibold tracking-tight text-ink-900 sm:text-3xl">
-							Kodu gir, adını yaz, oyna. Hesap gerekmez.
-						</p>
-						<form action="/play" className="flex flex-col gap-2">
-							<label
-								htmlFor="code"
-								className="font-mono text-xs tracking-[0.12em] text-ink-900 uppercase"
-							>
-								Oda kodu
-							</label>
-							<div className="flex gap-2">
-								<input
-									id="code"
-									name="code"
-									placeholder="3SZ6PU"
-									autoComplete="off"
-									autoCapitalize="characters"
-									maxLength={6}
-									required
-									className={cn(
-										FIELD,
-										'min-w-0 flex-1 rounded-full border-ink-900 px-5 font-mono text-xl tracking-[0.2em] uppercase placeholder:tracking-[0.2em] placeholder:text-ink-300',
-									)}
-								/>
-								<PrimaryButton type="submit" className="shrink-0 px-6">
-									Katıl
-								</PrimaryButton>
-							</div>
-							<p className="flex items-center gap-2 text-sm text-ink-900">
-								<QrCode className="size-4 shrink-0" aria-hidden />
-								Ya da host'un ekranındaki QR kodu telefonunla okut.
+						<div
+							className="reveal mt-10 flex max-w-lg flex-col gap-6"
+							style={{ transitionDelay: '500ms' }}
+						>
+							<p className="text-2xl leading-tight font-semibold tracking-tight text-ink-900 sm:text-3xl">
+								Kodu gir, adını yaz, oyna. Hesap gerekmez.
 							</p>
-						</form>
+							<form action="/play" className="flex flex-col gap-2">
+								<label
+									htmlFor="code"
+									className="font-mono text-xs tracking-[0.12em] text-ink-900 uppercase"
+								>
+									Oda kodu
+								</label>
+								<div className="flex gap-2">
+									<input
+										id="code"
+										name="code"
+										placeholder="3SZ6PU"
+										autoComplete="off"
+										autoCapitalize="characters"
+										maxLength={6}
+										required
+										className={cn(
+											FIELD,
+											'min-w-0 flex-1 rounded-full border-ink-900 px-5 font-mono text-xl tracking-[0.2em] uppercase placeholder:tracking-[0.2em] placeholder:text-ink-300',
+										)}
+									/>
+									<PrimaryButton type="submit" className="shrink-0 px-6">
+										Katıl
+									</PrimaryButton>
+								</div>
+								<p className="flex items-center gap-2 text-sm text-ink-900">
+									<QrCode className="size-4 shrink-0" aria-hidden />
+									Ya da host'un ekranındaki QR kodu telefonunla okut.
+								</p>
+							</form>
+						</div>
 					</div>
+					<SampleQuestion />
 				</section>
 				<a
 					href="#how"
@@ -352,5 +353,53 @@ function FormatCard({ type, children }: { type: keyof typeof FORMATS; children: 
 				</span>
 			</div>
 		</li>
+	);
+}
+
+// Hero'nun sağındaki örnek soru: oyuncunun telefonda ne göreceğini gösterir (tıklanamaz).
+function SampleQuestion() {
+	return (
+		<div
+			aria-hidden
+			className="reveal flex w-full flex-col gap-4 rounded-3xl border-2 border-ink-900 bg-white p-6 lg:max-w-md lg:justify-self-end"
+			style={{ transitionDelay: '800ms' }}
+		>
+			<div className="flex items-center justify-between">
+				<span className="font-mono text-sm font-medium text-ink-600 uppercase">
+					Soru 3 / 10
+				</span>
+				<span className="flex size-10 items-center justify-center rounded-full border-4 border-accent-400 font-mono text-sm font-medium">
+					14
+				</span>
+			</div>
+			<div className="h-1.5 rounded-full bg-ink-200">
+				<div className="h-full w-3/5 rounded-full bg-accent-400" />
+			</div>
+			<p className="eyebrow">Çoktan seçmeli</p>
+			<p className="text-xl font-semibold tracking-tight">
+				Güneş sistemindeki en büyük gezegen hangisi?
+			</p>
+			<div className="flex flex-col gap-2">
+				{['Satürn', 'Jüpiter', 'Neptün'].map((c, i) => (
+					<span
+						key={c}
+						className={cn(
+							'flex items-center gap-3 rounded-2xl border-2 p-2.5 font-medium',
+							i === 1 ? 'border-ink-900 bg-accent-50' : 'border-ink-200',
+						)}
+					>
+						<span
+							className={cn(
+								'flex size-8 items-center justify-center rounded-lg text-sm font-bold',
+								i === 1 ? 'bg-accent-400 text-ink-900' : 'bg-ink-100 text-ink-700',
+							)}
+						>
+							{LETTERS[i]}
+						</span>
+						{c}
+					</span>
+				))}
+			</div>
+		</div>
 	);
 }
