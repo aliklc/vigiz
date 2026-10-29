@@ -12,8 +12,10 @@ import {
 	Countdown,
 	Podium,
 	QuestionImage,
+	type QuestionVideo,
 	Scoreboard,
 	useRemaining,
+	VideoClip,
 } from '@/components/game-views';
 import { Centered, PlayerList, PrimaryButton } from '@/components/player-screen';
 import { useGame } from '@/hooks/use-game';
@@ -23,7 +25,14 @@ import { cn } from '@/lib/utils';
 
 type Action = 'start' | 'next' | 'pause' | 'resume' | 'end' | 'reveal' | 'judge';
 
-export function HostScreen({ code }: { code: string }) {
+export function HostScreen({
+	code,
+	videos,
+}: {
+	code: string;
+	// soru sırası → YouTube klibi (sadece host'a; oyuncu state'inde video yok)
+	videos: Record<number, QuestionVideo>;
+}) {
 	const { state, notFound, refresh, offset } = useGame(code, null);
 	const remaining = useRemaining(state?.question ?? null, offset, !!state?.reveal, refresh);
 	const [origin, setOrigin] = useState('');
@@ -185,7 +194,17 @@ export function HostScreen({ code }: { code: string }) {
 											/>
 										)}
 									</div>
-									<QuestionImage src={question.imageUrl} className="max-h-72" />
+									{videos[game.currentIndex] ? (
+										<VideoClip
+											video={videos[game.currentIndex]}
+											reveal={!!reveal}
+										/>
+									) : (
+										<QuestionImage
+											src={question.imageUrl}
+											className="max-h-72"
+										/>
+									)}
 									<Choices state={state} open={false} size="host" />
 									{reveal?.explanation && (
 										<p className="rounded-2xl border bg-white p-5 text-lg text-muted-foreground lg:text-xl">
@@ -292,6 +311,7 @@ export function HostScreen({ code }: { code: string }) {
 								)}
 								{game.phase === 'question' &&
 									question?.type !== 'buzzer' &&
+									remaining <= game.timeLimitSec * 1000 &&
 									(question?.pausedAt
 										? control('Devam et', 'resume')
 										: control('Duraklat', 'pause'))}

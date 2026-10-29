@@ -25,6 +25,10 @@ export async function POST(request: Request, ctx: RouteContext<'/api/games/[code
 	if (remainingMs < -GRACE_MS) {
 		return NextResponse.json({ error: 'Süre doldu' }, { status: 409 });
 	}
+	// Videolu soru: süre klip bitince başlar, o ana kadar cevap alınmaz.
+	if (remainingMs > game.limitMs) {
+		return NextResponse.json({ error: 'Video bitmeden cevap verilemez' }, { status: 409 });
+	}
 
 	const [question, playerId] = await Promise.all([
 		getCurrentQuestion(game),

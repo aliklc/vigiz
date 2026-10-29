@@ -50,6 +50,8 @@ export function Countdown({
 }) {
 	const r = 44;
 	const circumference = 2 * Math.PI * r;
+	// Videolu soruda klip oynarken süre henüz başlamadı: tam halka.
+	remaining = Math.min(remaining, limitMs);
 	const low = remaining <= 5000;
 	return (
 		<div
@@ -186,6 +188,29 @@ export function Choices({
 				);
 			})}
 		</div>
+	);
+}
+
+export type QuestionVideo = { id: string; start: number; cut: number; end: number | null };
+
+// Host ekranında YouTube klibi: soruda start → cut, cevapta cut → end. Telefonlarda gösterilmez.
+export function VideoClip({ video, reveal }: { video: QuestionVideo; reveal: boolean }) {
+	const params = new URLSearchParams({
+		start: String(reveal ? video.cut : video.start),
+		autoplay: '1',
+		rel: '0',
+		...(reveal ? video.end && { end: String(video.end) } : { end: String(video.cut) }),
+	});
+	const src = `https://www.youtube-nocookie.com/embed/${video.id}?${params}`;
+	return (
+		<iframe
+			key={src}
+			src={src}
+			title="Video"
+			allow="autoplay; encrypted-media; picture-in-picture"
+			allowFullScreen
+			className="mx-auto aspect-video w-full max-w-3xl rounded-2xl bg-ink"
+		/>
 	);
 }
 

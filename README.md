@@ -74,6 +74,12 @@ Her çalıştırma yeni bir quiz ekler. Soru formatı `type` ile seçilir:
 - `truefalse` (şıklar otomatik `Doğru`/`Yanlış`, `correct_index` 0 = Doğru).
 - `buzzer` (bulanık görsel: `image_url` ve `answer_text` zorunlu, şık yok).
 
+`choice` ve `truefalse` sorularına isteğe bağlı YouTube klibi eklenebilir ("Sonra ne oldu?"):
+- `video_id` (11 karakter), `video_start`, `video_cut`, `video_end` alanları, saniye cinsinden.
+- Soruda klip `video_start` → `video_cut` arası oynar. Süre klip bitince başlar.
+- Cevap ekranında video `video_cut`'tan `video_end`'e kadar oynar. `video_end` yoksa sonuna kadar oynar.
+- Klip sadece host ekranında oynar. Video ID'si oyuncuya gönderilmez.
+
 Dosya formatı (`image_url` ve `explanation` isteğe bağlı, 2–5 şık, `correct_index` 0'dan başlar):
 
 ```json

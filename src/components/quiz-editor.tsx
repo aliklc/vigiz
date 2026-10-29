@@ -12,11 +12,14 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
+	formatTime,
+	parseTime,
 	QUESTION_TYPES,
 	type QuestionInput,
 	type QuestionType,
 	type QuizInput,
 	TRUE_FALSE,
+	youtubeId,
 } from '@/lib/quiz';
 import { cn } from '@/lib/utils';
 
@@ -26,6 +29,7 @@ const emptyQuestion = (type: QuestionType = 'choice'): QuestionInput => ({
 	image_url: null,
 	explanation: null,
 	answer_text: null,
+	video_id: null,
 	choices: type === 'choice' ? ['', ''] : type === 'truefalse' ? TRUE_FALSE : [],
 	correct_index: 0,
 });
@@ -372,6 +376,7 @@ export function QuizEditor({
 								value={q.image_url}
 								onChange={image_url => setQuestion(i, { image_url })}
 							/>
+							<VideoField question={q} onChange={patch => setQuestion(i, patch)} />
 						</>
 					)}
 					<Input
@@ -433,6 +438,89 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 
 function IconButton({ label, ...props }: React.ComponentProps<typeof Button> & { label: string }) {
 	return <Button variant="ghost" size="icon-sm" aria-label={label} title={label} {...props} />;
+}
+
+// YouTube "Sonra ne oldu?": soruda Başla → Dur arası oynar, cevapta Dur → Bitir.
+// Metin alanları yerel: "1:" gibi yarım yazılan süre geçersiz diye silinmesin.
+function VideoField({
+	question,
+	onChange,
+}: {
+	question: QuestionInput;
+	onChange: (patch: Partial<QuestionInput>) => void;
+}) {
+	const [link, setLink] = useState(
+		question.video_id ? `https://youtu.be/${question.video_id}` : '',
+	);
+	const [times, setTimes] = useState(() => ({
+		video_start: formatTime(question.video_start ?? 0),
+		video_cut: question.video_cut != null ? formatTime(question.video_cut) : '',
+		video_end: question.video_end != null ? formatTime(question.video_end) : '',
+	}));
+	const id = question.video_id;
+	const invalidLink = !!link.trim() && !youtubeId(link);
+
+	function setTime(key: keyof typeof times, text: string) {
+		setTimes(t => ({ ...t, [key]: text }));
+		onChange({ [key]: text.trim() ? parseTime(text) : null });
+	}
+
+	return (
+		<div className="flex flex-col gap-2">
+			<Field label="YouTube videosu (isteğe bağlı)">
+				<Input
+					placeholder="https://youtu.be/…"
+					value={link}
+					aria-invalid={invalidLink}
+					onChange={e => {
+						setLink(e.target.value);
+						const next = youtubeId(e.target.value);
+						onChange({
+							video_id: next,
+							video_start: next ? (parseTime(times.video_start) ?? 0) : null,
+							video_cut: next ? parseTime(times.video_cut) : null,
+							video_end: next ? parseTime(times.video_end) : null,
+						});
+					}}
+				/>
+			</Field>
+			{invalidLink && (
+				<p className="text-sm text-destructive">Geçerli bir YouTube linki değil</p>
+			)}
+			{id && (
+				<>
+					<div className="grid grid-cols-3 gap-2">
+						{(
+							[
+								['video_start', 'Başla'],
+								['video_cut', 'Dur (soru)'],
+								['video_end', 'Bitir (cevap)'],
+							] as const
+						).map(([key, label]) => (
+							<Field key={key} label={label}>
+								<Input
+									inputMode="numeric"
+									placeholder={key === 'video_end' ? 'sonuna kadar' : 'dk:sn'}
+									value={times[key]}
+									onChange={e => setTime(key, e.target.value)}
+								/>
+							</Field>
+						))}
+					</div>
+					<p className="text-xs text-muted-foreground">
+						Soruda video Başla → Dur arası oynar, süre video durunca başlar. Cevap
+						ekranında Dur'dan devam eder. Video sadece host ekranında oynar.
+					</p>
+					<iframe
+						src={`https://www.youtube-nocookie.com/embed/${id}?start=${question.video_start ?? 0}&rel=0`}
+						title="Video önizleme"
+						allow="encrypted-media; picture-in-picture"
+						className="aspect-video w-full max-w-md rounded-xl bg-ink"
+					/>
+				</>
+			)}
+		</div>
+	);
 }
 
 // Görsel: URL yapıştır ya da dosya yükle (Supabase Storage, /api/host/uploads).

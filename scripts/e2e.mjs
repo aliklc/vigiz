@@ -726,6 +726,73 @@ try {
 	await db.from('games').delete().eq('id', g2.id);
 	log('sıra bonusu: 3 doğru cevapta +200 / +100 / +0, yanlış cevap 0');
 
+	// YouTube "Sonra ne oldu?": süre klip bitince başlar, video ID'si oyuncuya gitmez.
+	const vdQuiz = {
+		title: 'VD',
+		topic: 'T',
+		author_name: 'Bot',
+		quiz_date: '2026-10-28',
+		time_limit_sec: 15,
+		status: 'ready',
+		questions: [
+			{
+				text: 'Sonra ne oldu?',
+				image_url: null,
+				explanation: null,
+				choices: ['düştü', 'uçtu'],
+				correct_index: 0,
+				video_id: 'dQw4w9WgXcQ',
+				video_start: 10,
+				video_cut: 13,
+			},
+		],
+	};
+	const vdSave = body =>
+		fetch(`${B}/api/host/quizzes`, {
+			method: 'POST',
+			headers: { cookie },
+			body: JSON.stringify(body),
+		});
+	const badVideo = { ...vdQuiz.questions[0], video_cut: 5 };
+	assert.equal((await vdSave({ ...vdQuiz, questions: [badVideo] })).status, 400);
+	const { id: vdId } = await (await vdSave(vdQuiz)).json();
+	const vdRoom = await fetch(`${B}/api/host/games`, {
+		method: 'POST',
+		headers: { cookie },
+		body: new URLSearchParams({ quizId: vdId }),
+		redirect: 'manual',
+	});
+	const vdCode = vdRoom.headers.get('location').split('/').pop();
+	const vdTok = (await (await post(`/api/games/${vdCode}/join`, { name: 'Vee' })).json()).token;
+	const hostPage = await (
+		await fetch(`${B}/host/games/${vdCode}`, { headers: { cookie } })
+	).text();
+	assert.ok(hostPage.includes('dQw4w9WgXcQ'), 'host ekranı klibi almalı');
+	await fetch(`${B}/api/host/games/${vdCode}/action`, {
+		method: 'POST',
+		headers: { cookie },
+		body: '{"action":"start"}',
+	});
+	const vdRaw = await (await fetch(`${B}/api/games/${vdCode}/state?token=${vdTok}`)).text();
+	assert.ok(!vdRaw.includes('dQw4w9WgXcQ'), "video ID'si oyuncu state'inde olmamalı");
+	const vd = JSON.parse(vdRaw);
+	assert.ok(vd.question.deadline - vd.serverNow > 15_000, 'süre klip bitince başlamalı');
+	const vdAnswer = () => post(`/api/games/${vdCode}/answer`, { token: vdTok, choiceIndex: 0 });
+	assert.equal((await vdAnswer()).status, 409, 'klip oynarken cevap alınmamalı');
+	await sleep(vd.question.deadline - 15_000 - vd.serverNow + 300);
+	assert.equal((await vdAnswer()).status, 200);
+	const vdDone = await (await fetch(`${B}/api/games/${vdCode}/state?token=${vdTok}`)).json();
+	assert.ok(vdDone.reveal.myPoints > 900, `tam süre puanı: ${vdDone.reveal.myPoints}`);
+	const lockedVideo = { ...vdQuiz.questions[0], video_cut: 20 };
+	const vdPut = await fetch(`${B}/api/host/quizzes/${vdId}`, {
+		method: 'PUT',
+		headers: { cookie },
+		body: JSON.stringify({ ...vdQuiz, questions: [lockedVideo] }),
+	});
+	assert.equal(vdPut.status, 409, 'oynanmış quizde video değiştirilemez');
+	await db.from('quizzes').delete().eq('id', vdId);
+	log('video: klip sırasında cevap yok, süre klipten sonra başlar, ID oyuncuya gitmez, kilitli');
+
 	console.log('\nTÜM KONTROLLER GEÇTİ');
 } finally {
 	// Kullanıcı silinince quizleri, oyunları, oyuncuları ve cevapları cascade ile gider.

@@ -235,6 +235,10 @@ export type Database = {
 					quiz_id: string;
 					text: string;
 					type: string;
+					video_cut: number | null;
+					video_end: number | null;
+					video_id: string | null;
+					video_start: number | null;
 				};
 				ComputedFields: never;
 				Insert: {
@@ -248,6 +252,10 @@ export type Database = {
 					quiz_id: string;
 					text: string;
 					type?: string;
+					video_cut?: number | null;
+					video_end?: number | null;
+					video_id?: string | null;
+					video_start?: number | null;
 				};
 				Update: {
 					answer_text?: string | null;
@@ -260,6 +268,10 @@ export type Database = {
 					quiz_id?: string;
 					text?: string;
 					type?: string;
+					video_cut?: number | null;
+					video_end?: number | null;
+					video_id?: string | null;
+					video_start?: number | null;
 				};
 				Relationships: [
 					{

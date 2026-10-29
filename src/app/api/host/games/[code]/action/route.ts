@@ -12,14 +12,28 @@ const actionSchema = z.object({
 	verdict: z.enum(['correct', 'wrong']).optional(), // judge: buzzer sırasındakine karar
 });
 
-function nextUpdate(game: Game, action: z.infer<typeof actionSchema>['action']) {
+async function nextUpdate(
+	game: Game,
+	action: z.infer<typeof actionSchema>['action'],
+): Promise<TablesUpdate<'games'> | null> {
 	const now = new Date().toISOString();
-	const nextQuestion = (index: number): TablesUpdate<'games'> => ({
-		phase: 'question',
-		current_index: index,
-		question_started_at: now,
-		paused_at: null,
-	});
+	// Videolu soruda süre klip bitince başlar: başlangıç klip süresi kadar ileri alınır.
+	const nextQuestion = async (index: number): Promise<TablesUpdate<'games'>> => {
+		const { data: q } = await db
+			.from('questions')
+			.select('video_id, video_start, video_cut')
+			.eq('quiz_id', game.quiz_id)
+			.order('position')
+			.range(index, index)
+			.maybeSingle();
+		const clipMs = q?.video_id ? ((q.video_cut ?? 0) - (q.video_start ?? 0)) * 1000 : 0;
+		return {
+			phase: 'question',
+			current_index: index,
+			question_started_at: new Date(Date.parse(now) + clipMs).toISOString(),
+			paused_at: null,
+		};
+	};
 
 	if (action === 'start' && game.phase === 'lobby' && game.questionCount > 0) {
 		return nextQuestion(0);
@@ -64,7 +78,7 @@ export async function POST(request: Request, ctx: RouteContext<'/api/host/games/
 		return judge(game, parsed.data.verdict);
 	}
 
-	const update = nextUpdate(game, parsed.data.action);
+	const update = await nextUpdate(game, parsed.data.action);
 	if (!update) return NextResponse.json({ ok: true, changed: false });
 
 	// Okuduğumuz duruma göre koşullu update: çift tıklama iki kez ilerletmez.

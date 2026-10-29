@@ -11,7 +11,7 @@ export default async function EditQuizPage({ params }: PageProps<'/host/quizzes/
 	const { data: quiz } = await db
 		.from('quizzes')
 		.select(
-			'title, topic, author_name, quiz_date, time_limit_sec, status, questions(type, text, image_url, explanation, answer_text, choices, correct_index, position)',
+			'title, topic, author_name, quiz_date, time_limit_sec, status, questions(type, text, image_url, explanation, answer_text, choices, correct_index, position, video_id, video_start, video_cut, video_end)',
 		)
 		.eq('id', id)
 		.eq('owner_id', host.id)

@@ -223,6 +223,7 @@ export function PlayerScreen({ code }: { code: string }) {
 
 	if (phase === 'question' && question) {
 		const paused = !!question.pausedAt;
+		const watching = remaining > state.game.timeLimitSec * 1000;
 		const chosen = question.myChoice;
 		if (chosen != null) {
 			return (
@@ -258,17 +259,17 @@ export function PlayerScreen({ code }: { code: string }) {
 					/>
 				</div>
 				<QuestionImage src={question.imageUrl} className="max-h-48 sm:max-h-72" />
-				{paused && (
+				{(paused || watching) && (
 					<p
 						role="status"
 						className="rounded-xl border bg-white p-3 text-center font-medium"
 					>
-						Oyun duraklatıldı
+						{paused ? 'Oyun duraklatıldı' : 'Ekrana bak, video oynuyor…'}
 					</p>
 				)}
 				<Choices
 					state={{ ...state, question }}
-					open={!paused && remaining > 0}
+					open={!paused && !watching && remaining > 0}
 					onChoose={answer}
 					size="player"
 				/>
