@@ -441,12 +441,26 @@ export function BuzzerImage({
 	className?: string;
 }) {
 	const url = src ?? `/api/games/${code}/image?l=${level ?? 0}`;
+	// Yeni seviye arka planda yüklenip hazır olunca değiştirilir: arada boş kare görünmez.
+	const [shown, setShown] = useState(url);
+	useEffect(() => {
+		let live = true;
+		const img = new Image();
+		img.onload = () => live && setShown(url);
+		img.src = url;
+		return () => {
+			live = false;
+		};
+	}, [url]);
 	return (
 		// biome-ignore lint/performance/noImgElement: sunucunun ürettiği görsel, next/image gerekmez
 		<img
-			src={url}
+			src={shown}
 			alt={src ? 'Görsel' : 'Bulanık görsel'}
-			className={cn('mx-auto w-full rounded-2xl bg-muted object-contain', className)}
+			className={cn(
+				'mx-auto w-full rounded-2xl bg-muted object-contain transition-[filter] duration-500',
+				className,
+			)}
 		/>
 	);
 }

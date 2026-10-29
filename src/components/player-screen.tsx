@@ -19,6 +19,7 @@ import {
 } from '@/components/game-views';
 import { useGame } from '@/hooks/use-game';
 import type { GameState } from '@/lib/game-types';
+import { blurLevel } from '@/lib/scoring';
 import { cn } from '@/lib/utils';
 
 const storageKey = (code: string) => `vigiz:token:${code}`;
@@ -572,19 +573,17 @@ function BuzzerPlayerView({
 	}
 
 	const answering = pending[0];
+	// Seviye istemcide kalan süreden hesaplanır (state sadece olaylarda yenilenir, yoksa görsel
+	// ilk halinde kalırdı). Sunucu görseli yine kendi saatine göre verir.
+	const level = blurLevel(remaining, state.game.timeLimitSec * 1000);
 	return (
 		<Stage className="gap-4">
 			<QuestionHeader state={state} remaining={remaining} paused={!!question.pausedAt} />
 			<h2>{question.text || 'Bu ne?'}</h2>
 			<div className="relative">
-				<BuzzerImage
-					code={code}
-					level={question.blurLevel}
-					src={null}
-					className="max-h-[45vh]"
-				/>
+				<BuzzerImage code={code} level={level} src={null} className="max-h-[45vh]" />
 				<span className="absolute top-3 left-3 rounded-full bg-white px-3 py-1 text-sm font-semibold">
-					Netlik %{(question.blurLevel ?? 0) * 10}
+					Netlik %{level * 10}
 				</span>
 			</div>
 			<p className="text-ink-600">

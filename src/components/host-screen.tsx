@@ -23,6 +23,7 @@ import { Centered, PlayerList, PrimaryButton } from '@/components/player-screen'
 import { useGame } from '@/hooks/use-game';
 import type { GameState } from '@/lib/game-types';
 import type { QuestionType } from '@/lib/quiz';
+import { blurLevel } from '@/lib/scoring';
 import { cn } from '@/lib/utils';
 
 type Action = 'start' | 'next' | 'pause' | 'resume' | 'end' | 'reveal' | 'judge' | 'cancel';
@@ -521,7 +522,7 @@ function BuzzerHostView({
 				</div>
 				<BuzzerImage
 					code={code}
-					level={question.blurLevel}
+					level={blurLevel(remaining, game.timeLimitSec * 1000)}
 					src={reveal ? question.imageUrl : null}
 					className="max-h-[55vh]"
 				/>
