@@ -329,7 +329,7 @@ export function PlayerScreen({ code }: { code: string }) {
 				{finished ? (
 					<Link
 						href="/"
-						className="mt-auto flex h-14 items-center justify-center rounded-full bg-ink-900 px-6 text-lg font-bold text-accent-400 hover:bg-ink-700"
+						className="mt-auto flex h-14 items-center justify-center rounded-full bg-ink-900 px-6 text-lg font-bold text-white hover:bg-ink-700"
 					>
 						Ana sayfaya dön
 					</Link>
@@ -420,7 +420,7 @@ export function Avatar({ name, className }: { name: string; className?: string }
 		<span
 			aria-hidden
 			className={cn(
-				'flex shrink-0 items-center justify-center rounded-full bg-ink-900 font-semibold text-accent-400',
+				'flex shrink-0 items-center justify-center rounded-full bg-ink-900 font-semibold text-white',
 				className,
 			)}
 		>
@@ -499,12 +499,12 @@ export function Centered({ children }: { children: React.ReactNode }) {
 	);
 }
 
-// Ekrandaki tek birincil aksiyon: lacivert hap üzerinde mercan yazı.
+// Ekrandaki tek birincil aksiyon: koyu hap üzerinde beyaz yazı.
 export function PrimaryButton({ className, ...props }: React.ComponentProps<'button'>) {
 	return (
 		<button
 			className={cn(
-				'h-14 rounded-full bg-ink-900 px-6 text-lg font-bold text-accent-400 transition outline-none hover:bg-ink-700 focus-visible:ring-3 focus-visible:ring-ink-900/40 disabled:opacity-50',
+				'h-14 rounded-full bg-ink-900 px-6 text-lg font-bold text-white transition outline-none hover:bg-ink-700 focus-visible:ring-3 focus-visible:ring-ink-900/40 disabled:opacity-50',
 				className,
 			)}
 			{...props}

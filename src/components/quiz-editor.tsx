@@ -196,7 +196,7 @@ export function QuizEditor({
 						type="button"
 						disabled={pending}
 						onClick={() => save('ready')}
-						className="h-11 rounded-full bg-ink-900 px-5 text-sm font-semibold text-accent-400 hover:bg-ink-700 disabled:opacity-50"
+						className="h-11 rounded-full bg-ink-900 px-5 text-sm font-semibold text-white hover:bg-ink-700 disabled:opacity-50"
 					>
 						Hazır olarak kaydet
 					</button>

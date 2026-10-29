@@ -181,7 +181,7 @@ export function HostScreen({
 									<p className="font-mono text-sm tracking-[0.08em] text-accent-200 uppercase">
 										Oda kodu
 									</p>
-									<p className="font-mono text-6xl font-medium tracking-[0.08em] text-accent-400 lg:text-7xl">
+									<p className="font-mono text-6xl font-medium tracking-[0.08em] text-white lg:text-7xl">
 										{code}
 									</p>
 									{origin && (

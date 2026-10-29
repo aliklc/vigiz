@@ -48,7 +48,7 @@ export default async function HostHome() {
 				</div>
 				<Link
 					href="/host/quizzes/new"
-					className="flex h-14 items-center gap-2 rounded-full bg-ink-900 px-6 text-lg font-bold text-accent-400 hover:bg-ink-700"
+					className="flex h-14 items-center gap-2 rounded-full bg-ink-900 px-6 text-lg font-bold text-white hover:bg-ink-700"
 				>
 					<Plus className="size-5" aria-hidden /> Yeni quiz
 				</Link>

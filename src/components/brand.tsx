@@ -14,16 +14,26 @@ export const FIELD =
 export function LogoMark({
 	bubble,
 	mark,
+	outline,
 	className,
 	size,
 }: {
 	bubble: string;
 	mark: string;
+	// Açık zeminde krem balon kaybolmasın diye ince kontur
+	outline?: string;
 	className?: string;
 	size?: number; // piksel; verilmezse className belirler
 }) {
 	return (
 		<svg viewBox="0 0 48 48" aria-hidden className={className} width={size} height={size}>
+			{outline && (
+				// Konturlu şekiller altta, dolgulu olanlar üstte: balon ile kuyruğun birleşimi tek parça görünür
+				<g fill={outline} stroke={outline} strokeWidth="4" strokeLinejoin="round">
+					<ellipse cx="25.5" cy="21" rx="20.5" ry="18.5" />
+					<path d="M10 31 L6 45 L19 38.5 Z" />
+				</g>
+			)}
 			<ellipse cx="25.5" cy="21" rx="20.5" ry="18.5" fill={bubble} />
 			<path d="M10 31 L6 45 L19 38.5 Z" fill={bubble} />
 			<path
@@ -38,7 +48,8 @@ export function LogoMark({
 	);
 }
 
-// Logo: balon işareti + kalın "vigiz". Koyu zeminde yazı krem, balon mercan.
+// Logo: krem balon içinde mercan soru işareti + kalın "vigiz". Açık zeminde balonun yazı
+// renginde ince konturu olur.
 export function Wordmark({
 	className,
 	dark,
@@ -46,8 +57,8 @@ export function Wordmark({
 }: {
 	className?: string;
 	dark?: boolean;
-	// Ana sayfanın kendi paleti için balon ve "?" rengi; yazı rengi className'den
-	colors?: { bubble: string; mark: string };
+	// Konturu kapatmak ya da renkleri değiştirmek için (ör. mercan zemin); yazı rengi className'den
+	colors?: { bubble: string; mark: string; outline?: string };
 }) {
 	return (
 		<span
@@ -60,8 +71,9 @@ export function Wordmark({
 			)}
 		>
 			<LogoMark
-				bubble={colors?.bubble ?? (dark ? '#ff7a59' : '#181430')}
-				mark={colors?.mark ?? (dark ? '#181430' : '#ff7a59')}
+				bubble={colors?.bubble ?? '#fff8f2'}
+				mark={colors?.mark ?? '#ff7a59'}
+				outline={colors ? colors.outline : dark ? undefined : 'currentColor'}
 				className="size-[1.15em] shrink-0"
 			/>
 			<span aria-hidden className="pb-[0.12em]">

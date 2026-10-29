@@ -77,7 +77,7 @@ export default async function Home() {
 									/>
 									<PrimaryButton
 										type="submit"
-										className="shrink-0 bg-cocoa px-6 text-peach hover:bg-cocoa/90"
+										className="shrink-0 bg-cocoa px-6 text-white hover:bg-cocoa/90"
 									>
 										Katıl
 									</PrimaryButton>
@@ -254,7 +254,7 @@ export default async function Home() {
 							>
 								<Link
 									href={host ? '/host' : '/register'}
-									className="flex h-12 items-center rounded-full bg-cocoa px-6 font-semibold text-peach hover:bg-cocoa/90"
+									className="flex h-12 items-center rounded-full bg-cocoa px-6 font-semibold text-white hover:bg-cocoa/90"
 								>
 									{host ? 'Panele git' : 'Hesap oluştur'}
 								</Link>
@@ -278,7 +278,7 @@ export default async function Home() {
 						>
 							<Wordmark
 								className="text-lg text-cocoa"
-								colors={{ bubble: '#3b1e1a', mark: '#ff7a59' }}
+								colors={{ bubble: '#fff8f2', mark: '#ff7a59' }}
 							/>
 							<span>Canlı quiz gecesi</span>
 						</div>
@@ -323,7 +323,7 @@ function FloatingBubbles() {
 					className={cn(
 						'bubble absolute',
 						i >= 10 && 'hidden sm:block',
-						b.dark ? 'opacity-25' : 'opacity-80',
+						b.dark ? 'opacity-90' : 'opacity-70',
 					)}
 					style={{
 						left: b.x,
@@ -333,7 +333,7 @@ function FloatingBubbles() {
 					}}
 				>
 					<LogoMark
-						bubble={b.dark ? '#3b1e1a' : '#ffd7c7'}
+						bubble={b.dark ? '#fff8f2' : '#ffd7c7'}
 						mark={b.dark ? '#ff7a59' : '#3b1e1a'}
 						size={b.size}
 					/>
