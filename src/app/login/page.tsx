@@ -1,4 +1,7 @@
+import type { Metadata } from 'next';
 import { AuthForm } from '@/components/auth-form';
+
+export const metadata: Metadata = { title: 'Giriş yap', robots: { index: false, follow: false } };
 
 export default async function LoginPage({ searchParams }: PageProps<'/login'>) {
 	const { error, registered } = await searchParams;

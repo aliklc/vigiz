@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
 import type { QuestionVideo } from '@/components/game-views';
@@ -5,6 +6,8 @@ import { HostScreen } from '@/components/host-screen';
 import { requireHost } from '@/lib/auth';
 import { getOwnedGame } from '@/lib/game';
 import { db } from '@/lib/supabase/admin';
+
+export const metadata: Metadata = { title: 'Oyun', robots: { index: false, follow: false } };
 
 export default async function HostGamePage({ params }: PageProps<'/host/games/[code]'>) {
 	const host = await requireHost();

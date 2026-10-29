@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { AuthForm } from '@/components/auth-form';
 
 const ERRORS: Record<string, string> = {
@@ -7,6 +8,11 @@ const ERRORS: Record<string, string> = {
 	weak_password: 'Şifre çok zayıf (en az 6 karakter)',
 	email_address_invalid: 'Geçerli bir e-posta gir',
 	over_email_send_rate_limit: 'Çok fazla deneme; biraz sonra tekrar dene',
+};
+
+export const metadata: Metadata = {
+	title: 'Hesap oluştur',
+	robots: { index: false, follow: false },
 };
 
 export default async function RegisterPage({ searchParams }: PageProps<'/register'>) {

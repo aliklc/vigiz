@@ -1,10 +1,13 @@
 import { LogOut } from 'lucide-react';
+import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { CONTAINER, Wordmark } from '@/components/brand';
 import { Avatar } from '@/components/player-screen';
 import { requireHost } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+
+export const metadata: Metadata = { title: 'Panel', robots: { index: false, follow: false } };
 
 export default async function PanelLayout({ children }: LayoutProps<'/host'>) {
 	const host = await requireHost();
