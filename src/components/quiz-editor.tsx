@@ -153,7 +153,7 @@ export function QuizEditor({
 				)}
 			</div>
 
-			<section className="grid gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:grid-cols-2 sm:p-6">
+			<section className="grid gap-3 rounded-2xl border bg-white p-4 sm:grid-cols-2 sm:p-6">
 				<Field label="Başlık">
 					<Input value={quiz.title} onChange={e => set('title', e.target.value)} />
 				</Field>
@@ -187,7 +187,7 @@ export function QuizEditor({
 			{quiz.questions.map((q, i) => (
 				<section
 					key={i}
-					className="flex flex-col gap-3 rounded-2xl border bg-white p-4 shadow-sm sm:p-6"
+					className="flex flex-col gap-3 rounded-2xl border bg-white p-4 sm:p-6"
 				>
 					<div className="flex items-start justify-between gap-3">
 						<div className="flex flex-wrap items-center gap-3">
@@ -269,7 +269,7 @@ export function QuizEditor({
 											className={cn(
 												'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 py-3 font-semibold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 												q.correct_index === ci
-													? 'border-green-600 bg-green-50 text-green-800'
+													? 'border-teal-500 bg-teal-50 text-teal-800'
 													: 'border-border hover:bg-muted',
 											)}
 										>
@@ -302,7 +302,7 @@ export function QuizEditor({
 												className={cn(
 													'relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-sm font-bold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 													q.correct_index === ci
-														? 'bg-green-600 text-white'
+														? 'bg-teal-500 text-white'
 														: 'bg-brand-tint text-brand-ink hover:bg-brand/20',
 												)}
 											>
@@ -407,7 +407,7 @@ export function QuizEditor({
 			<footer className="sticky bottom-0 -mx-4 border-t bg-background/95 p-3 backdrop-blur sm:-mx-8 sm:px-8">
 				<div className="flex flex-col gap-2">
 					{error && <p className="text-sm text-destructive">{error}</p>}
-					{saved && <p className="text-sm text-green-700">{saved}</p>}
+					{saved && <p className="text-sm text-teal-700">{saved}</p>}
 					<div className="flex gap-2">
 						<Button
 							variant="outline"
@@ -639,7 +639,7 @@ function FormatPicker({
 						className={cn(
 							'flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition has-focus-visible:ring-2 has-focus-visible:ring-ring',
 							value === type
-								? 'bg-white text-ink shadow-sm'
+								? 'bg-white text-ink'
 								: 'text-muted-foreground hover:text-ink',
 						)}
 					>

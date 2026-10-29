@@ -31,7 +31,7 @@ export default async function Home() {
 					</div>
 					<form
 						action="/play"
-						className="mx-auto flex w-full max-w-md flex-col gap-4 rounded-3xl border bg-white p-6 shadow-sm sm:p-8"
+						className="mx-auto flex w-full max-w-md flex-col gap-4 rounded-3xl border bg-white p-6 sm:p-8"
 					>
 						<div>
 							<h2 className="text-xl font-semibold">Odaya gir</h2>
@@ -99,7 +99,7 @@ export default async function Home() {
 											className={cn(
 												'flex h-8 items-center gap-2 rounded-lg border px-2 text-xs font-bold',
 												i === 1
-													? 'border-green-600 bg-green-50 text-green-700'
+													? 'border-teal-500 bg-teal-50 text-teal-700'
 													: 'text-brand-ink',
 											)}
 										>
@@ -111,7 +111,7 @@ export default async function Home() {
 						</FormatCard>
 						<FormatCard type="truefalse">
 							<div className="grid grid-cols-2 gap-1.5">
-								<span className="flex h-[4.25rem] items-center justify-center rounded-lg border border-green-600 bg-green-50 text-green-700">
+								<span className="flex h-[4.25rem] items-center justify-center rounded-lg border border-teal-500 bg-teal-50 text-teal-700">
 									<Check className="size-6" strokeWidth={3} />
 								</span>
 								<span className="flex h-[4.25rem] items-center justify-center rounded-lg border text-muted-foreground">
@@ -171,7 +171,7 @@ export default async function Home() {
 						{host ? (
 							<Link
 								href="/host"
-								className="rounded-xl bg-ink px-6 py-3 font-semibold text-white hover:bg-ink/85"
+								className="rounded-xl bg-teal-700 px-6 py-3 font-semibold text-white hover:bg-teal-600"
 							>
 								Panele git
 							</Link>
@@ -179,7 +179,7 @@ export default async function Home() {
 							<>
 								<Link
 									href="/register"
-									className="rounded-xl bg-ink px-6 py-3 font-semibold text-white hover:bg-ink/85"
+									className="rounded-xl bg-teal-700 px-6 py-3 font-semibold text-white hover:bg-teal-600"
 								>
 									Hesap oluştur
 								</Link>

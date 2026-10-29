@@ -140,8 +140,8 @@ export function Choices({
 							open && onChoose && 'hover:border-brand active:scale-[0.99]',
 							!reveal && chosen && 'border-brand bg-brand-tint',
 							!reveal && !chosen && 'border-border',
-							reveal && correct && 'border-green-600 bg-green-50',
-							wrongPick && 'border-destructive bg-red-50',
+							reveal && correct && 'border-teal-500 bg-teal-50',
+							wrongPick && 'border-destructive bg-wrong-bg',
 							reveal && !correct && !wrongPick && 'border-border opacity-60',
 						)}
 					>
@@ -150,7 +150,7 @@ export function Choices({
 								'flex size-9 shrink-0 items-center justify-center rounded-xl text-base font-bold',
 								'lg:size-11 lg:text-lg',
 								correct
-									? 'bg-green-600 text-white'
+									? 'bg-teal-500 text-white'
 									: chosen
 										? 'bg-brand text-white'
 										: 'bg-brand-tint text-brand-ink',
@@ -179,7 +179,7 @@ export function Choices({
 								aria-hidden
 								className={cn(
 									'absolute bottom-0 left-0 h-1.5 transition-[width] duration-700 ease-out',
-									correct ? 'bg-green-600' : 'bg-brand/50',
+									correct ? 'bg-teal-500' : 'bg-brand/50',
 								)}
 								style={{ width: `${(reveal.counts[i] / total) * 100}%` }}
 							/>
@@ -307,7 +307,7 @@ export function Scoreboard({
 							<span
 								className={cn(
 									'relative animate-in rounded-full px-2 py-0.5 text-sm font-semibold text-white delay-300 duration-500 fill-mode-backwards fade-in slide-in-from-left-4',
-									gained > 0 ? 'bg-green-600' : 'bg-destructive',
+									gained > 0 ? 'bg-teal-500' : 'bg-destructive',
 								)}
 							>
 								{gained > 0 ? `+${gained}` : `−${-gained}`}

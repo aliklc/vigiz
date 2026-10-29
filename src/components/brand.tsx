@@ -1,13 +1,13 @@
 import { cn } from '@/lib/utils';
 
-// Şıklar renk yerine harfle ayrılır (vignetim.com'un sade, tek vurgu renkli dili).
+// Şıklar renk yerine harfle ayrılır (tek vurgu renkli sade dil).
 export const LETTERS = 'ABCDE';
 
 // Ortak input stili (sunucu bileşenlerinde de kullanılır; 'use client' dosyasında olmamalı).
 export const FIELD =
-	'h-12 rounded-xl border border-[#c9d1d6] bg-white px-4 text-base text-ink outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-3 focus-visible:ring-brand/25';
+	'h-14 rounded-xl border-[1.5px] border-ink-300 bg-white px-4 text-base text-ink outline-none placeholder:text-ink-500 focus-visible:border-teal-500 focus-visible:ring-3 focus-visible:ring-teal-500/20';
 
-// "vignetim." logosuyla aynı aile: küçük harf, camgöbeği, sonda nokta.
+// Kelime markası: küçük harf, sıkı aralık, teal nokta.
 export function Wordmark({ className, dark }: { className?: string; dark?: boolean }) {
 	return (
 		<span

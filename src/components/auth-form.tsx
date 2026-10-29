@@ -22,7 +22,7 @@ export function AuthForm({
 				<form
 					method="post"
 					action={isLogin ? '/api/auth/login' : '/api/auth/register'}
-					className="flex w-full max-w-md flex-col gap-3 rounded-3xl border bg-white p-6 shadow-sm sm:p-8"
+					className="flex w-full max-w-md flex-col gap-3 rounded-3xl border bg-white p-6 sm:p-8"
 				>
 					<div className="mb-2">
 						<h1 className="text-2xl font-bold tracking-tight">

@@ -129,7 +129,7 @@ export function HostScreen({
 										act('end');
 									}
 								}}
-								className="shrink-0 rounded-lg border border-destructive/40 px-3 py-1.5 text-sm font-semibold text-destructive hover:bg-red-50 disabled:opacity-50"
+								className="shrink-0 rounded-lg border border-destructive/40 px-3 py-1.5 text-sm font-semibold text-destructive hover:bg-wrong-bg disabled:opacity-50"
 							>
 								Oyunu bitir
 							</button>
@@ -145,7 +145,7 @@ export function HostScreen({
 					<>
 						{game.phase === 'lobby' && (
 							<>
-								<div className="flex flex-col items-center justify-center gap-8 rounded-3xl border bg-white px-6 py-8 shadow-sm sm:flex-row lg:gap-14 lg:py-12">
+								<div className="flex flex-col items-center justify-center gap-8 rounded-3xl border bg-white px-6 py-8 sm:flex-row lg:gap-14 lg:py-12">
 									{origin && <JoinQr url={joinUrl} />}
 									<div className="flex flex-col items-center gap-4">
 										<CodeTiles code={code} />
@@ -293,7 +293,7 @@ export function HostScreen({
 													type="button"
 													disabled={busy}
 													onClick={() => act('judge', 'correct')}
-													className="h-12 rounded-xl bg-green-600 px-6 font-semibold text-white hover:bg-green-700 disabled:opacity-50 lg:h-14 lg:px-8 lg:text-lg"
+													className="h-12 rounded-xl bg-teal-500 px-6 font-semibold text-white hover:bg-teal-600 disabled:opacity-50 lg:h-14 lg:px-8 lg:text-lg"
 												>
 													Doğru
 												</button>
@@ -485,7 +485,7 @@ function BuzzerHostView({
 								b.id === answeringId && 'border-brand bg-brand-tint font-semibold',
 								b.verdict === 'wrong' && 'text-muted-foreground line-through',
 								b.verdict === 'correct' &&
-									'border-green-600 bg-green-50 font-semibold',
+									'border-teal-500 bg-teal-50 font-semibold',
 							)}
 						>
 							<span className="w-6 text-right font-bold tabular-nums">{i + 1}</span>

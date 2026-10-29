@@ -58,7 +58,7 @@ export default async function HostHome() {
 					['Oynanan oyun', played.length],
 					['Toplam katılım', totalPlayers],
 				].map(([label, value]) => (
-					<div key={label} className="rounded-2xl border bg-white p-4 shadow-sm sm:p-5">
+					<div key={label} className="rounded-2xl border bg-white p-4 sm:p-5">
 						<dt className="text-sm text-muted-foreground">{label}</dt>
 						<dd className="text-2xl font-bold tabular-nums sm:text-3xl">{value}</dd>
 					</div>
@@ -74,7 +74,7 @@ export default async function HostHome() {
 						<Link
 							key={g.code}
 							href={`/host/games/${g.code}`}
-							className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4 shadow-sm hover:border-brand"
+							className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4 hover:border-brand"
 						>
 							<CodeTiles code={g.code} size="md" />
 							<div className="min-w-0 flex-1">
@@ -83,7 +83,7 @@ export default async function HostHome() {
 									{PHASE_LABEL[g.phase]}, {g.players[0]?.count ?? 0} oyuncu
 								</p>
 							</div>
-							<span className="rounded-xl bg-ink px-4 py-2 text-sm font-semibold text-white">
+							<span className="rounded-xl bg-teal-700 px-4 py-2 text-sm font-semibold text-white">
 								Ekrana dön
 							</span>
 						</Link>
@@ -121,7 +121,7 @@ export default async function HostHome() {
 						return (
 							<li
 								key={q.id}
-								className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-3 pr-4 shadow-sm sm:flex-nowrap"
+								className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-3 pr-4 sm:flex-nowrap"
 							>
 								<div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-tint leading-none text-brand-ink sm:size-16">
 									<span className="text-2xl font-bold">{date.getDate()}</span>
@@ -176,7 +176,7 @@ export default async function HostHome() {
 									className={cn(
 										'hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline',
 										ready
-											? 'bg-green-50 text-green-700'
+											? 'bg-teal-50 text-teal-700'
 											: 'bg-muted text-muted-foreground',
 									)}
 								>

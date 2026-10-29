@@ -141,7 +141,7 @@ export function PlayerScreen({ code }: { code: string }) {
 		// Masaüstünde host lobisiyle aynı genişlik ve boyutlar
 		return (
 			<Stage wide className="justify-center gap-6 lg:gap-8">
-				<div className="flex flex-col items-center gap-6 rounded-3xl border bg-white px-6 py-8 text-center shadow-sm lg:gap-8 lg:py-12">
+				<div className="flex flex-col items-center gap-6 rounded-3xl border bg-white px-6 py-8 text-center lg:gap-8 lg:py-12">
 					<div>
 						<p className="text-muted-foreground lg:text-xl">{state.quiz.topic}</p>
 						<h1 className="text-3xl font-bold tracking-tight lg:text-5xl">
@@ -192,7 +192,7 @@ export function PlayerScreen({ code }: { code: string }) {
 	if (phase === 'lobby') {
 		return (
 			<Stage wide className="gap-6 lg:gap-8">
-				<div className="flex flex-col items-center gap-3 rounded-3xl border bg-white px-6 py-8 text-center shadow-sm lg:py-12">
+				<div className="flex flex-col items-center gap-3 rounded-3xl border bg-white px-6 py-8 text-center lg:py-12">
 					<span className="inline-block rounded-full border border-brand/30 bg-brand-tint px-3 py-1 text-sm text-brand-ink lg:text-base">
 						{state.quiz.title}
 					</span>
@@ -285,7 +285,7 @@ export function PlayerScreen({ code }: { code: string }) {
 	if (phase === 'reveal' && question && reveal) {
 		const verdict = reveal.myPoints
 			? {
-					cls: 'border-green-600 bg-green-50 text-green-800',
+					cls: 'border-teal-500 bg-teal-50 text-teal-800',
 					title: 'Doğru!',
 					sub: `+${reveal.myPoints} puan`,
 				}
@@ -296,7 +296,7 @@ export function PlayerScreen({ code }: { code: string }) {
 						sub: 'Bu soruya cevap vermedin',
 					}
 				: {
-						cls: 'border-destructive bg-red-50 text-red-800',
+						cls: 'border-destructive bg-wrong-bg text-wrong',
 						title: 'Yanlış',
 						sub: 'Bu sorudan puan yok',
 					};
@@ -330,7 +330,7 @@ export function PlayerScreen({ code }: { code: string }) {
 						<h1 className="text-3xl font-bold tracking-tight lg:text-5xl">Sonuçlar</h1>
 						<Link
 							href="/"
-							className="flex h-11 shrink-0 items-center rounded-xl bg-ink px-5 font-semibold text-white hover:bg-ink/85 lg:h-14 lg:px-8 lg:text-lg"
+							className="flex h-11 shrink-0 items-center rounded-xl bg-teal-700 px-5 font-semibold text-white hover:bg-teal-600 lg:h-14 lg:px-8 lg:text-lg"
 						>
 							Ana sayfaya dön
 						</Link>
@@ -421,7 +421,7 @@ export function Card({ children, className }: { children: React.ReactNode; class
 	return (
 		<div
 			className={cn(
-				'mx-auto w-full max-w-md rounded-3xl border bg-white p-6 shadow-sm sm:p-8',
+				'mx-auto w-full max-w-md rounded-3xl border bg-white p-6 sm:p-8',
 				className,
 			)}
 		>
@@ -438,12 +438,12 @@ export function Centered({ children }: { children: React.ReactNode }) {
 	);
 }
 
-// vignetim.com'daki siyah ana buton.
+// Ekrandaki tek birincil aksiyon: teal-500 üzerinde beyaz yazı en az 18px/700 olmalı.
 export function PrimaryButton({ className, ...props }: React.ComponentProps<'button'>) {
 	return (
 		<button
 			className={cn(
-				'h-12 rounded-xl bg-ink px-6 font-semibold text-white transition outline-none hover:bg-ink/85 focus-visible:ring-3 focus-visible:ring-brand/40 disabled:opacity-50',
+				'h-14 rounded-xl bg-teal-500 px-6 text-lg font-bold text-white transition outline-none hover:bg-teal-600 focus-visible:ring-3 focus-visible:ring-teal-500/40 disabled:opacity-50',
 				className,
 			)}
 			{...props}
@@ -477,12 +477,12 @@ function BuzzerPlayerView({
 		const verdict = reveal.myPoints
 			? reveal.myPoints > 0
 				? {
-						cls: 'border-green-600 bg-green-50 text-green-800',
+						cls: 'border-teal-500 bg-teal-50 text-teal-800',
 						title: 'Doğru!',
 						sub: `+${reveal.myPoints} puan`,
 					}
 				: {
-						cls: 'border-destructive bg-red-50 text-red-800',
+						cls: 'border-destructive bg-wrong-bg text-wrong',
 						title: 'Yanlış',
 						sub: `${reveal.myPoints} puan`,
 					}
@@ -545,7 +545,7 @@ function BuzzerPlayerView({
 				</p>
 			)}
 			{mine?.verdict === 'wrong' ? (
-				<p className="rounded-2xl border-2 border-destructive bg-red-50 p-4 text-center text-lg font-semibold text-red-800">
+				<p className="rounded-2xl border-2 border-destructive bg-wrong-bg p-4 text-center text-lg font-semibold text-wrong">
 					Yanlış, −300. Bu soruda hakkın bitti.
 				</p>
 			) : myTurn === 0 ? (
@@ -561,7 +561,7 @@ function BuzzerPlayerView({
 					type="button"
 					onClick={onBuzz}
 					disabled={remaining <= 0}
-					className="h-24 rounded-3xl bg-brand text-3xl font-extrabold tracking-tight text-white shadow-[0_6px_0_var(--color-brand-ink)] transition outline-none focus-visible:ring-4 focus-visible:ring-brand/40 active:translate-y-1 active:shadow-none disabled:opacity-40 lg:h-28 lg:text-4xl"
+					className="h-24 rounded-3xl bg-brand text-3xl font-extrabold tracking-tight text-white shadow-[0_6px_0_var(--color-brand-ink)] transition outline-none focus-visible:ring-4 focus-visible:ring-brand/40 active:translate-y-1 active: disabled:opacity-40 lg:h-28 lg:text-4xl"
 				>
 					{remaining > 0 ? 'BİLDİM!' : 'Süre doldu'}
 				</button>

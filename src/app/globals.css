@@ -154,6 +154,34 @@
 	html {
 		@apply font-sans;
 	}
+	/* Yazı ölçeği: H1 32/38, H2 24/30, H3 20/26, hepsi 600 */
+	h1 {
+		font-size: 2rem;
+		line-height: 2.375rem;
+		letter-spacing: -0.02em;
+		font-weight: 600;
+	}
+	h2 {
+		font-size: 1.5rem;
+		line-height: 1.875rem;
+		letter-spacing: -0.016em;
+		font-weight: 600;
+	}
+	h3 {
+		font-size: 1.25rem;
+		line-height: 1.625rem;
+		font-weight: 600;
+	}
+}
+
+/* Üst etiket: küçük, büyük harf, aralıklı, teal-700 */
+@utility eyebrow {
+	font-size: 11px;
+	line-height: 16px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.11em;
+	color: var(--color-teal-700);
 }
 
 .stage {
