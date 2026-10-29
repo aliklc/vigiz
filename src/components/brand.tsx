@@ -8,10 +8,16 @@ export const FIELD =
 	'h-12 rounded-xl border border-[#c9d1d6] bg-white px-4 text-base text-ink outline-none placeholder:text-muted-foreground focus-visible:border-brand focus-visible:ring-3 focus-visible:ring-brand/25';
 
 // "vignetim." logosuyla aynı aile: küçük harf, camgöbeği, sonda nokta.
-export function Wordmark({ className }: { className?: string }) {
+export function Wordmark({ className, dark }: { className?: string; dark?: boolean }) {
 	return (
-		<span className={cn('font-semibold tracking-tight text-brand-dark', className)}>
-			vigiz<span className="text-ink">.</span>
+		<span
+			className={cn(
+				'font-bold tracking-[-0.035em]',
+				dark ? 'text-white' : 'text-ink-900',
+				className,
+			)}
+		>
+			vigiz<span className={dark ? 'text-teal-300' : 'text-teal-500'}>.</span>
 		</span>
 	);
 }

@@ -3,12 +3,15 @@ import { Inter } from 'next/font/google';
 
 import './globals.css';
 
-// vignetim.com ile aynı yazı tipi; başlıklar da Inter (kalın, sıkı aralık).
-const inter = Inter({ variable: '--font-sans', subsets: ['latin', 'latin-ext'] });
+const inter = Inter({
+	variable: '--font-sans',
+	subsets: ['latin', 'latin-ext'],
+	weight: ['400', '500', '600', '700'],
+});
 
 export const metadata: Metadata = {
 	title: 'Vigiz — Quiz Night',
-	description: 'Aylık şirket içi quiz gecesi',
+	description: 'Canlı quiz gecesi: kodu gir, adını yaz, oyna',
 };
 
 export const viewport: Viewport = { width: 'device-width', initialScale: 1 };

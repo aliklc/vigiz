@@ -10,12 +10,33 @@
 	--font-sans: var(--font-sans);
 	--font-mono: var(--font-geist-mono);
 	--font-heading: var(--font-sans);
-	/* Vignetim paleti (vignetim.com) */
-	--color-brand: #01c0d9;
-	--color-brand-dark: #019cb9;
-	--color-brand-ink: #0b7b93;
-	--color-brand-tint: #e6f7f8;
-	--color-ink: #0b1215;
+	/* Teal tek vurgu rengi; ink nötrler. teal-500 metin olarak kullanılmaz (kontrast), teal-700 kullan. */
+	--color-teal-50: #eaf8fb;
+	--color-teal-100: #cbeff6;
+	--color-teal-200: #9be1ee;
+	--color-teal-300: #5fcee2;
+	--color-teal-400: #22b5ce;
+	--color-teal-500: #049cb9;
+	--color-teal-600: #03849e;
+	--color-teal-700: #046b80;
+	--color-teal-800: #065363;
+	--color-teal-900: #083b47;
+	--color-ink-0: #ffffff;
+	--color-ink-50: #f7f8f9;
+	--color-ink-100: #edeff1;
+	--color-ink-200: #dde1e4;
+	--color-ink-300: #c2c8cc;
+	--color-ink-500: #6c757c;
+	--color-ink-600: #565e64;
+	--color-ink-700: #3e454a;
+	--color-ink-900: #161b1e;
+	--color-wrong: #b4400f;
+	--color-wrong-bg: #fdf0e9;
+	--color-brand: var(--color-teal-500);
+	--color-brand-dark: var(--color-teal-700);
+	--color-brand-ink: var(--color-teal-700);
+	--color-brand-tint: var(--color-teal-50);
+	--color-ink: var(--color-ink-900);
 	--color-sidebar-ring: var(--sidebar-ring);
 	--color-sidebar-border: var(--sidebar-border);
 	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -55,24 +76,24 @@
 }
 
 :root {
-	--background: #fbfcfc;
-	--foreground: #0b1215;
+	--background: #f7f8f9;
+	--foreground: #161b1e;
 	--card: #ffffff;
-	--card-foreground: #0b1215;
+	--card-foreground: #161b1e;
 	--popover: #ffffff;
-	--popover-foreground: #0b1215;
-	--primary: #0b1215;
+	--popover-foreground: #161b1e;
+	--primary: #049cb9;
 	--primary-foreground: #ffffff;
-	--secondary: #f2f5f6;
-	--secondary-foreground: #0b1215;
-	--muted: #f2f5f6;
-	--muted-foreground: #5b6b73;
-	--accent: #e6f7f8;
-	--accent-foreground: #0b7b93;
-	--destructive: #dc2626;
-	--border: #e5eaee;
-	--input: #dde1e4;
-	--ring: #01c0d9;
+	--secondary: #edeff1;
+	--secondary-foreground: #161b1e;
+	--muted: #edeff1;
+	--muted-foreground: #565e64;
+	--accent: #eaf8fb;
+	--accent-foreground: #046b80;
+	--destructive: #b4400f;
+	--border: #dde1e4;
+	--input: #c2c8cc;
+	--ring: #049cb9;
 	--chart-1: oklch(0.87 0 0);
 	--chart-2: oklch(0.556 0 0);
 	--chart-3: oklch(0.439 0 0);
@@ -135,11 +156,8 @@
 	}
 }
 
-/* vignetim.com'daki gibi beyaz zemin + hafif camgöbeği parıltı */
 .stage {
-	background:
-		radial-gradient(60% 50% at 85% 0%, rgb(1 192 217 / 0.12), transparent 70%),
-		var(--background);
+	background: var(--background);
 	color: var(--foreground);
 	min-height: 100dvh;
 }
