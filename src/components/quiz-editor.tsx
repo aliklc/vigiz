@@ -1,6 +1,15 @@
 'use client';
 
-import { ArrowDown, ArrowUp, Check, ImageUp, Plus, Trash2 } from 'lucide-react';
+import {
+	ArrowDown,
+	ArrowUp,
+	Check,
+	ChevronLeft,
+	ChevronRight,
+	ImageUp,
+	Plus,
+	Trash2,
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -59,6 +68,8 @@ export function QuizEditor({
 	const [error, setError] = useState('');
 	const [saved, setSaved] = useState('');
 	const [pending, setPending] = useState(false);
+	// Sağ panelde düzenlenen soru.
+	const [active, setActive] = useState(0);
 	// Kaydedilmemiş değişiklik varken sekmeyi kapatma/yenileme uyarısı.
 	const [dirty, setDirty] = useState(false);
 	useEffect(() => {
@@ -101,6 +112,7 @@ export function QuizEditor({
 		const qs = [...quiz.questions];
 		[qs[i], qs[i + dir]] = [qs[i + dir], qs[i]];
 		set('questions', qs);
+		setActive(i + dir);
 	};
 
 	async function save(status: QuizInput['status']) {
@@ -132,9 +144,19 @@ export function QuizEditor({
 		router.replace('/host');
 	}
 
+	const q = quiz.questions[active];
+	const i = active;
+	const removeQuestion = () => {
+		set(
+			'questions',
+			quiz.questions.filter((_, j) => j !== i),
+		);
+		setActive(Math.max(0, Math.min(i, quiz.questions.length - 2)));
+	};
+
 	return (
-		<main className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-8">
-			<div className="flex items-center justify-between gap-4">
+		<main className="mx-auto flex w-full max-w-6xl flex-col gap-6 px-4 py-6 sm:px-8">
+			<div className="flex flex-wrap items-end justify-between gap-4">
 				<div className="flex min-w-0 flex-col gap-1">
 					<Breadcrumbs
 						items={[
@@ -142,287 +164,386 @@ export function QuizEditor({
 							{ label: id ? quiz.title || 'Adsız quiz' : 'Yeni quiz' },
 						]}
 					/>
-					<h1 className="text-3xl font-bold tracking-tight">
-						{id ? quiz.title || 'Adsız quiz' : 'Yeni quiz'}
-					</h1>
+					<h1 className="truncate">{id ? quiz.title || 'Adsız quiz' : 'Yeni quiz'}</h1>
+					<p
+						role="status"
+						className={cn('text-sm', error ? 'text-destructive' : 'text-ink-600')}
+					>
+						{error ||
+							(dirty
+								? 'Kaydedilmemiş değişiklik var'
+								: saved || (quiz.status === 'ready' ? 'Hazır' : 'Taslak'))}
+					</p>
 				</div>
-				{id && (
-					<Button variant="ghost" size="sm" className="text-destructive" onClick={remove}>
-						Quizi sil
+				<div className="flex flex-wrap gap-2">
+					{id && (
+						<Button variant="ghost" className="text-destructive" onClick={remove}>
+							Quizi sil
+						</Button>
+					)}
+					{id && quiz.status === 'ready' && !dirty && (
+						<form method="post" action="/api/host/games">
+							<input type="hidden" name="quizId" value={id} />
+							<Button type="submit" variant="outline">
+								Oda aç
+							</Button>
+						</form>
+					)}
+					<Button variant="outline" disabled={pending} onClick={() => save('draft')}>
+						Taslak kaydet
 					</Button>
-				)}
+					<button
+						type="button"
+						disabled={pending}
+						onClick={() => save('ready')}
+						className="h-11 rounded-xl bg-teal-700 px-5 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
+					>
+						Hazır olarak kaydet
+					</button>
+				</div>
 			</div>
 
-			<section className="grid gap-3 rounded-2xl border bg-white p-4 sm:grid-cols-2 sm:p-6">
-				<Field label="Başlık">
-					<Input value={quiz.title} onChange={e => set('title', e.target.value)} />
-				</Field>
-				<Field label="Konu">
-					<Input value={quiz.topic} onChange={e => set('topic', e.target.value)} />
-				</Field>
-				<Field label="Hazırlayan">
-					<Input
-						value={quiz.author_name}
-						onChange={e => set('author_name', e.target.value)}
-					/>
-				</Field>
-				<Field label="Tarih">
-					<Input
-						type="date"
-						value={quiz.quiz_date}
-						onChange={e => set('quiz_date', e.target.value)}
-					/>
-				</Field>
-				<Field label="Soru süresi (sn)">
-					<Input
-						type="number"
-						min={5}
-						max={120}
-						value={quiz.time_limit_sec}
-						onChange={e => set('time_limit_sec', Number(e.target.value))}
-					/>
-				</Field>
-			</section>
+			<div className="grid items-start gap-6 lg:grid-cols-[20rem_1fr]">
+				<aside className="flex flex-col gap-4 lg:sticky lg:top-24">
+					<section className="grid gap-3 rounded-3xl border bg-white p-5">
+						<Field label="Başlık">
+							<Input
+								value={quiz.title}
+								onChange={e => set('title', e.target.value)}
+							/>
+						</Field>
+						<Field label="Konu">
+							<Input
+								value={quiz.topic}
+								onChange={e => set('topic', e.target.value)}
+							/>
+						</Field>
+						<Field label="Hazırlayan">
+							<Input
+								value={quiz.author_name}
+								onChange={e => set('author_name', e.target.value)}
+							/>
+						</Field>
+						<div className="grid grid-cols-2 gap-3">
+							<Field label="Tarih">
+								<Input
+									type="date"
+									value={quiz.quiz_date}
+									onChange={e => set('quiz_date', e.target.value)}
+								/>
+							</Field>
+							<Field label="Süre (sn)">
+								<Input
+									type="number"
+									min={5}
+									max={120}
+									value={quiz.time_limit_sec}
+									onChange={e => set('time_limit_sec', Number(e.target.value))}
+								/>
+							</Field>
+						</div>
+					</section>
 
-			{quiz.questions.map((q, i) => (
-				<section
-					key={i}
-					className="flex flex-col gap-3 rounded-2xl border bg-white p-4 sm:p-6"
-				>
-					<div className="flex items-start justify-between gap-3">
-						<div className="flex flex-wrap items-center gap-3">
-							<h2 className="text-lg font-semibold">Soru {i + 1}</h2>
-							<FormatPicker
-								value={q.type ?? 'choice'}
-								onChange={type => changeType(i, type)}
-							/>
-						</div>
-						<div className="flex gap-1">
-							<IconButton
-								label="Yukarı"
-								disabled={i === 0}
-								onClick={() => moveQuestion(i, -1)}
-							>
-								<ArrowUp />
-							</IconButton>
-							<IconButton
-								label="Aşağı"
-								disabled={i === quiz.questions.length - 1}
-								onClick={() => moveQuestion(i, 1)}
-							>
-								<ArrowDown />
-							</IconButton>
-							<IconButton
-								label="Soruyu sil"
-								onClick={() =>
-									set(
-										'questions',
-										quiz.questions.filter((_, j) => j !== i),
-									)
-								}
-							>
-								<Trash2 />
-							</IconButton>
-						</div>
-					</div>
-					{(q.type ?? 'choice') === 'buzzer' ? (
-						<>
-							<p className="text-sm text-muted-foreground">
-								Görsel bulanık başlar ve süre boyunca netleşir. Bilen oyuncular
-								buzzer'a basar, sırayla sesli cevap verir; sen Doğru ya da Yanlış
-								dersin.
-							</p>
-							<ImageField
-								value={q.image_url}
-								onChange={image_url => setQuestion(i, { image_url })}
-								blurredPreview
-							/>
-							<Input
-								placeholder="Doğru cevap (sadece cevap ekranında görünür)"
-								value={q.answer_text ?? ''}
-								onChange={e =>
-									setQuestion(i, { answer_text: e.target.value || null })
-								}
-							/>
-							<Input
-								placeholder="Soru (isteğe bağlı, örn. Bu hangi şehir?)"
-								value={q.text}
-								onChange={e => setQuestion(i, { text: e.target.value })}
-							/>
-						</>
-					) : (
-						<>
-							<Textarea
-								placeholder="Soru metni"
-								value={q.text}
-								onChange={e => setQuestion(i, { text: e.target.value })}
-							/>
-							{q.type === 'truefalse' ? (
-								<div
-									className="flex gap-2"
-									role="radiogroup"
-									aria-label="Doğru cevap"
-								>
-									{TRUE_FALSE.map((label, ci) => (
-										<label
-											key={label}
+					<nav
+						aria-label="Sorular"
+						className="flex flex-col gap-2 rounded-3xl border bg-white p-3"
+					>
+						<p className="px-2 pt-1 text-sm font-semibold">
+							Sorular{' '}
+							<span className="font-normal text-ink-600">
+								({quiz.questions.length})
+							</span>
+						</p>
+						<ol className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
+							{quiz.questions.map((x, j) => {
+								const { label, Icon } = FORMATS[x.type ?? 'choice'];
+								return (
+									<li key={j} className="shrink-0">
+										<button
+											type="button"
+											onClick={() => setActive(j)}
+											aria-current={j === active ? 'step' : undefined}
 											className={cn(
-												'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 py-3 font-semibold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
-												q.correct_index === ci
-													? 'border-teal-500 bg-teal-50 text-teal-800'
-													: 'border-border hover:bg-muted',
+												'flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm',
+												j === active
+													? 'bg-teal-50 text-teal-800'
+													: 'hover:bg-ink-50',
 											)}
 										>
-											<input
-												type="radio"
-												name={`tf-${i}`}
-												checked={q.correct_index === ci}
-												onChange={() =>
-													setQuestion(i, { correct_index: ci })
-												}
-												className="sr-only"
+											<span className="w-5 font-semibold tabular-nums">
+												{j + 1}
+											</span>
+											<span className="hidden min-w-0 flex-1 truncate lg:block">
+												{x.text || x.answer_text || 'Boş soru'}
+											</span>
+											<Icon
+												className="size-4 shrink-0 text-ink-600"
+												aria-label={label}
 											/>
-											{q.correct_index === ci && (
-												<Check className="size-4" strokeWidth={3} />
-											)}
-											{label}
-										</label>
-									))}
-								</div>
-							) : (
-								<div
-									className="flex flex-col gap-2"
-									role="radiogroup"
-									aria-label="Şıklar"
+										</button>
+									</li>
+								);
+							})}
+						</ol>
+						<div className="flex flex-wrap gap-1 border-t pt-2">
+							{QUESTION_TYPES.map(type => {
+								const { label, Icon } = FORMATS[type];
+								return (
+									<Button
+										key={type}
+										variant="ghost"
+										size="sm"
+										title={`${label} ekle`}
+										onClick={() => {
+											set('questions', [
+												...quiz.questions,
+												emptyQuestion(type),
+											]);
+											setActive(quiz.questions.length);
+										}}
+									>
+										<Plus /> <Icon />
+										<span className="sr-only">{label} ekle</span>
+									</Button>
+								);
+							})}
+						</div>
+					</nav>
+				</aside>
+
+				{q ? (
+					<section
+						key={`${active}:${quiz.questions.length}`}
+						className="flex flex-col gap-4 rounded-3xl border bg-white p-5 sm:p-6"
+					>
+						<div className="flex flex-wrap items-center justify-between gap-3">
+							<h2>Soru {i + 1}</h2>
+							<div className="flex gap-1">
+								<IconButton
+									label="Yukarı taşı"
+									disabled={i === 0}
+									onClick={() => moveQuestion(i, -1)}
 								>
-									{q.choices.map((c, ci) => (
-										<div key={ci} className="flex items-center gap-2">
+									<ArrowUp />
+								</IconButton>
+								<IconButton
+									label="Aşağı taşı"
+									disabled={i === quiz.questions.length - 1}
+									onClick={() => moveQuestion(i, 1)}
+								>
+									<ArrowDown />
+								</IconButton>
+							</div>
+						</div>
+						<FormatPicker
+							value={q.type ?? 'choice'}
+							onChange={type => changeType(i, type)}
+						/>
+						{(q.type ?? 'choice') === 'buzzer' ? (
+							<>
+								<p className="text-sm text-muted-foreground">
+									Görsel bulanık başlar ve süre boyunca netleşir. Bilen oyuncular
+									buzzer'a basar, sırayla sesli cevap verir; sen Doğru ya da
+									Yanlış dersin.
+								</p>
+								<ImageField
+									value={q.image_url}
+									onChange={image_url => setQuestion(i, { image_url })}
+									blurredPreview
+								/>
+								<Field label="Doğru cevap">
+									<Input
+										placeholder="Sadece cevap ekranında görünür"
+										value={q.answer_text ?? ''}
+										onChange={e =>
+											setQuestion(i, { answer_text: e.target.value || null })
+										}
+									/>
+								</Field>
+								<Field label="Soru (isteğe bağlı)">
+									<Input
+										placeholder="Örn. Bu hangi şehir?"
+										value={q.text}
+										onChange={e => setQuestion(i, { text: e.target.value })}
+									/>
+								</Field>
+							</>
+						) : (
+							<>
+								<Field label="Soru metni">
+									<Textarea
+										value={q.text}
+										onChange={e => setQuestion(i, { text: e.target.value })}
+									/>
+								</Field>
+								{q.type === 'truefalse' ? (
+									<div
+										className="flex gap-2"
+										role="radiogroup"
+										aria-label="Doğru cevap"
+									>
+										{TRUE_FALSE.map((label, ci) => (
 											<label
-												title="Doğru cevap olarak işaretle"
+												key={label}
 												className={cn(
-													'relative flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-sm font-bold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
+													'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 py-3 font-semibold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 													q.correct_index === ci
-														? 'bg-teal-500 text-white'
-														: 'bg-brand-tint text-brand-ink hover:bg-brand/20',
+														? 'border-teal-500 bg-teal-50 text-teal-800'
+														: 'border-border hover:bg-muted',
 												)}
 											>
 												<input
 													type="radio"
-													name={`correct-${i}`}
-													aria-label={`Şık ${ci + 1} doğru cevap`}
+													name={`tf-${i}`}
 													checked={q.correct_index === ci}
 													onChange={() =>
 														setQuestion(i, { correct_index: ci })
 													}
 													className="sr-only"
 												/>
-												{q.correct_index === ci ? (
-													<Check className="size-5" strokeWidth={3} />
-												) : (
-													LETTERS[ci]
+												{q.correct_index === ci && (
+													<Check className="size-4" strokeWidth={3} />
 												)}
+												{label}
 											</label>
-											<Input
-												placeholder={`Şık ${ci + 1}`}
-												value={c}
-												onChange={e =>
-													setQuestion(i, {
-														choices: q.choices.map((x, k) =>
-															k === ci ? e.target.value : x,
-														),
-													})
-												}
-											/>
-											<IconButton
-												label="Şıkkı sil"
-												disabled={q.choices.length <= 2}
+										))}
+									</div>
+								) : (
+									<div
+										className="flex flex-col gap-2"
+										role="radiogroup"
+										aria-label="Şıklar"
+									>
+										{q.choices.map((c, ci) => (
+											<div key={ci} className="flex items-center gap-2">
+												<label
+													title="Doğru cevap olarak işaretle"
+													className={cn(
+														'relative flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl text-sm font-bold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
+														q.correct_index === ci
+															? 'bg-teal-500 text-white'
+															: 'bg-ink-100 text-ink-700 hover:bg-teal-50',
+													)}
+												>
+													<input
+														type="radio"
+														name={`correct-${i}`}
+														aria-label={`Şık ${ci + 1} doğru cevap`}
+														checked={q.correct_index === ci}
+														onChange={() =>
+															setQuestion(i, { correct_index: ci })
+														}
+														className="sr-only"
+													/>
+													{q.correct_index === ci ? (
+														<Check className="size-5" strokeWidth={3} />
+													) : (
+														LETTERS[ci]
+													)}
+												</label>
+												<Input
+													placeholder={`Şık ${ci + 1}`}
+													value={c}
+													onChange={e =>
+														setQuestion(i, {
+															choices: q.choices.map((x, k) =>
+																k === ci ? e.target.value : x,
+															),
+														})
+													}
+												/>
+												<IconButton
+													label="Şıkkı sil"
+													disabled={q.choices.length <= 2}
+													onClick={() =>
+														setQuestion(i, {
+															choices: q.choices.filter(
+																(_, k) => k !== ci,
+															),
+															correct_index:
+																q.correct_index === ci
+																	? 0
+																	: q.correct_index > ci
+																		? q.correct_index - 1
+																		: q.correct_index,
+														})
+													}
+												>
+													<Trash2 />
+												</IconButton>
+											</div>
+										))}
+										{q.choices.length < 5 && (
+											<Button
+												variant="outline"
+												size="sm"
+												className="self-start"
 												onClick={() =>
-													setQuestion(i, {
-														choices: q.choices.filter(
-															(_, k) => k !== ci,
-														),
-														correct_index:
-															q.correct_index === ci
-																? 0
-																: q.correct_index > ci
-																	? q.correct_index - 1
-																	: q.correct_index,
-													})
+													setQuestion(i, { choices: [...q.choices, ''] })
 												}
 											>
-												<Trash2 />
-											</IconButton>
-										</div>
-									))}
-									{q.choices.length < 5 && (
-										<Button
-											variant="outline"
-											size="sm"
-											className="self-start"
-											onClick={() =>
-												setQuestion(i, { choices: [...q.choices, ''] })
-											}
-										>
-											<Plus /> Şık ekle
-										</Button>
-									)}
-									<p className="text-xs text-muted-foreground">
-										Doğru cevabı soldaki harfe basarak işaretle (yeşil olan
-										doğru cevap).
-									</p>
-								</div>
-							)}
-							<ImageField
-								value={q.image_url}
-								onChange={image_url => setQuestion(i, { image_url })}
+												<Plus /> Şık ekle
+											</Button>
+										)}
+										<p className="text-xs text-muted-foreground">
+											Doğru cevabı soldaki harfe basarak işaretle.
+										</p>
+									</div>
+								)}
+								<ImageField
+									value={q.image_url}
+									onChange={image_url => setQuestion(i, { image_url })}
+								/>
+								<VideoField
+									question={q}
+									onChange={patch => setQuestion(i, patch)}
+								/>
+							</>
+						)}
+						<Field label="Açıklama (isteğe bağlı)">
+							<Input
+								placeholder="Cevaptan sonra gösterilir"
+								value={q.explanation ?? ''}
+								onChange={e =>
+									setQuestion(i, { explanation: e.target.value || null })
+								}
 							/>
-							<VideoField question={q} onChange={patch => setQuestion(i, patch)} />
-						</>
-					)}
-					<Input
-						placeholder="Cevaptan sonra gösterilecek açıklama (isteğe bağlı)"
-						value={q.explanation ?? ''}
-						onChange={e => setQuestion(i, { explanation: e.target.value || null })}
-					/>
-				</section>
-			))}
-
-			<div className="flex flex-wrap gap-2">
-				{QUESTION_TYPES.map(type => {
-					const { label, Icon } = FORMATS[type];
-					return (
-						<Button
-							key={type}
-							variant="outline"
-							onClick={() =>
-								set('questions', [...quiz.questions, emptyQuestion(type)])
-							}
-						>
-							<Plus /> <Icon /> {label}
-						</Button>
-					);
-				})}
+						</Field>
+						<div className="flex flex-wrap items-center justify-between gap-2 border-t pt-4">
+							<Button
+								variant="ghost"
+								className="text-destructive"
+								onClick={removeQuestion}
+							>
+								<Trash2 /> Soruyu sil
+							</Button>
+							<div className="flex gap-2">
+								<Button
+									variant="outline"
+									disabled={i === 0}
+									onClick={() => setActive(i - 1)}
+								>
+									<ChevronLeft /> Önceki
+								</Button>
+								<Button
+									variant="outline"
+									disabled={i === quiz.questions.length - 1}
+									onClick={() => setActive(i + 1)}
+								>
+									Sonraki <ChevronRight />
+								</Button>
+							</div>
+						</div>
+					</section>
+				) : (
+					<section className="flex flex-col items-center gap-2 rounded-3xl border-2 border-dashed bg-white p-10 text-center">
+						<p className="font-semibold">Henüz soru yok</p>
+						<p className="text-ink-600">
+							Soldaki + butonlarıyla bir format seçip soru ekle.
+						</p>
+					</section>
+				)}
 			</div>
-
-			<footer className="sticky bottom-0 -mx-4 border-t bg-background/95 p-3 backdrop-blur sm:-mx-8 sm:px-8">
-				<div className="flex flex-col gap-2">
-					{error && <p className="text-sm text-destructive">{error}</p>}
-					{saved && <p className="text-sm text-teal-700">{saved}</p>}
-					<div className="flex gap-2">
-						<Button
-							variant="outline"
-							className="flex-1"
-							disabled={pending}
-							onClick={() => save('draft')}
-						>
-							Taslak kaydet
-						</Button>
-						<Button className="flex-1" disabled={pending} onClick={() => save('ready')}>
-							Hazır olarak kaydet
-						</Button>
-					</div>
-				</div>
-			</footer>
 		</main>
 	);
 }
@@ -564,7 +685,7 @@ function ImageField({
 				/>
 				<label
 					className={cn(
-						'flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border bg-white px-3 text-sm font-medium hover:bg-muted has-focus-visible:ring-3 has-focus-visible:ring-ring',
+						'flex min-h-13 shrink-0 cursor-pointer items-center gap-1.5 rounded-xl border-2 border-dashed border-ink-300 bg-ink-50 px-4 text-sm font-semibold text-ink-700 hover:border-teal-500 hover:bg-teal-50 has-focus-visible:ring-3 has-focus-visible:ring-ring',
 						uploading && 'pointer-events-none opacity-60',
 					)}
 				>
@@ -626,7 +747,7 @@ function FormatPicker({
 }) {
 	return (
 		<div
-			className="flex rounded-lg border bg-muted/50 p-0.5"
+			className="grid grid-cols-3 gap-1 rounded-xl bg-ink-100 p-1"
 			role="radiogroup"
 			aria-label="Soru formatı"
 		>
@@ -637,10 +758,10 @@ function FormatPicker({
 						key={type}
 						title={label}
 						className={cn(
-							'flex cursor-pointer items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition has-focus-visible:ring-2 has-focus-visible:ring-ring',
+							'flex min-h-10 cursor-pointer items-center justify-center gap-1.5 rounded-lg px-2 text-sm font-semibold transition has-focus-visible:ring-2 has-focus-visible:ring-ring',
 							value === type
-								? 'bg-white text-ink'
-								: 'text-muted-foreground hover:text-ink',
+								? 'border border-ink-200 bg-white text-ink-900'
+								: 'text-ink-600 hover:text-ink-900',
 						)}
 					>
 						<input
@@ -649,7 +770,7 @@ function FormatPicker({
 							onChange={() => onChange(type)}
 							className="sr-only"
 						/>
-						<Icon className="size-3.5" />
+						<Icon className="size-4" />
 						<span className="hidden sm:inline">{label}</span>
 					</label>
 				);

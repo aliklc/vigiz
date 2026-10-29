@@ -42,14 +42,16 @@ export default async function HostHome() {
 	return (
 		<main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-8 sm:px-8 sm:py-10">
 			<header className="flex flex-wrap items-center justify-between gap-4">
-				<h1 className="text-3xl font-bold tracking-tight sm:text-4xl">
-					Merhaba, {host.name.split(' ')[0]}
-				</h1>
-				<Button asChild size="lg">
-					<Link href="/host/quizzes/new">
-						<Plus /> Yeni quiz
-					</Link>
-				</Button>
+				<div>
+					<h1>Quizlerim</h1>
+					<p className="text-ink-600">Merhaba, {host.name.split(' ')[0]}</p>
+				</div>
+				<Link
+					href="/host/quizzes/new"
+					className="flex h-14 items-center gap-2 rounded-xl bg-teal-500 px-6 text-lg font-bold text-white hover:bg-teal-600"
+				>
+					<Plus className="size-5" aria-hidden /> Yeni quiz
+				</Link>
 			</header>
 
 			<dl className="grid grid-cols-3 gap-3">
@@ -58,23 +60,21 @@ export default async function HostHome() {
 					['Oynanan oyun', played.length],
 					['Toplam katılım', totalPlayers],
 				].map(([label, value]) => (
-					<div key={label} className="rounded-2xl border bg-white p-4 sm:p-5">
-						<dt className="text-sm text-muted-foreground">{label}</dt>
-						<dd className="text-2xl font-bold tabular-nums sm:text-3xl">{value}</dd>
+					<div key={label} className="rounded-3xl border bg-white p-4 sm:p-5">
+						<dt className="text-sm text-ink-600">{label}</dt>
+						<dd className="text-2xl font-semibold tabular-nums sm:text-3xl">{value}</dd>
 					</div>
 				))}
 			</dl>
 
 			{open.length > 0 && (
 				<section aria-labelledby="open-rooms" className="flex flex-col gap-3">
-					<h2 id="open-rooms" className="text-xl font-semibold">
-						Açık odalar
-					</h2>
+					<h2 id="open-rooms">Açık odalar</h2>
 					{open.map(g => (
 						<Link
 							key={g.code}
 							href={`/host/games/${g.code}`}
-							className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4 hover:border-brand"
+							className="flex flex-wrap items-center gap-4 rounded-3xl border bg-white p-4 hover:border-teal-500"
 						>
 							<CodeTiles code={g.code} size="md" />
 							<div className="min-w-0 flex-1">
@@ -92,13 +92,13 @@ export default async function HostHome() {
 			)}
 
 			<section aria-labelledby="quizzes" className="flex flex-col gap-3">
-				<h2 id="quizzes" className="text-xl font-semibold">
-					Quizlerim
+				<h2 id="quizzes" className="sr-only">
+					Quizler
 				</h2>
 				{!quizzes?.length && (
-					<div className="flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed bg-white p-10 text-center">
+					<div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink-300 bg-white p-10 text-center">
 						<p className="font-semibold">Henüz bir quizin yok</p>
-						<p className="text-muted-foreground">Bir konu seç, soruları yaz, oda aç.</p>
+						<p className="text-ink-600">Bir konu seç, soruları yaz, oda aç.</p>
 						<Button asChild>
 							<Link href="/host/quizzes/new">
 								<Plus /> İlk quizini oluştur
@@ -121,22 +121,33 @@ export default async function HostHome() {
 						return (
 							<li
 								key={q.id}
-								className="flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-3 pr-4 sm:flex-nowrap"
+								className="flex flex-wrap items-center gap-4 rounded-3xl border bg-white p-4 sm:flex-nowrap"
 							>
-								<div className="flex size-14 shrink-0 flex-col items-center justify-center rounded-xl bg-brand-tint leading-none text-brand-ink sm:size-16">
-									<span className="text-2xl font-bold">{date.getDate()}</span>
-									<span className="text-xs font-semibold">
-										{date.toLocaleDateString('tr-TR', { month: 'short' })}
-									</span>
-								</div>
+								<span
+									aria-hidden
+									className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-teal-50 text-xl font-semibold text-teal-700 sm:size-14"
+								>
+									{(q.title || '?')[0].toLocaleUpperCase('tr')}
+								</span>
 								<div className="min-w-0 flex-1">
-									<p className="truncate font-semibold sm:text-lg">
-										{q.title || 'Adsız quiz'}
+									<div className="flex items-center gap-2">
+										<p className="truncate font-semibold sm:text-lg">
+											{q.title || 'Adsız quiz'}
+										</p>
+										<StatusBadge
+											status={
+												runs.length ? 'played' : ready ? 'ready' : 'draft'
+											}
+										/>
+									</div>
+									<p className="truncate text-sm text-ink-600">
+										{q.topic || 'Konu yok'},{' '}
+										{date.toLocaleDateString('tr-TR', {
+											day: 'numeric',
+											month: 'long',
+										})}
 									</p>
-									<p className="truncate text-sm text-muted-foreground">
-										{q.topic || 'Konu yok'}
-									</p>
-									<div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+									<div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-600">
 										{byType.length ? (
 											byType.map(({ type, count }) => {
 												const { label, Icon } = FORMATS[type];
@@ -172,26 +183,14 @@ export default async function HostHome() {
 										</span>
 									</div>
 								</div>
-								<span
-									className={cn(
-										'hidden rounded-full px-3 py-1 text-xs font-semibold sm:inline',
-										ready
-											? 'bg-teal-50 text-teal-700'
-											: 'bg-muted text-muted-foreground',
-									)}
-								>
-									{ready ? 'Hazır' : 'Taslak'}
-								</span>
 								<div className="flex shrink-0 gap-2">
-									<Button asChild variant="outline" size="sm">
+									<Button asChild variant="outline">
 										<Link href={`/host/quizzes/${q.id}`}>Düzenle</Link>
 									</Button>
 									{ready && (
 										<form method="post" action="/api/host/games">
 											<input type="hidden" name="quizId" value={q.id} />
-											<Button type="submit" size="sm">
-												Oda aç
-											</Button>
+											<Button type="submit">Oda aç</Button>
 										</form>
 									)}
 								</div>
@@ -201,5 +200,20 @@ export default async function HostHome() {
 				</ul>
 			</section>
 		</main>
+	);
+}
+
+const BADGES = {
+	ready: ['Hazır', 'bg-teal-50 text-teal-700'],
+	draft: ['Taslak', 'bg-ink-100 text-ink-700'],
+	played: ['Oynandı', 'bg-ink-50 text-ink-600 border'],
+} as const;
+
+function StatusBadge({ status }: { status: keyof typeof BADGES }) {
+	const [label, cls] = BADGES[status];
+	return (
+		<span className={cn('shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold', cls)}>
+			{label}
+		</span>
 	);
 }
