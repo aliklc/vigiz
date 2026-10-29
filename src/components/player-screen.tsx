@@ -123,7 +123,9 @@ export function PlayerScreen({ code }: { code: string }) {
 	if (notFound) {
 		return (
 			<Centered>
-				<p className="text-2xl font-bold tracking-tight">Bu kodla bir oda yok</p>
+				<p className="text-2xl font-semibold tracking-tight">
+					Bu oda kapatıldı ya da hiç açılmadı
+				</p>
 				<p className="text-muted-foreground">
 					Kodu host'un ekranından kontrol edip tekrar dene.
 				</p>

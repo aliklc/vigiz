@@ -8,7 +8,7 @@ import { db } from '@/lib/supabase/admin';
 import type { TablesUpdate } from '@/lib/supabase/types';
 
 const actionSchema = z.object({
-	action: z.enum(['start', 'next', 'pause', 'resume', 'end', 'reveal', 'judge']),
+	action: z.enum(['start', 'next', 'pause', 'resume', 'end', 'reveal', 'judge', 'cancel']),
 	verdict: z.enum(['correct', 'wrong']).optional(), // judge: buzzer sırasındakine karar
 });
 
@@ -71,6 +71,17 @@ export async function POST(request: Request, ctx: RouteContext<'/api/host/games/
 
 	const parsed = actionSchema.safeParse(await request.json().catch(() => null));
 	if (!parsed.success) return NextResponse.json({ error: 'Geçersiz istek' }, { status: 400 });
+
+	// Lobide odayı iptal et: oyun (ve cascade ile oyuncular) silinir. Başlamış oyun silinmez.
+	if (parsed.data.action === 'cancel') {
+		const { data: gone } = await db
+			.from('games')
+			.delete()
+			.eq('id', game.id)
+			.eq('phase', 'lobby')
+			.select('id');
+		return NextResponse.json({ ok: true, changed: !!gone?.length });
+	}
 
 	if (parsed.data.action === 'judge') {
 		if (!parsed.data.verdict)

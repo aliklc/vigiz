@@ -2,6 +2,7 @@
 
 import { Copy } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { renderSVG } from 'uqr';
 
@@ -24,7 +25,7 @@ import type { GameState } from '@/lib/game-types';
 import type { QuestionType } from '@/lib/quiz';
 import { cn } from '@/lib/utils';
 
-type Action = 'start' | 'next' | 'pause' | 'resume' | 'end' | 'reveal' | 'judge';
+type Action = 'start' | 'next' | 'pause' | 'resume' | 'end' | 'reveal' | 'judge' | 'cancel';
 
 export function HostScreen({
 	code,
@@ -41,6 +42,7 @@ export function HostScreen({
 	// "Önceki soru": sadece bu ekranda gösterilir, oyunu ve oyuncuları etkilemez.
 	const [viewing, setViewing] = useState<PastQuestion | null>(null);
 	const [copied, setCopied] = useState(false);
+	const router = useRouter();
 
 	async function showQuestion(index: number) {
 		const res = await fetch(`/api/host/games/${code}/questions/${index}`, {
@@ -58,7 +60,7 @@ export function HostScreen({
 		return () => clearInterval(id);
 	}, [phase, refresh]);
 
-	async function act(action: Action, verdict?: 'correct' | 'wrong') {
+	async function act(action: Action, verdict?: 'correct' | 'wrong'): Promise<boolean> {
 		setBusy(true);
 		try {
 			const res = await fetch(`/api/host/games/${code}/action`, {
@@ -66,9 +68,13 @@ export function HostScreen({
 				body: JSON.stringify({ action, verdict }),
 			});
 			if (!res.ok) alert((await res.json()).error ?? 'İşlem başarısız');
+			// İptal edilen oda artık yok; yenilemek "bulunamadı" ekranını gösterirdi.
+			else if (action === 'cancel') return true;
 			await refresh();
+			return res.ok;
 		} catch {
 			alert('Bağlantı koptu, tekrar dene.');
+			return false;
 		} finally {
 			// Ağ hatasında da butonlar tekrar açılsın; yoksa oyun ortasında kilitlenir.
 			setBusy(false);
@@ -142,6 +148,24 @@ export function HostScreen({
 								Oyunu bitir
 							</button>
 						)}
+						{game.phase === 'lobby' && (
+							<button
+								type="button"
+								disabled={busy}
+								onClick={async () => {
+									if (
+										!confirm(
+											'Oda iptal edilsin mi? Katılan oyuncular odadan çıkar.',
+										)
+									)
+										return;
+									if (await act('cancel')) router.replace('/host');
+								}}
+								className="flex h-11 shrink-0 items-center rounded-xl border-[1.5px] border-ink-300 bg-white px-4 text-sm font-semibold text-wrong hover:bg-wrong-bg disabled:opacity-50"
+							>
+								Odayı iptal et
+							</button>
+						)}
 					</div>
 				</div>
 			</header>
@@ -189,10 +213,6 @@ export function HostScreen({
 											İlk oyuncu bekleniyor…
 										</p>
 									)}
-									<p className="mt-auto text-sm text-ink-600">
-										Bu ekranı yöneten sen puan almazsın; oynamak için
-										telefonundan katıl.
-									</p>
 								</section>
 							</div>
 						)}

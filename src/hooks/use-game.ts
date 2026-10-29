@@ -59,6 +59,10 @@ export function useGame(code: string, token: string | null) {
 				{ event: '*', schema: 'public', table: 'buzzes', filter: `game_id=eq.${gameId}` },
 				refresh,
 			)
+			// Silinen oda (host lobide iptal etti). DELETE olayları filtrelenemez; id'ye bakılır.
+			.on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'games' }, p => {
+				if (p.old.id === gameId) refresh();
+			})
 			// Yeniden bağlanınca kaçırılmış değişiklikleri yakala.
 			.subscribe(status => status === 'SUBSCRIBED' && refresh());
 		return () => {

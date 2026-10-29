@@ -793,6 +793,51 @@ try {
 	await db.from('quizzes').delete().eq('id', vdId);
 	log('video: klip sırasında cevap yok, süre klipten sonra başlar, ID oyuncuya gitmez, kilitli');
 
+	// Lobide iptal: oda silinir, başlamış oyunda etkisiz, başka host iptal edemez.
+	const openRoom = async () => {
+		const r = await fetch(`${B}/api/host/games`, {
+			method: 'POST',
+			headers: { cookie },
+			body: new URLSearchParams({ quizId }),
+			redirect: 'manual',
+		});
+		return r.headers.get('location').split('/').pop();
+	};
+	const cancelAs = (c, k) =>
+		fetch(`${B}/api/host/games/${c}/action`, {
+			method: 'POST',
+			headers: { cookie: k },
+			body: '{"action":"cancel"}',
+		});
+	const cxCode = await openRoom();
+	await post(`/api/games/${cxCode}/join`, { name: 'İptal' });
+	assert.equal((await cancelAs(cxCode, hostB.cookie)).status, 404, 'başka host iptal edemez');
+	assert.equal((await (await cancelAs(cxCode, cookie)).json()).changed, true);
+	assert.equal(
+		(await fetch(`${B}/api/games/${cxCode}/state`)).status,
+		404,
+		'iptal edilen oda yok',
+	);
+	const { count: cxLeft } = await db
+		.from('games')
+		.select('*', { count: 'exact', head: true })
+		.eq('code', cxCode);
+	assert.equal(cxLeft, 0);
+	const runCode = await openRoom();
+	await post(`/api/games/${runCode}/join`, { name: 'Koşan' });
+	await fetch(`${B}/api/host/games/${runCode}/action`, {
+		method: 'POST',
+		headers: { cookie },
+		body: '{"action":"start"}',
+	});
+	assert.equal((await (await cancelAs(runCode, cookie)).json()).changed, false);
+	assert.equal(
+		(await fetch(`${B}/api/games/${runCode}/state`)).status,
+		200,
+		'başlamış oyun silinmez',
+	);
+	log('lobide iptal: oda silindi, başlamış oyunda etkisiz, başka host 404');
+
 	console.log('\nTÜM KONTROLLER GEÇTİ');
 } finally {
 	// Kullanıcı silinince quizleri, oyunları, oyuncuları ve cevapları cascade ile gider.
