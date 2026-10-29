@@ -10,18 +10,19 @@
 	--font-sans: var(--font-sans);
 	--font-mono: var(--font-mono);
 	--font-heading: var(--font-sans);
-	/* Logo renkleri: sarı vurgu + lacivert. Sarı metin olarak kullanılmaz (kontrast); sarı tonlu
-	   metin accent-800. Sarı zemin üstünde yazı lacivert. */
-	--color-accent-50: #fff9e6;
-	--color-accent-100: #fff0bf;
-	--color-accent-200: #ffe28a;
-	--color-accent-300: #ffd45c;
-	--color-accent-400: #ffc83d;
-	--color-accent-500: #f2b01e;
-	--color-accent-600: #d29400;
-	--color-accent-700: #a06e00;
-	--color-accent-800: #7a5300;
-	--color-accent-900: #4f3600;
+	/* Vurgu mercan + lacivert. Mercan metin olarak kullanılmaz (beyazda 2.6:1); mercan tonlu
+	   metin accent-800. Mercan zemin üstünde yazı lacivert. Doğru cevap yeşil (forest),
+	   yanlış cevap wrong: ikisi de mercandan ayrışsın. */
+	--color-accent-50: #fff3ef;
+	--color-accent-100: #ffe2d8;
+	--color-accent-200: #ffc7b5;
+	--color-accent-300: #ffa68c;
+	--color-accent-400: #ff7a59;
+	--color-accent-500: #f2603d;
+	--color-accent-600: #d94a28;
+	--color-accent-700: #b03a1e;
+	--color-accent-800: #8a2e18;
+	--color-accent-900: #5e1f10;
 	--color-ink-0: #ffffff;
 	--color-ink-50: #f7f6f2;
 	--color-ink-100: #efeef3;
@@ -32,14 +33,14 @@
 	--color-ink-700: #3a3550;
 	--color-ink-900: #181430;
 	--color-cream: #f5f4ef;
-	/* Sadece ana sayfa: mercan + krem paleti */
+	/* Ana sayfa: mercan + krem paleti */
 	--color-coral: #ff7a59;
 	--color-peach: #ffd7c7;
 	--color-shell: #fff8f2;
 	--color-cocoa: #3b1e1a;
 	--color-forest: #1f5c4a;
-	--color-wrong: #b4400f;
-	--color-wrong-bg: #fdf0e9;
+	--color-wrong: #c0262d;
+	--color-wrong-bg: #fdecee;
 	--color-brand: var(--color-accent-400);
 	--color-brand-dark: var(--color-accent-800);
 	--color-brand-ink: var(--color-accent-800);
@@ -96,8 +97,8 @@
 	--secondary-foreground: #181430;
 	--muted: #efeef3;
 	--muted-foreground: #57536b;
-	--accent: #fff9e6;
-	--accent-foreground: #7a5300;
+	--accent: #fff3ef;
+	--accent-foreground: #8a2e18;
 	--destructive: #b4400f;
 	--border: #e2e0e8;
 	--input: #c9c7d3;
@@ -202,6 +203,11 @@
 /* Ana sayfa üç ekran: kaydırınca bölümlere yumuşakça oturur (zorlamaz) */
 html:has(.snap-start) {
 	scroll-snap-type: y proximity;
+}
+
+/* Ana sayfa: JS zemin rengini kaydırmaya göre boyarken bölümler kendi zeminini bırakır */
+.home-live [data-bg] {
+	background-color: transparent;
 }
 
 /* Ana sayfa: kaydırınca öğeler bulanıktan netleşerek ve hafif yukarı kayarak gelir.

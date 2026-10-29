@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og';
 
 import { LogoMark } from '@/components/brand';
 
-// Uygulama simgesi: sarı yuvarlak köşeli kare içinde lacivert balon ve sarı soru işareti.
+// Uygulama simgesi: mercan yuvarlak köşeli kare içinde lacivert balon ve açık mercan soru işareti.
 export function appIcon(size: number) {
 	return new ImageResponse(
 		<div
@@ -12,11 +12,11 @@ export function appIcon(size: number) {
 				display: 'flex',
 				alignItems: 'center',
 				justifyContent: 'center',
-				background: '#ffc83d',
+				background: '#ff7a59',
 				borderRadius: size * 0.22,
 			}}
 		>
-			<LogoMark bubble="#181430" mark="#ffc83d" size={size * 0.74} />
+			<LogoMark bubble="#181430" mark="#ffa68c" size={size * 0.74} />
 		</div>,
 		{ width: size, height: size },
 	);

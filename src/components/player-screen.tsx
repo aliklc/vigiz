@@ -372,7 +372,7 @@ function QuestionHeader({
 	);
 }
 
-// Doğru: lacivert kart ve sarı tik. Yanlış ya da cevapsız: beyaz kart ve çarpı.
+// Doğru: lacivert kart ve yeşil tik. Yanlış ya da cevapsız: beyaz kart ve çarpı.
 function ResultCard({ right, title, sub }: { right: boolean; title: string; sub: string }) {
 	const Icon = right ? Check : X;
 	return (
@@ -386,7 +386,7 @@ function ResultCard({ right, title, sub }: { right: boolean; title: string; sub:
 			<span
 				className={cn(
 					'flex size-14 shrink-0 items-center justify-center rounded-full',
-					right ? 'bg-accent-400 text-ink-900' : 'bg-wrong-bg text-wrong',
+					right ? 'bg-forest text-white' : 'bg-wrong-bg text-wrong',
 				)}
 			>
 				<Icon className="size-8" strokeWidth={3} aria-hidden />
@@ -499,7 +499,7 @@ export function Centered({ children }: { children: React.ReactNode }) {
 	);
 }
 
-// Ekrandaki tek birincil aksiyon: lacivert hap üzerinde sarı yazı.
+// Ekrandaki tek birincil aksiyon: lacivert hap üzerinde mercan yazı.
 export function PrimaryButton({ className, ...props }: React.ComponentProps<'button'>) {
 	return (
 		<button

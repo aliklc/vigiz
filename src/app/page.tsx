@@ -27,11 +27,12 @@ const STEPS = [
 export default async function Home() {
 	const host = await getHost();
 	return (
-		// Renkler kaydırdıkça akar: bölüm zeminleri ve aradaki bant dikey gradient (JS yok).
-		<div className="flex min-h-dvh flex-col bg-shell text-cocoa">
+		// Zemin rengi kaydırdıkça bölümlerin renkleri (data-bg) arasında akar: mercan → krem →
+		// mercan (ScrollEffects). JS yoksa bölümler kendi zeminleriyle görünür.
+		<div data-home className="relative flex min-h-dvh flex-col bg-shell text-cocoa">
 			<ScrollEffects />
-			<div className="relative flex min-h-dvh snap-start flex-col overflow-hidden bg-[linear-gradient(to_bottom,var(--color-coral)_62%,var(--color-peach))]">
-				<FloatingBubbles />
+			<FloatingBubbles />
+			<div data-bg="#ff7a59" className="relative flex min-h-dvh snap-start flex-col bg-coral">
 				<SiteHeader tone="hero" />
 				<section
 					className={cn(
@@ -101,27 +102,30 @@ export default async function Home() {
 
 			<main className="flex flex-col">
 				{/* 2. ekran: nasıl oynanır + formatlar */}
-				<div className="flex min-h-dvh snap-start items-center bg-[linear-gradient(to_bottom,var(--color-peach),var(--color-shell)_22%)]">
-					<div className={cn(CONTAINER, 'flex flex-col gap-14 py-16')}>
-						<section aria-labelledby="how" className="flex flex-col gap-6">
-							<h2 id="how" className="reveal">
+				<div
+					data-bg="#fff8f2"
+					className="relative flex min-h-dvh snap-start items-center bg-shell"
+				>
+					<div className={cn(CONTAINER, 'flex flex-col gap-16 py-20')}>
+						<section aria-labelledby="how" className="flex flex-col gap-8">
+							<h2 id="how" className="reveal text-4xl sm:text-5xl">
 								Nasıl oynanır
 							</h2>
-							<ol className="grid gap-3 sm:grid-cols-3">
+							<ol className="grid gap-4 md:grid-cols-3">
 								{STEPS.map(({ Icon, title, text }, i) => (
 									<li
 										key={title}
-										className="reveal flex items-center gap-4 rounded-3xl border border-cocoa/10 bg-white p-5"
+										className="reveal flex items-center gap-5 rounded-3xl border border-cocoa/10 bg-white p-6 lg:p-8"
 										style={{ transitionDelay: `${(i + 1) * 120}ms` }}
 									>
-										<span className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-peach/50 text-forest">
-											<Icon className="size-6" aria-hidden />
+										<span className="flex size-16 shrink-0 items-center justify-center rounded-2xl bg-peach/50 text-forest">
+											<Icon className="size-8" aria-hidden />
 										</span>
 										<span>
-											<span className="block font-semibold">
+											<span className="block text-xl font-semibold">
 												{i + 1}. {title}
 											</span>
-											<span className="block text-sm text-cocoa/75">
+											<span className="block text-base text-cocoa/75">
 												{text}
 											</span>
 										</span>
@@ -130,11 +134,11 @@ export default async function Home() {
 							</ol>
 						</section>
 
-						<section aria-labelledby="formats" className="flex flex-col gap-6">
-							<h2 id="formats" className="reveal">
+						<section aria-labelledby="formats" className="flex flex-col gap-8">
+							<h2 id="formats" className="reveal text-4xl sm:text-5xl">
 								Soru formatları
 							</h2>
-							<ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+							<ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 								<FormatCard type="choice">
 									<div className="grid grid-cols-2 gap-1.5">
 										{LETTERS.slice(0, 4)
@@ -143,7 +147,7 @@ export default async function Home() {
 												<span
 													key={l}
 													className={cn(
-														'flex h-8 items-center gap-2 rounded-lg border px-2 text-xs font-bold',
+														'flex h-[3.25rem] items-center gap-2 rounded-xl border px-3 text-sm font-bold',
 														i === 1
 															? 'border-forest bg-forest/10 text-forest'
 															: 'text-cocoa/70',
@@ -157,16 +161,16 @@ export default async function Home() {
 								</FormatCard>
 								<FormatCard type="truefalse">
 									<div className="grid grid-cols-2 gap-1.5">
-										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border border-forest bg-forest/10 text-forest">
-											<Check className="size-6" strokeWidth={3} />
+										<span className="flex h-28 items-center justify-center rounded-xl border border-forest bg-forest/10 text-forest">
+											<Check className="size-9" strokeWidth={3} />
 										</span>
-										<span className="flex h-[4.25rem] items-center justify-center rounded-lg border text-cocoa/60">
-											<X className="size-6" strokeWidth={3} />
+										<span className="flex h-28 items-center justify-center rounded-xl border text-cocoa/60">
+											<X className="size-9" strokeWidth={3} />
 										</span>
 									</div>
 								</FormatCard>
 								<FormatCard type="buzzer">
-									<div className="relative h-[4.25rem] overflow-hidden rounded-lg bg-peach/50">
+									<div className="relative h-28 overflow-hidden rounded-lg bg-peach/50">
 										{/* Gerçekten bulanık küçük bir örnek: ne olduğunu açıklamadan gösterir */}
 										<svg
 											viewBox="0 0 120 60"
@@ -180,33 +184,33 @@ export default async function Home() {
 												fill="#1f5c4a"
 											/>
 										</svg>
-										<span className="absolute right-1.5 bottom-1.5 rounded-md bg-cocoa px-2 py-0.5 text-[10px] font-bold text-shell">
+										<span className="absolute right-1.5 bottom-1.5 rounded-md bg-cocoa px-2.5 py-1 text-xs font-bold text-shell">
 											BİLDİM!
 										</span>
 									</div>
 								</FormatCard>
 								{/* Video ayrı bir format değil, şıklı sorulara ek; kartı elle */}
-								<li className="reveal flex flex-col gap-4 rounded-3xl border border-cocoa/10 bg-white p-5">
-									<div className="relative flex h-[4.25rem] flex-col justify-end overflow-hidden rounded-lg bg-cocoa p-2">
+								<li className="reveal flex flex-col gap-4 rounded-3xl border border-cocoa/10 bg-white p-6 lg:p-7">
+									<div className="relative flex h-28 flex-col justify-end overflow-hidden rounded-lg bg-cocoa p-2">
 										<Pause
-											className="absolute top-1/2 left-1/2 size-6 -translate-1/2 text-white"
+											className="absolute top-1/2 left-1/2 size-9 -translate-1/2 text-white"
 											fill="currentColor"
 											aria-hidden
 										/>
-										<span className="relative h-1 rounded-full bg-white/25">
+										<span className="relative h-1.5 rounded-full bg-white/25">
 											<span className="absolute inset-y-0 left-0 w-3/5 rounded-full bg-coral" />
 										</span>
 									</div>
 									<div className="flex items-start gap-3">
 										<Clapperboard
-											className="mt-0.5 size-5 shrink-0 text-forest"
+											className="mt-0.5 size-6 shrink-0 text-forest"
 											aria-hidden
 										/>
 										<span>
-											<span className="block font-semibold">
+											<span className="block text-xl font-semibold">
 												Sonra ne oldu?
 											</span>
-											<span className="block text-sm text-cocoa/75">
+											<span className="block text-base text-cocoa/75">
 												Video en kritik anda durur, tahmin et
 											</span>
 										</span>
@@ -217,18 +221,15 @@ export default async function Home() {
 					</div>
 				</div>
 
-				{/* Krem → kahve geçiş bandı: renk kaydırdıkça akar, üstünde içerik yok */}
+				{/* 3. ekran: kapanış + footer, yine mercan */}
 				<div
-					aria-hidden
-					className="h-[35vh] bg-[linear-gradient(to_bottom,var(--color-shell),var(--color-cocoa))]"
-				/>
-
-				{/* 3. ekran: kapanış + footer, tek koyu ekran */}
-				<div className="relative flex min-h-dvh snap-start flex-col overflow-hidden bg-cocoa text-shell">
+					data-bg="#ff7a59"
+					className="relative flex min-h-dvh snap-start flex-col overflow-hidden bg-coral"
+				>
 					{/* Buzz'daki gibi arkada dev ve bulanık logo; sayfanın sonunda ekranın ortasında */}
 					<p
 						aria-hidden
-						className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[clamp(8rem,30vw,26rem)] leading-none font-extrabold tracking-[-0.06em] text-coral opacity-15 blur-md select-none"
+						className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[clamp(8rem,30vw,26rem)] leading-none font-extrabold tracking-[-0.06em] text-cocoa opacity-10 blur-md select-none"
 					>
 						vigiz
 					</p>
@@ -243,7 +244,7 @@ export default async function Home() {
 								<h2 className="text-4xl leading-tight sm:text-5xl">
 									Kendi quizini hazırla
 								</h2>
-								<p className="text-lg text-peach">
+								<p className="text-lg text-cocoa/80">
 									Sorularını yaz, oda aç, herkesi davet et.
 								</p>
 							</div>
@@ -253,14 +254,14 @@ export default async function Home() {
 							>
 								<Link
 									href={host ? '/host' : '/register'}
-									className="flex h-12 items-center rounded-full bg-coral px-6 font-semibold text-cocoa hover:bg-peach"
+									className="flex h-12 items-center rounded-full bg-cocoa px-6 font-semibold text-peach hover:bg-cocoa/90"
 								>
 									{host ? 'Panele git' : 'Hesap oluştur'}
 								</Link>
 								{!host && (
 									<Link
 										href="/login"
-										className="flex h-12 items-center rounded-full px-4 font-semibold text-shell underline-offset-4 hover:underline"
+										className="flex h-12 items-center rounded-full px-4 font-semibold text-cocoa underline-offset-4 hover:underline"
 									>
 										Giriş yap
 									</Link>
@@ -272,12 +273,12 @@ export default async function Home() {
 						<div
 							className={cn(
 								CONTAINER,
-								'flex items-center justify-between gap-4 py-6 text-sm text-peach',
+								'flex items-center justify-between gap-4 py-6 text-sm text-cocoa/80',
 							)}
 						>
 							<Wordmark
-								className="text-lg text-shell"
-								colors={{ bubble: '#ff7a59', mark: '#3b1e1a' }}
+								className="text-lg text-cocoa"
+								colors={{ bubble: '#3b1e1a', mark: '#ff7a59' }}
 							/>
 							<span>Canlı quiz gecesi</span>
 						</div>
@@ -288,8 +289,8 @@ export default async function Home() {
 	);
 }
 
-// Hero'da yavaşça süzülen soru balonları (dekor). Konum, boyut ve hız sabit: sunucu ve
-// istemci aynı çizer. Mobilde ilk onu görünür.
+// Tüm sayfa boyunca arkada yavaşça süzülen soru balonları (sabit katman, dekor). Konum, boyut
+// ve hız sabit: sunucu ve istemci aynı çizer. Mobilde ilk onu görünür.
 const BUBBLES = [
 	{ x: '6%', y: '16%', size: 28, dur: 26, dark: true },
 	{ x: '44%', y: '9%', size: 22, dur: 34, dark: false },
@@ -315,7 +316,7 @@ const BUBBLES = [
 
 function FloatingBubbles() {
 	return (
-		<div aria-hidden className="pointer-events-none absolute inset-0">
+		<div aria-hidden className="pointer-events-none fixed inset-0">
 			{BUBBLES.map((b, i) => (
 				<span
 					key={`${b.x}${b.y}`}
@@ -332,7 +333,7 @@ function FloatingBubbles() {
 					}}
 				>
 					<LogoMark
-						bubble={b.dark ? '#3b1e1a' : '#fff8f2'}
+						bubble={b.dark ? '#3b1e1a' : '#ffd7c7'}
 						mark={b.dark ? '#ff7a59' : '#3b1e1a'}
 						size={b.size}
 					/>
@@ -345,13 +346,13 @@ function FloatingBubbles() {
 function FormatCard({ type, children }: { type: keyof typeof FORMATS; children: React.ReactNode }) {
 	const { label, short, Icon } = FORMATS[type];
 	return (
-		<li className="reveal flex flex-col gap-4 rounded-3xl border border-cocoa/10 bg-white p-5">
+		<li className="reveal flex flex-col gap-4 rounded-3xl border border-cocoa/10 bg-white p-6 lg:p-7">
 			{children}
 			<div className="flex items-start gap-3">
-				<Icon className="mt-0.5 size-5 shrink-0 text-forest" aria-hidden />
+				<Icon className="mt-0.5 size-6 shrink-0 text-forest" aria-hidden />
 				<span>
-					<span className="block font-semibold">{label}</span>
-					<span className="block text-sm text-cocoa/75">{short}</span>
+					<span className="block text-xl font-semibold">{label}</span>
+					<span className="block text-base text-cocoa/75">{short}</span>
 				</span>
 			</div>
 		</li>

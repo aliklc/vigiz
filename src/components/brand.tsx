@@ -38,7 +38,7 @@ export function LogoMark({
 	);
 }
 
-// Logo: balon işareti + kalın "vigiz". Koyu zeminde yazı krem, balon sarı.
+// Logo: balon işareti + kalın "vigiz". Koyu zeminde yazı krem, balon mercan.
 export function Wordmark({
 	className,
 	dark,
@@ -60,8 +60,8 @@ export function Wordmark({
 			)}
 		>
 			<LogoMark
-				bubble={colors?.bubble ?? (dark ? '#ffc83d' : '#181430')}
-				mark={colors?.mark ?? (dark ? '#181430' : '#ffc83d')}
+				bubble={colors?.bubble ?? (dark ? '#ff7a59' : '#181430')}
+				mark={colors?.mark ?? (dark ? '#181430' : '#ff7a59')}
 				className="size-[1.15em] shrink-0"
 			/>
 			<span aria-hidden className="pb-[0.12em]">

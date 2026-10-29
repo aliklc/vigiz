@@ -141,7 +141,7 @@ export function Choices({
 							open && onChoose && 'hover:border-accent-600 active:scale-[0.99]',
 							!reveal && chosen && 'border-ink-900 bg-accent-50',
 							!reveal && !chosen && 'border-ink-200',
-							correct && 'border-ink-900 bg-accent-50',
+							correct && 'border-forest bg-forest/10',
 							wrongPick && 'border-wrong bg-wrong-bg',
 							reveal && !correct && !wrongPick && 'border-ink-200 text-ink-600',
 						)}
@@ -150,11 +150,13 @@ export function Choices({
 							className={cn(
 								'flex size-10 shrink-0 items-center justify-center rounded-xl text-base font-bold',
 								size === 'host' && 'lg:size-12 lg:text-lg',
-								correct || (!reveal && chosen)
-									? 'bg-accent-400 text-ink-900'
-									: wrongPick
-										? 'bg-wrong text-white'
-										: 'bg-ink-100 text-ink-700',
+								correct
+									? 'bg-forest text-white'
+									: !reveal && chosen
+										? 'bg-accent-400 text-ink-900'
+										: wrongPick
+											? 'bg-wrong text-white'
+											: 'bg-ink-100 text-ink-700',
 							)}
 						>
 							{question.type === 'truefalse' ? (
@@ -178,7 +180,7 @@ export function Choices({
 							<Mark
 								className={cn(
 									'size-6 shrink-0',
-									correct ? 'text-accent-800' : 'text-wrong',
+									correct ? 'text-forest' : 'text-wrong',
 								)}
 								strokeWidth={3}
 								aria-label={correct ? 'Doğru cevap' : 'Senin yanlış cevabın'}
@@ -189,7 +191,7 @@ export function Choices({
 								aria-hidden
 								className={cn(
 									'absolute bottom-0 left-0 h-1.5 transition-[width] duration-700 ease-out',
-									correct ? 'bg-accent-400' : 'bg-ink-300',
+									correct ? 'bg-forest' : 'bg-ink-300',
 								)}
 								style={{ width: `${(reveal.counts[i] / total) * 100}%` }}
 							/>
