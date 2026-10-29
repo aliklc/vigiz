@@ -32,7 +32,7 @@ export default async function Home() {
 		<div data-home className="relative flex min-h-dvh flex-col bg-shell text-cocoa">
 			<ScrollEffects />
 			<FloatingBubbles />
-			<div data-bg="#ff7a59" className="relative flex min-h-dvh snap-start flex-col bg-coral">
+			<div data-bg="#ff8f70" className="relative flex min-h-dvh snap-start flex-col bg-coral">
 				<SiteHeader tone="hero" />
 				<section
 					className={cn(
@@ -178,7 +178,7 @@ export default async function Home() {
 											aria-hidden
 										>
 											<rect width="120" height="60" fill="#ffd7c7" />
-											<circle cx="92" cy="16" r="9" fill="#ff7a59" />
+											<circle cx="92" cy="16" r="9" fill="#ff8f70" />
 											<path
 												d="M0 60 L30 26 L52 44 L74 18 L120 60Z"
 												fill="#1f5c4a"
@@ -223,45 +223,45 @@ export default async function Home() {
 
 				{/* 3. ekran: kapanış + footer, yine mercan */}
 				<div
-					data-bg="#ff7a59"
+					data-bg="#ff8f70"
 					className="relative flex min-h-dvh snap-start flex-col overflow-hidden bg-coral"
 				>
-					{/* Buzz'daki gibi arkada dev ve bulanık logo; sayfanın sonunda ekranın ortasında */}
-					<p
-						aria-hidden
-						className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[clamp(8rem,30vw,26rem)] leading-none font-extrabold tracking-[-0.06em] text-cocoa opacity-10 blur-md select-none"
-					>
-						vigiz
-					</p>
-					<section className="relative flex flex-1 items-center">
+					<section className="relative flex flex-1 items-center justify-center">
+						{/* Buzz'daki gibi arkada dev ve bulanık logo; içerik tam üstünde ortalı */}
+						<p
+							aria-hidden
+							className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pb-[0.12em] text-[clamp(12rem,48vw,36rem)] leading-none font-extrabold tracking-[-0.06em] text-cocoa opacity-10 blur-md select-none"
+						>
+							vigiz
+						</p>
 						<div
 							className={cn(
 								CONTAINER,
-								'relative flex flex-col items-start gap-8 py-16 sm:flex-row sm:items-center sm:justify-between',
+								'relative flex flex-col items-center gap-8 py-16 text-center',
 							)}
 						>
-							<div className="reveal flex flex-col gap-2">
-								<h2 className="text-4xl leading-tight sm:text-5xl">
+							<div className="reveal flex flex-col items-center gap-3">
+								<h2 className="text-5xl leading-tight sm:text-6xl">
 									Kendi quizini hazırla
 								</h2>
-								<p className="text-lg text-cocoa/80">
+								<p className="text-lg text-cocoa/80 sm:text-xl">
 									Sorularını yaz, oda aç, herkesi davet et.
 								</p>
 							</div>
 							<div
-								className="reveal flex flex-wrap items-center gap-2"
+								className="reveal flex flex-wrap items-center justify-center gap-2"
 								style={{ transitionDelay: '200ms' }}
 							>
 								<Link
 									href={host ? '/host' : '/register'}
-									className="flex h-12 items-center rounded-full bg-cocoa px-6 font-semibold text-white hover:bg-cocoa/90"
+									className="flex h-14 items-center rounded-full bg-cocoa px-7 text-lg font-semibold text-white hover:bg-cocoa/90"
 								>
 									{host ? 'Panele git' : 'Hesap oluştur'}
 								</Link>
 								{!host && (
 									<Link
 										href="/login"
-										className="flex h-12 items-center rounded-full px-4 font-semibold text-cocoa underline-offset-4 hover:underline"
+										className="flex h-14 items-center rounded-full px-5 text-lg font-semibold text-cocoa underline-offset-4 hover:underline"
 									>
 										Giriş yap
 									</Link>
@@ -278,7 +278,7 @@ export default async function Home() {
 						>
 							<Wordmark
 								className="text-lg text-cocoa"
-								colors={{ bubble: '#fff8f2', mark: '#ff7a59' }}
+								colors={{ bubble: '#fff8f2', mark: '#ff8f70' }}
 							/>
 							<span>Canlı quiz gecesi</span>
 						</div>
@@ -334,7 +334,7 @@ function FloatingBubbles() {
 				>
 					<LogoMark
 						bubble={b.dark ? '#fff8f2' : '#ffd7c7'}
-						mark={b.dark ? '#ff7a59' : '#3b1e1a'}
+						mark={b.dark ? '#ff8f70' : '#3b1e1a'}
 						size={b.size}
 					/>
 				</span>

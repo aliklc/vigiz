@@ -12,11 +12,11 @@ export function appIcon(size: number) {
 				display: 'flex',
 				alignItems: 'center',
 				justifyContent: 'center',
-				background: '#ff7a59',
+				background: '#ff8f70',
 				borderRadius: size * 0.22,
 			}}
 		>
-			<LogoMark bubble="#fff8f2" mark="#ff7a59" size={size * 0.74} />
+			<LogoMark bubble="#fff8f2" mark="#ff8f70" size={size * 0.74} />
 		</div>,
 		{ width: size, height: size },
 	);

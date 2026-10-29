@@ -72,7 +72,7 @@ export function Wordmark({
 		>
 			<LogoMark
 				bubble={colors?.bubble ?? '#fff8f2'}
-				mark={colors?.mark ?? '#ff7a59'}
+				mark={colors?.mark ?? '#ff8f70'}
 				outline={colors ? colors.outline : dark ? undefined : 'currentColor'}
 				className="size-[1.15em] shrink-0"
 			/>

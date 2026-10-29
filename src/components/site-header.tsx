@@ -16,7 +16,7 @@ export async function SiteHeader({ tone }: { tone?: 'hero' }) {
 					{tone ? (
 						<Wordmark
 							className="text-2xl text-cocoa"
-							colors={{ bubble: '#fff8f2', mark: '#ff7a59' }}
+							colors={{ bubble: '#fff8f2', mark: '#ff8f70' }}
 						/>
 					) : (
 						<Wordmark className="text-2xl" />
