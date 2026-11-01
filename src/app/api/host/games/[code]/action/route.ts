@@ -3,6 +3,7 @@ import { z } from 'zod';
 
 import { getHost, unauthorized } from '@/lib/auth';
 import { type Game, getCurrentQuestion, getOwnedGame } from '@/lib/game';
+import { getDict } from '@/lib/locale';
 import { WRONG_BUZZ_POINTS } from '@/lib/scoring';
 import { db } from '@/lib/supabase/admin';
 import type { TablesUpdate } from '@/lib/supabase/types';
@@ -64,13 +65,14 @@ async function nextUpdate(
 }
 
 export async function POST(request: Request, ctx: RouteContext<'/api/host/games/[code]/action'>) {
+	const t = (await getDict()).api;
 	const host = await getHost();
 	if (!host) return unauthorized();
 	const game = await getOwnedGame((await ctx.params).code, host.id);
-	if (!game) return NextResponse.json({ error: 'Oda bulunamadı' }, { status: 404 });
+	if (!game) return NextResponse.json({ error: t.roomNotFound }, { status: 404 });
 
 	const parsed = actionSchema.safeParse(await request.json().catch(() => null));
-	if (!parsed.success) return NextResponse.json({ error: 'Geçersiz istek' }, { status: 400 });
+	if (!parsed.success) return NextResponse.json({ error: t.badRequest }, { status: 400 });
 
 	// Lobide odayı iptal et: oyun (ve cascade ile oyuncular) silinir. Başlamış oyun silinmez.
 	if (parsed.data.action === 'cancel') {
@@ -101,7 +103,7 @@ export async function POST(request: Request, ctx: RouteContext<'/api/host/games/
 		.eq('current_index', game.current_index);
 	query = game.paused_at ? query.eq('paused_at', game.paused_at) : query.is('paused_at', null);
 	const { error } = await query;
-	if (error) return NextResponse.json({ error: 'İşlem başarısız' }, { status: 500 });
+	if (error) return NextResponse.json({ error: t.actionFailed }, { status: 500 });
 	return NextResponse.json({ ok: true, changed: true });
 }
 
@@ -109,10 +111,11 @@ export async function POST(request: Request, ctx: RouteContext<'/api/host/games/
 // Doğru → puanı yazılır, soru cevap ekranına geçer. Yanlış → eksi puan; kuyrukta kimse
 // kalmadıysa görsel kaldığı yerden netleşmeye devam eder.
 async function judge(game: Game, verdict: 'correct' | 'wrong') {
+	const t = (await getDict()).api;
 	if (game.phase !== 'question') return NextResponse.json({ ok: true, changed: false });
 	const question = await getCurrentQuestion(game);
 	if (question?.type !== 'buzzer') {
-		return NextResponse.json({ error: 'Bu soru buzzer sorusu değil' }, { status: 400 });
+		return NextResponse.json({ error: t.notBuzzer }, { status: 400 });
 	}
 	const { data: pending } = await db
 		.from('buzzes')

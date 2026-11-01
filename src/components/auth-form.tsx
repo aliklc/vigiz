@@ -3,18 +3,23 @@ import Link from 'next/link';
 import { FIELD } from '@/components/brand';
 import { PrimaryButton } from '@/components/player-screen';
 import { SiteHeader } from '@/components/site-header';
+import { getDict } from '@/lib/locale';
 
 // /login ve /register için ortak form (JS'siz, düz POST).
-export function AuthForm({
+export async function AuthForm({
 	mode,
 	error,
 	notice,
+	from,
 }: {
 	mode: 'login' | 'register';
+	// Kayıt kaynağı (oyun sonu çağrısı); formla birlikte gönderilir
+	from?: string;
 	error?: string;
 	notice?: string;
 }) {
 	const isLogin = mode === 'login';
+	const t = (await getDict()).auth;
 	return (
 		<div className="stage flex flex-col">
 			<SiteHeader />
@@ -25,12 +30,8 @@ export function AuthForm({
 					className="flex w-full max-w-md flex-col gap-4 rounded-3xl border bg-white p-6 sm:p-8"
 				>
 					<div className="mb-2 flex flex-col gap-1">
-						<h1>{isLogin ? 'Giriş yap' : 'Hesap oluştur'}</h1>
-						<p className="text-ink-600">
-							{isLogin
-								? 'Quizlerini hazırlamak ve oyun açmak için.'
-								: 'Kendi quizlerini hazırla; sadece sen görürsün.'}
-						</p>
+						<h1>{isLogin ? t.logInTitle : t.registerTitle}</h1>
+						<p className="text-ink-600">{isLogin ? t.logInLead : t.registerLead}</p>
 					</div>
 					{notice && (
 						<p
@@ -40,8 +41,9 @@ export function AuthForm({
 							{notice}
 						</p>
 					)}
+					{from && <input type="hidden" name="from" value={from} />}
 					{!isLogin && (
-						<Field label="Ad soyad" htmlFor="name">
+						<Field label={t.name} htmlFor="name">
 							<input
 								id="name"
 								name="name"
@@ -51,7 +53,7 @@ export function AuthForm({
 							/>
 						</Field>
 					)}
-					<Field label="E-posta" htmlFor="email">
+					<Field label={t.email} htmlFor="email">
 						<input
 							id="email"
 							name="email"
@@ -62,9 +64,9 @@ export function AuthForm({
 						/>
 					</Field>
 					<Field
-						label="Şifre"
+						label={t.password}
 						htmlFor="password"
-						hint={isLogin ? undefined : 'En az 6 karakter'}
+						hint={isLogin ? undefined : t.passwordHint}
 					>
 						<input
 							id="password"
@@ -82,15 +84,15 @@ export function AuthForm({
 						</p>
 					)}
 					<PrimaryButton type="submit" className="mt-2">
-						{isLogin ? 'Giriş yap' : 'Hesabı oluştur'}
+						{isLogin ? t.submitLogIn : t.submitRegister}
 					</PrimaryButton>
 					<p className="text-center text-sm text-ink-600">
-						{isLogin ? 'Hesabın yok mu? ' : 'Zaten hesabın var mı? '}
+						{isLogin ? t.noAccount : t.haveAccount}
 						<Link
 							href={isLogin ? '/register' : '/login'}
 							className="font-semibold text-accent-800 underline-offset-4 hover:underline"
 						>
-							{isLogin ? 'Hesap oluştur' : 'Giriş yap'}
+							{isLogin ? t.registerTitle : t.logInTitle}
 						</Link>
 					</p>
 				</form>

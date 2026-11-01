@@ -15,7 +15,9 @@ import { useEffect, useState } from 'react';
 
 import { CONTAINER, LETTERS } from '@/components/brand';
 import { Breadcrumbs } from '@/components/breadcrumbs';
-import { FORMATS } from '@/components/formats';
+import { FORMAT_ICONS } from '@/components/formats';
+import { trueFalseLabel } from '@/components/game-views';
+import { useDict } from '@/components/locale-provider';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -63,6 +65,7 @@ export function QuizEditor({
 	initial?: QuizInput;
 	authorName?: string;
 }) {
+	const t = useDict();
 	const router = useRouter();
 	const [quiz, setQuiz] = useState<QuizInput>(() => initial ?? emptyQuiz(authorName));
 	const [error, setError] = useState('');
@@ -125,20 +128,20 @@ export function QuizEditor({
 				body: JSON.stringify({ ...quiz, status }),
 			});
 			const body = await res.json();
-			if (!res.ok) return setError(body.error ?? 'Kaydedilemedi');
+			if (!res.ok) return setError(body.error ?? t.editor.saveFailed);
 			set('status', status);
 			setDirty(false);
-			setSaved(status === 'ready' ? 'Hazır olarak kaydedildi' : 'Taslak kaydedildi');
+			setSaved(status === 'ready' ? t.editor.savedReady : t.editor.savedDraft);
 			if (!id) router.replace(`/host/quizzes/${body.id}`);
 		} catch {
-			setError('Bağlantı koptu, kaydedilemedi. Sayfayı kapatmadan tekrar dene.');
+			setError(t.editor.saveDisconnected);
 		} finally {
 			setPending(false);
 		}
 	}
 
 	async function remove() {
-		if (!id || !confirm('Bu quiz ve oynandığı oyunların sonuçları silinsin mi?')) return;
+		if (!id || !confirm(t.editor.confirmDelete)) return;
 		const res = await fetch(`/api/host/quizzes/${id}`, { method: 'DELETE' });
 		if (!res.ok) return setError((await res.json()).error);
 		router.replace('/host');
@@ -160,37 +163,40 @@ export function QuizEditor({
 				<div className="flex min-w-0 flex-col gap-1">
 					<Breadcrumbs
 						items={[
-							{ label: 'Quizlerim', href: '/host' },
-							{ label: id ? quiz.title || 'Adsız quiz' : 'Yeni quiz' },
+							{ label: t.common.myQuizzes, href: '/host' },
+							{ label: id ? quiz.title || t.common.untitledQuiz : t.editor.newQuiz },
 						]}
 					/>
-					<h1 className="truncate">{id ? quiz.title || 'Adsız quiz' : 'Yeni quiz'}</h1>
+					<h1 className="truncate">
+						{id ? quiz.title || t.common.untitledQuiz : t.editor.newQuiz}
+					</h1>
 					<p
 						role="status"
 						className={cn('text-sm', error ? 'text-destructive' : 'text-ink-600')}
 					>
 						{error ||
 							(dirty
-								? 'Kaydedilmemiş değişiklik var'
-								: saved || (quiz.status === 'ready' ? 'Hazır' : 'Taslak'))}
+								? t.editor.unsaved
+								: saved ||
+									(quiz.status === 'ready' ? t.editor.ready : t.editor.draft))}
 					</p>
 				</div>
 				<div className="flex flex-wrap gap-2">
 					{id && (
 						<Button variant="ghost" className="text-destructive" onClick={remove}>
-							Quizi sil
+							{t.editor.deleteQuiz}
 						</Button>
 					)}
 					{id && quiz.status === 'ready' && !dirty && (
 						<form method="post" action="/api/host/games">
 							<input type="hidden" name="quizId" value={id} />
 							<Button type="submit" variant="outline">
-								Oda aç
+								{t.editor.openRoom}
 							</Button>
 						</form>
 					)}
 					<Button variant="outline" disabled={pending} onClick={() => save('draft')}>
-						Taslak kaydet
+						{t.editor.saveDraft}
 					</Button>
 					<button
 						type="button"
@@ -198,7 +204,7 @@ export function QuizEditor({
 						onClick={() => save('ready')}
 						className="h-11 rounded-full bg-ink-900 px-5 text-sm font-semibold text-white hover:bg-ink-700 disabled:opacity-50"
 					>
-						Hazır olarak kaydet
+						{t.editor.saveReady}
 					</button>
 				</div>
 			</div>
@@ -206,33 +212,33 @@ export function QuizEditor({
 			<div className="grid items-start gap-6 lg:grid-cols-[20rem_1fr]">
 				<aside className="flex flex-col gap-4 lg:sticky lg:top-24">
 					<section className="grid gap-3 rounded-3xl border bg-white p-5">
-						<Field label="Başlık">
+						<Field label={t.editor.title}>
 							<Input
 								value={quiz.title}
 								onChange={e => set('title', e.target.value)}
 							/>
 						</Field>
-						<Field label="Konu">
+						<Field label={t.editor.topic}>
 							<Input
 								value={quiz.topic}
 								onChange={e => set('topic', e.target.value)}
 							/>
 						</Field>
-						<Field label="Hazırlayan">
+						<Field label={t.editor.author}>
 							<Input
 								value={quiz.author_name}
 								onChange={e => set('author_name', e.target.value)}
 							/>
 						</Field>
 						<div className="grid grid-cols-2 gap-3">
-							<Field label="Tarih">
+							<Field label={t.editor.date}>
 								<Input
 									type="date"
 									value={quiz.quiz_date}
 									onChange={e => set('quiz_date', e.target.value)}
 								/>
 							</Field>
-							<Field label="Süre (sn)">
+							<Field label={t.editor.timeLimit}>
 								<Input
 									type="number"
 									min={5}
@@ -245,18 +251,20 @@ export function QuizEditor({
 					</section>
 
 					<nav
-						aria-label="Sorular"
+						aria-label={t.editor.questions}
 						className="flex flex-col gap-2 rounded-3xl border bg-white p-3"
 					>
 						<p className="px-2 pt-1 text-sm font-semibold">
-							Sorular{' '}
+							{t.editor.questions}{' '}
 							<span className="font-normal text-ink-600">
 								({quiz.questions.length})
 							</span>
 						</p>
 						<ol className="flex gap-2 overflow-x-auto pb-1 lg:flex-col lg:overflow-visible lg:pb-0">
 							{quiz.questions.map((x, j) => {
-								const { label, Icon } = FORMATS[x.type ?? 'choice'];
+								const type = x.type ?? 'choice';
+								const label = t.formats[type].label;
+								const Icon = FORMAT_ICONS[type];
 								return (
 									<li key={j} className="shrink-0">
 										<button
@@ -274,7 +282,7 @@ export function QuizEditor({
 												{j + 1}
 											</span>
 											<span className="hidden min-w-0 flex-1 truncate lg:block">
-												{x.text || x.answer_text || 'Boş soru'}
+												{x.text || x.answer_text || t.editor.emptyQuestion}
 											</span>
 											<Icon
 												className="size-4 shrink-0 text-ink-600"
@@ -287,13 +295,14 @@ export function QuizEditor({
 						</ol>
 						<div className="flex flex-wrap gap-1 border-t pt-2">
 							{QUESTION_TYPES.map(type => {
-								const { label, Icon } = FORMATS[type];
+								const label = t.formats[type].label;
+								const Icon = FORMAT_ICONS[type];
 								return (
 									<Button
 										key={type}
 										variant="ghost"
 										size="sm"
-										title={`${label} ekle`}
+										title={t.editor.addFormat(label)}
 										onClick={() => {
 											set('questions', [
 												...quiz.questions,
@@ -303,7 +312,7 @@ export function QuizEditor({
 										}}
 									>
 										<Plus /> <Icon />
-										<span className="sr-only">{label} ekle</span>
+										<span className="sr-only">{t.editor.addFormat(label)}</span>
 									</Button>
 								);
 							})}
@@ -317,17 +326,17 @@ export function QuizEditor({
 						className="flex flex-col gap-4 rounded-3xl border bg-white p-5 sm:p-6"
 					>
 						<div className="flex flex-wrap items-center justify-between gap-3">
-							<h2>Soru {i + 1}</h2>
+							<h2>{t.editor.questionN(i + 1)}</h2>
 							<div className="flex gap-1">
 								<IconButton
-									label="Yukarı taşı"
+									label={t.editor.moveUp}
 									disabled={i === 0}
 									onClick={() => moveQuestion(i, -1)}
 								>
 									<ArrowUp />
 								</IconButton>
 								<IconButton
-									label="Aşağı taşı"
+									label={t.editor.moveDown}
 									disabled={i === quiz.questions.length - 1}
 									onClick={() => moveQuestion(i, 1)}
 								>
@@ -342,27 +351,25 @@ export function QuizEditor({
 						{(q.type ?? 'choice') === 'buzzer' ? (
 							<>
 								<p className="text-sm text-muted-foreground">
-									Görsel bulanık başlar ve süre boyunca netleşir. Bilen oyuncular
-									buzzer'a basar, sırayla sesli cevap verir; sen Doğru ya da
-									Yanlış dersin.
+									{t.editor.buzzerHelp}
 								</p>
 								<ImageField
 									value={q.image_url}
 									onChange={image_url => setQuestion(i, { image_url })}
 									blurredPreview
 								/>
-								<Field label="Doğru cevap">
+								<Field label={t.editor.correctAnswer}>
 									<Input
-										placeholder="Sadece cevap ekranında görünür"
+										placeholder={t.editor.answerPlaceholder}
 										value={q.answer_text ?? ''}
 										onChange={e =>
 											setQuestion(i, { answer_text: e.target.value || null })
 										}
 									/>
 								</Field>
-								<Field label="Soru (isteğe bağlı)">
+								<Field label={t.editor.questionOptional}>
 									<Input
-										placeholder="Örn. Bu hangi şehir?"
+										placeholder={t.editor.questionPlaceholder}
 										value={q.text}
 										onChange={e => setQuestion(i, { text: e.target.value })}
 									/>
@@ -370,7 +377,7 @@ export function QuizEditor({
 							</>
 						) : (
 							<>
-								<Field label="Soru metni">
+								<Field label={t.editor.questionText}>
 									<Textarea
 										value={q.text}
 										onChange={e => setQuestion(i, { text: e.target.value })}
@@ -380,11 +387,11 @@ export function QuizEditor({
 									<div
 										className="flex gap-2"
 										role="radiogroup"
-										aria-label="Doğru cevap"
+										aria-label={t.editor.correctAnswer}
 									>
-										{TRUE_FALSE.map((label, ci) => (
+										{TRUE_FALSE.map((value, ci) => (
 											<label
-												key={label}
+												key={value}
 												className={cn(
 													'flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border-2 py-3 font-semibold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 													q.correct_index === ci
@@ -404,7 +411,7 @@ export function QuizEditor({
 												{q.correct_index === ci && (
 													<Check className="size-4" strokeWidth={3} />
 												)}
-												{label}
+												{trueFalseLabel(t, ci)}
 											</label>
 										))}
 									</div>
@@ -412,12 +419,12 @@ export function QuizEditor({
 									<div
 										className="flex flex-col gap-2"
 										role="radiogroup"
-										aria-label="Şıklar"
+										aria-label={t.editor.choices}
 									>
 										{q.choices.map((c, ci) => (
 											<div key={ci} className="flex items-center gap-2">
 												<label
-													title="Doğru cevap olarak işaretle"
+													title={t.editor.markCorrect}
 													className={cn(
 														'relative flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-xl text-sm font-bold transition has-focus-visible:ring-3 has-focus-visible:ring-ring',
 														q.correct_index === ci
@@ -428,7 +435,7 @@ export function QuizEditor({
 													<input
 														type="radio"
 														name={`correct-${i}`}
-														aria-label={`Şık ${ci + 1} doğru cevap`}
+														aria-label={t.editor.choiceCorrect(ci + 1)}
 														checked={q.correct_index === ci}
 														onChange={() =>
 															setQuestion(i, { correct_index: ci })
@@ -442,7 +449,7 @@ export function QuizEditor({
 													)}
 												</label>
 												<Input
-													placeholder={`Şık ${ci + 1}`}
+													placeholder={t.editor.choiceN(ci + 1)}
 													value={c}
 													onChange={e =>
 														setQuestion(i, {
@@ -453,7 +460,7 @@ export function QuizEditor({
 													}
 												/>
 												<IconButton
-													label="Şıkkı sil"
+													label={t.editor.deleteChoice}
 													disabled={q.choices.length <= 2}
 													onClick={() =>
 														setQuestion(i, {
@@ -482,11 +489,11 @@ export function QuizEditor({
 													setQuestion(i, { choices: [...q.choices, ''] })
 												}
 											>
-												<Plus /> Şık ekle
+												<Plus /> {t.editor.addChoice}
 											</Button>
 										)}
 										<p className="text-xs text-muted-foreground">
-											Doğru cevabı soldaki harfe basarak işaretle.
+											{t.editor.choicesHint}
 										</p>
 									</div>
 								)}
@@ -500,9 +507,9 @@ export function QuizEditor({
 								/>
 							</>
 						)}
-						<Field label="Açıklama (isteğe bağlı)">
+						<Field label={t.editor.explanation}>
 							<Input
-								placeholder="Cevaptan sonra gösterilir"
+								placeholder={t.editor.explanationPlaceholder}
 								value={q.explanation ?? ''}
 								onChange={e =>
 									setQuestion(i, { explanation: e.target.value || null })
@@ -515,7 +522,7 @@ export function QuizEditor({
 								className="text-destructive"
 								onClick={removeQuestion}
 							>
-								<Trash2 /> Soruyu sil
+								<Trash2 /> {t.editor.deleteQuestion}
 							</Button>
 							<div className="flex gap-2">
 								<Button
@@ -523,24 +530,22 @@ export function QuizEditor({
 									disabled={i === 0}
 									onClick={() => setActive(i - 1)}
 								>
-									<ChevronLeft /> Önceki
+									<ChevronLeft /> {t.editor.previous}
 								</Button>
 								<Button
 									variant="outline"
 									disabled={i === quiz.questions.length - 1}
 									onClick={() => setActive(i + 1)}
 								>
-									Sonraki <ChevronRight />
+									{t.editor.next} <ChevronRight />
 								</Button>
 							</div>
 						</div>
 					</section>
 				) : (
 					<section className="flex flex-col items-center gap-2 rounded-3xl border-2 border-dashed bg-white p-10 text-center">
-						<p className="font-semibold">Henüz soru yok</p>
-						<p className="text-ink-600">
-							Soldaki + butonlarıyla bir format seçip soru ekle.
-						</p>
+						<p className="font-semibold">{t.editor.noQuestions}</p>
+						<p className="text-ink-600">{t.editor.noQuestionsHint}</p>
 					</section>
 				)}
 			</div>
@@ -570,6 +575,7 @@ function VideoField({
 	question: QuestionInput;
 	onChange: (patch: Partial<QuestionInput>) => void;
 }) {
+	const t = useDict();
 	const [link, setLink] = useState(
 		question.video_id ? `https://youtu.be/${question.video_id}` : '',
 	);
@@ -588,7 +594,7 @@ function VideoField({
 
 	return (
 		<div className="flex flex-col gap-2">
-			<Field label="YouTube videosu (isteğe bağlı)">
+			<Field label={t.editor.video}>
 				<Input
 					placeholder="https://youtu.be/…"
 					value={link}
@@ -605,36 +611,33 @@ function VideoField({
 					}}
 				/>
 			</Field>
-			{invalidLink && (
-				<p className="text-sm text-destructive">Geçerli bir YouTube linki değil</p>
-			)}
+			{invalidLink && <p className="text-sm text-destructive">{t.editor.invalidYoutube}</p>}
 			{id && (
 				<>
 					<div className="grid grid-cols-3 gap-2">
 						{(
 							[
-								['video_start', 'Başla'],
-								['video_cut', 'Dur (soru)'],
-								['video_end', 'Bitir (cevap)'],
+								['video_start', t.editor.videoStart],
+								['video_cut', t.editor.videoCut],
+								['video_end', t.editor.videoEnd],
 							] as const
 						).map(([key, label]) => (
 							<Field key={key} label={label}>
 								<Input
 									inputMode="numeric"
-									placeholder={key === 'video_end' ? 'sonuna kadar' : 'dk:sn'}
+									placeholder={
+										key === 'video_end' ? t.editor.untilEnd : t.editor.minSec
+									}
 									value={times[key]}
 									onChange={e => setTime(key, e.target.value)}
 								/>
 							</Field>
 						))}
 					</div>
-					<p className="text-xs text-muted-foreground">
-						Soruda video Başla → Dur arası oynar, süre video durunca başlar. Cevap
-						ekranında Dur'dan devam eder. Video sadece host ekranında oynar.
-					</p>
+					<p className="text-xs text-muted-foreground">{t.editor.videoHelp}</p>
 					<iframe
 						src={`https://www.youtube-nocookie.com/embed/${id}?start=${question.video_start ?? 0}&rel=0`}
-						title="Video önizleme"
+						title={t.editor.videoPreview}
 						allow="encrypted-media; picture-in-picture"
 						className="aspect-video w-full max-w-md rounded-xl bg-ink"
 					/>
@@ -655,6 +658,7 @@ function ImageField({
 	// Bulanık görsel sorusu: oyuncuların başta göreceği hali de göster
 	blurredPreview?: boolean;
 }) {
+	const t = useDict();
 	const [uploading, setUploading] = useState(false);
 	const [error, setError] = useState('');
 
@@ -666,10 +670,10 @@ function ImageField({
 			form.append('file', file);
 			const res = await fetch('/api/host/uploads', { method: 'POST', body: form });
 			const body = await res.json();
-			if (!res.ok) return setError(body.error ?? 'Görsel yüklenemedi');
+			if (!res.ok) return setError(body.error ?? t.editor.uploadFailed);
 			onChange(body.url);
 		} catch {
-			setError('Bağlantı koptu, görsel yüklenemedi. Tekrar dene.');
+			setError(t.editor.uploadDisconnected);
 		} finally {
 			setUploading(false);
 		}
@@ -679,7 +683,7 @@ function ImageField({
 		<div className="flex flex-col gap-2">
 			<div className="flex gap-2">
 				<Input
-					placeholder="Görsel URL (isteğe bağlı)"
+					placeholder={t.editor.imageUrl}
 					value={value ?? ''}
 					onChange={e => onChange(e.target.value || null)}
 				/>
@@ -701,7 +705,7 @@ function ImageField({
 						}}
 					/>
 					<ImageUp className="size-4" />
-					{uploading ? 'Yükleniyor…' : 'Görsel yükle'}
+					{uploading ? t.editor.uploading : t.editor.uploadImage}
 				</label>
 			</div>
 			{value && (
@@ -716,20 +720,20 @@ function ImageField({
 									className="h-20 scale-110 object-contain blur-md"
 								/>
 							</span>
-							<figcaption>Başta</figcaption>
+							<figcaption>{t.editor.atStart}</figcaption>
 						</figure>
 					)}
 					<figure className="flex flex-col items-center gap-1 text-xs text-muted-foreground">
 						{/* biome-ignore lint/performance/noImgElement: dış URL'ler için next/image domain ayarı gerekir */}
 						<img
 							src={value}
-							alt="Soru görseli önizleme"
+							alt={t.editor.imagePreview}
 							className="h-20 rounded-lg border object-contain"
 						/>
-						{blurredPreview && <figcaption>Sonunda</figcaption>}
+						{blurredPreview && <figcaption>{t.editor.atEnd}</figcaption>}
 					</figure>
 					<Button variant="ghost" size="sm" onClick={() => onChange(null)}>
-						Kaldır
+						{t.editor.remove}
 					</Button>
 				</div>
 			)}
@@ -743,16 +747,18 @@ function FormatPicker({
 	onChange,
 }: {
 	value: QuestionType;
-	onChange: (t: QuestionType) => void;
+	onChange: (type: QuestionType) => void;
 }) {
+	const t = useDict();
 	return (
 		<div
 			className="grid grid-cols-3 gap-1 rounded-xl bg-ink-100 p-1"
 			role="radiogroup"
-			aria-label="Soru formatı"
+			aria-label={t.editor.format}
 		>
 			{QUESTION_TYPES.map(type => {
-				const { label, Icon } = FORMATS[type];
+				const label = t.formats[type].label;
+				const Icon = FORMAT_ICONS[type];
 				return (
 					<label
 						key={type}

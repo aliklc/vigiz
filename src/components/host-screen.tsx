@@ -19,6 +19,7 @@ import {
 	useRemaining,
 	VideoClip,
 } from '@/components/game-views';
+import { useDict } from '@/components/locale-provider';
 import { Centered, PlayerList, PrimaryButton } from '@/components/player-screen';
 import { useGame } from '@/hooks/use-game';
 import type { GameState } from '@/lib/game-types';
@@ -36,6 +37,7 @@ export function HostScreen({
 	// soru sırası → YouTube klibi (sadece host'a; oyuncu state'inde video yok)
 	videos: Record<number, QuestionVideo>;
 }) {
+	const t = useDict();
 	const { state, notFound, refresh, offset } = useGame(code, null);
 	const remaining = useRemaining(state?.question ?? null, offset, !!state?.reveal, refresh);
 	const [origin, setOrigin] = useState('');
@@ -68,13 +70,13 @@ export function HostScreen({
 				method: 'POST',
 				body: JSON.stringify({ action, verdict }),
 			});
-			if (!res.ok) alert((await res.json()).error ?? 'İşlem başarısız');
+			if (!res.ok) alert((await res.json()).error ?? t.host.actionFailed);
 			// İptal edilen oda artık yok; yenilemek "bulunamadı" ekranını gösterirdi.
 			else if (action === 'cancel') return true;
 			await refresh();
 			return res.ok;
 		} catch {
-			alert('Bağlantı koptu, tekrar dene.');
+			alert(t.common.disconnected);
 			return false;
 		} finally {
 			// Ağ hatasında da butonlar tekrar açılsın; yoksa oyun ortasında kilitlenir.
@@ -82,8 +84,8 @@ export function HostScreen({
 		}
 	}
 
-	if (notFound) return <Centered>Oda bulunamadı.</Centered>;
-	if (!state) return <Centered>Yükleniyor…</Centered>;
+	if (notFound) return <Centered>{t.host.roomNotFound}</Centered>;
+	if (!state) return <Centered>{t.common.loading}</Centered>;
 
 	const { game, question, reveal, scores } = state;
 	const joinUrl = `${origin}/play/${code}`;
@@ -117,15 +119,15 @@ export function HostScreen({
 			<header className="border-b bg-white">
 				<div className={cn(CONTAINER, 'flex items-center justify-between gap-4 py-3')}>
 					<div className="flex min-w-0 items-center gap-4">
-						<Link href="/host" aria-label="Panele dön" className="shrink-0">
+						<Link href="/host" aria-label={t.host.backToPanel} className="shrink-0">
 							<Wordmark className="text-2xl" />
 						</Link>
 						<Breadcrumbs
 							className="hidden sm:block"
 							items={[
-								{ label: 'Quizlerim', href: '/host' },
+								{ label: t.common.myQuizzes, href: '/host' },
 								{ label: state.quiz.title },
-								{ label: `Oda ${code}` },
+								{ label: t.common.room(code) },
 							]}
 						/>
 					</div>
@@ -135,18 +137,14 @@ export function HostScreen({
 								type="button"
 								disabled={busy}
 								onClick={() => {
-									if (
-										confirm(
-											'Oyun şimdi bitsin mi? O ana kadarki puanlarla sonuçlar gösterilir.',
-										)
-									) {
+									if (confirm(t.host.confirmEnd)) {
 										setViewing(null);
 										act('end');
 									}
 								}}
 								className="flex h-11 shrink-0 items-center rounded-full border-[1.5px] border-ink-300 bg-white px-4 text-sm font-semibold text-wrong hover:bg-wrong-bg disabled:opacity-50"
 							>
-								Oyunu bitir
+								{t.host.endGame}
 							</button>
 						)}
 						{game.phase === 'lobby' && (
@@ -154,17 +152,12 @@ export function HostScreen({
 								type="button"
 								disabled={busy}
 								onClick={async () => {
-									if (
-										!confirm(
-											'Oda iptal edilsin mi? Katılan oyuncular odadan çıkar.',
-										)
-									)
-										return;
+									if (!confirm(t.host.confirmCancel)) return;
 									if (await act('cancel')) router.replace('/host');
 								}}
 								className="flex h-11 shrink-0 items-center rounded-full border-[1.5px] border-ink-300 bg-white px-4 text-sm font-semibold text-wrong hover:bg-wrong-bg disabled:opacity-50"
 							>
-								Odayı iptal et
+								{t.host.cancelRoom}
 							</button>
 						)}
 					</div>
@@ -180,7 +173,7 @@ export function HostScreen({
 							<div className="grid gap-6 lg:grid-cols-[minmax(0,26rem)_1fr] lg:gap-8">
 								<section className="flex flex-col items-center gap-5 rounded-3xl bg-ink-900 p-6 text-center text-white lg:p-8">
 									<p className="font-mono text-sm tracking-[0.08em] text-accent-200 uppercase">
-										Oda kodu
+										{t.host.roomCode}
 									</p>
 									<p className="font-mono text-6xl font-medium tracking-[0.08em] text-white lg:text-7xl">
 										{code}
@@ -200,18 +193,18 @@ export function HostScreen({
 												className="flex h-11 items-center gap-2 rounded-full border-[1.5px] border-white/40 px-4 text-sm font-semibold hover:bg-white/10"
 											>
 												<Copy className="size-4" aria-hidden />
-												{copied ? 'Kopyalandı' : 'Linki kopyala'}
+												{copied ? t.host.copied : t.host.copyLink}
 											</button>
 										</>
 									)}
 								</section>
-								<section aria-label="Katılanlar" className="flex flex-col gap-4">
-									<h1>{playerCount} oyuncu katıldı</h1>
+								<section aria-label={t.host.joined} className="flex flex-col gap-4">
+									<h1>{t.host.playersJoined(playerCount)}</h1>
 									{playerCount ? (
 										<PlayerList players={state.players} />
 									) : (
 										<p className="text-lg text-ink-600">
-											İlk oyuncu bekleniyor…
+											{t.host.waitingFirst}
 										</p>
 									)}
 								</section>
@@ -230,7 +223,10 @@ export function HostScreen({
 									<div className="flex items-start justify-between gap-6">
 										<div className="flex flex-col gap-2">
 											<p className="font-mono font-medium text-ink-600 uppercase lg:text-lg">
-												Soru {game.currentIndex + 1}/{game.questionCount}
+												{t.host.questionN(
+													game.currentIndex + 1,
+													game.questionCount,
+												)}
 											</p>
 											<h1 className="text-3xl leading-tight lg:text-5xl">
 												{question.text}
@@ -281,7 +277,7 @@ export function HostScreen({
 						{game.phase === 'leaderboard' && scores && (
 							<>
 								<h1 className="text-3xl font-bold tracking-tight lg:text-4xl">
-									{game.currentIndex + 1}. sorudan sonra sıralama
+									{t.game.rankingAfter(game.currentIndex + 1)}
 								</h1>
 								<Scoreboard scores={scores} />
 							</>
@@ -290,10 +286,13 @@ export function HostScreen({
 						{game.phase === 'finished' && scores && (
 							<>
 								<h1 className="text-center text-4xl font-bold tracking-tight lg:text-5xl">
-									Kazananlar
+									{t.host.winners}
 								</h1>
 								<Podium scores={scores} />
 								<Scoreboard scores={scores} />
+								<p className="text-center text-lg text-ink-600">
+									{t.host.finishedCta}
+								</p>
 							</>
 						)}
 					</>
@@ -303,17 +302,15 @@ export function HostScreen({
 			<footer className="fixed inset-x-0 bottom-0 border-t bg-white/90 py-3 backdrop-blur lg:py-4">
 				<div className={cn(CONTAINER, 'flex items-center justify-between gap-4')}>
 					{viewing ? (
-						<p className="font-medium text-ink-600">
-							Önceki soruya bakıyorsun; oyun devam ediyor.
-						</p>
+						<p className="font-medium text-ink-600">{t.host.viewingPast}</p>
 					) : game.phase === 'question' && question?.type === 'buzzer' ? (
 						<p className="font-medium text-ink-600">
-							{question.answeredCount} kişi bastı
+							{t.host.buzzedN(question.answeredCount)}
 						</p>
 					) : game.phase === 'question' && question ? (
 						<AnsweredBar answered={question.answeredCount} total={playerCount} />
 					) : (
-						<p className="font-medium text-ink-600">{playerCount} oyuncu</p>
+						<p className="font-medium text-ink-600">{t.host.playersN(playerCount)}</p>
 					)}
 					<div className="flex gap-3">
 						{game.phase !== 'lobby' && previousIndex >= 0 && (
@@ -322,7 +319,7 @@ export function HostScreen({
 								onClick={() => showQuestion(previousIndex)}
 								className={SECONDARY}
 							>
-								Önceki soru
+								{t.host.previousQuestion}
 							</button>
 						)}
 						{viewing && (
@@ -330,14 +327,14 @@ export function HostScreen({
 								className="lg:h-14 lg:px-8 lg:text-lg"
 								onClick={() => setViewing(null)}
 							>
-								Güncel ekrana dön
+								{t.host.backToLive}
 							</PrimaryButton>
 						)}
 						{!viewing && (
 							<>
 								{game.phase === 'lobby' &&
 									control(
-										'Başlat',
+										t.host.start,
 										'start',
 										game.questionCount === 0 || playerCount === 0,
 									)}
@@ -351,7 +348,7 @@ export function HostScreen({
 													onClick={() => act('judge', 'wrong')}
 													className="h-12 rounded-full bg-wrong px-6 font-semibold text-white hover:bg-wrong/90 disabled:opacity-50 lg:h-14 lg:px-8 lg:text-lg"
 												>
-													Yanlış
+													{t.common.wrong}
 												</button>
 												<button
 													type="button"
@@ -359,7 +356,7 @@ export function HostScreen({
 													onClick={() => act('judge', 'correct')}
 													className="h-12 rounded-full bg-ink-900 px-6 font-semibold text-white hover:bg-ink-700 disabled:opacity-50 lg:h-14 lg:px-8 lg:text-lg"
 												>
-													Doğru
+													{t.common.correct}
 												</button>
 											</>
 										)}
@@ -369,7 +366,7 @@ export function HostScreen({
 											onClick={() => act('reveal')}
 											className="h-12 rounded-full border-[1.5px] border-ink-300 bg-white px-5 font-semibold text-ink-900 hover:bg-ink-50 disabled:opacity-50 lg:h-14 lg:px-6 lg:text-lg"
 										>
-											Cevabı göster
+											{t.host.showAnswer}
 										</button>
 									</>
 								)}
@@ -377,21 +374,24 @@ export function HostScreen({
 									<>
 										{remaining <= game.timeLimitSec * 1000 &&
 											secondary(
-												question?.pausedAt ? 'Devam et' : 'Duraklat',
+												question?.pausedAt ? t.host.resume : t.host.pause,
 												question?.pausedAt ? 'resume' : 'pause',
 											)}
-										{secondary('Cevabı göster', 'reveal')}
+										{secondary(t.host.showAnswer, 'reveal')}
 									</>
 								)}
-								{game.phase === 'reveal' && control('Sıralamayı göster', 'next')}
+								{game.phase === 'reveal' && control(t.host.showRanking, 'next')}
 								{game.phase === 'leaderboard' &&
-									control(isLast ? 'Sonuçları göster' : 'Sonraki soru', 'next')}
+									control(
+										isLast ? t.host.showResults : t.host.nextQuestion,
+										'next',
+									)}
 								{game.phase === 'finished' && (
 									<Link
 										href="/host"
 										className="flex h-12 items-center rounded-full border-[1.5px] border-ink-300 bg-white px-6 font-semibold lg:h-14"
 									>
-										Panele dön
+										{t.host.backToPanel}
 									</Link>
 								)}
 							</>
@@ -404,6 +404,7 @@ export function HostScreen({
 }
 
 function AnsweredBar({ answered, total }: { answered: number; total: number }) {
+	const t = useDict();
 	return (
 		<div className="flex min-w-0 flex-1 items-center gap-3">
 			<div className="h-2.5 max-w-sm flex-1 overflow-hidden rounded-full bg-ink-200">
@@ -412,20 +413,19 @@ function AnsweredBar({ answered, total }: { answered: number; total: number }) {
 					style={{ width: `${total ? (answered / total) * 100 : 0}%` }}
 				/>
 			</div>
-			<p className="shrink-0 font-medium tabular-nums">
-				{answered}/{total} cevapladı
-			</p>
+			<p className="shrink-0 font-medium tabular-nums">{t.host.answeredN(answered, total)}</p>
 		</div>
 	);
 }
 
 // Telefon kamerasıyla okutunca doğrudan oyuncu sayfası açılır.
 function JoinQr({ url }: { url: string }) {
+	const t = useDict();
 	const svg = useMemo(() => renderSVG(url, { border: 1 }), [url]);
 	return (
 		<div
 			role="img"
-			aria-label="Katılmak için QR kod"
+			aria-label={t.host.joinQr}
 			className="size-48 shrink-0 rounded-2xl bg-white p-2 lg:size-56 [&>svg]:size-full"
 			// biome-ignore lint/security/noDangerouslySetInnerHtml: SVG kendi ürettiğimiz oda linkinden, kullanıcı girdisi değil
 			dangerouslySetInnerHTML={{ __html: svg }}
@@ -445,6 +445,7 @@ type PastQuestion = {
 };
 
 function PastQuestionView({ state, past }: { state: GameState; past: PastQuestion }) {
+	const t = useDict();
 	// Choices bileşenini sonuç modunda kullanmak için state'i bu soruyla doldur.
 	const view: GameState = {
 		...state,
@@ -469,7 +470,7 @@ function PastQuestionView({ state, past }: { state: GameState; past: PastQuestio
 		<>
 			<div className="flex flex-col gap-2">
 				<p className="font-mono font-medium text-ink-600 uppercase lg:text-lg">
-					Önceki soru: Soru {past.index + 1}/{state.game.questionCount}
+					{t.host.pastQuestion(past.index + 1, state.game.questionCount)}
 				</p>
 				<h1 className="text-3xl leading-tight lg:text-5xl">{past.text}</h1>
 			</div>
@@ -495,6 +496,7 @@ function BuzzerHostView({
 	code: string;
 	remaining: number;
 }) {
+	const t = useDict();
 	const { question, reveal, game } = state;
 	if (!question) return null;
 	const queue = state.buzzer?.queue ?? [];
@@ -505,10 +507,10 @@ function BuzzerHostView({
 				<div className="flex items-start justify-between gap-6">
 					<div className="flex flex-col gap-2">
 						<p className="font-mono font-medium text-ink-600 uppercase lg:text-lg">
-							Soru {game.currentIndex + 1}/{game.questionCount}
+							{t.host.questionN(game.currentIndex + 1, game.questionCount)}
 						</p>
 						<h1 className="text-3xl leading-tight lg:text-5xl">
-							{reveal ? reveal.answerText : question.text || 'Bu ne?'}
+							{reveal ? reveal.answerText : question.text || t.common.whatIsThis}
 						</h1>
 					</div>
 					{!reveal && (
@@ -529,8 +531,8 @@ function BuzzerHostView({
 				{reveal && (
 					<p className="text-center text-xl font-semibold lg:text-2xl">
 						{reveal.winner
-							? `${reveal.winner.name} bildi, +${reveal.winner.points}`
-							: 'Kimse bilemedi'}
+							? t.host.winnerLine(reveal.winner.name, reveal.winner.points)
+							: t.play.nobodyGotIt}
 					</p>
 				)}
 				{reveal?.explanation && (
@@ -539,9 +541,9 @@ function BuzzerHostView({
 					</p>
 				)}
 			</div>
-			<section aria-label="Basış sırası" className="flex flex-col gap-2">
-				<h2 className="font-semibold text-ink-600 lg:text-lg">Basış sırası</h2>
-				{!queue.length && <p className="text-ink-600">Henüz kimse basmadı.</p>}
+			<section aria-label={t.host.buzzOrder} className="flex flex-col gap-2">
+				<h2 className="font-semibold text-ink-600 lg:text-lg">{t.host.buzzOrder}</h2>
+				{!queue.length && <p className="text-ink-600">{t.host.nobodyBuzzed}</p>}
 				<ol className="flex flex-col gap-1.5">
 					{queue.map((b, i) => (
 						<li
@@ -558,12 +560,12 @@ function BuzzerHostView({
 							<span className="flex-1 truncate">{b.name}</span>
 							<span className="text-sm no-underline">
 								{b.verdict === 'correct'
-									? 'Doğru'
+									? t.common.correct
 									: b.verdict === 'wrong'
 										? '−300'
 										: b.id === answeringId
-											? 'Cevaplıyor'
-											: 'Bekliyor'}
+											? t.host.answeringNow
+											: t.host.waiting}
 							</span>
 						</li>
 					))}

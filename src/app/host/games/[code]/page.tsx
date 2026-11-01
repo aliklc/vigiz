@@ -5,9 +5,13 @@ import type { QuestionVideo } from '@/components/game-views';
 import { HostScreen } from '@/components/host-screen';
 import { requireHost } from '@/lib/auth';
 import { getOwnedGame } from '@/lib/game';
+import { getDict } from '@/lib/locale';
 import { db } from '@/lib/supabase/admin';
 
-export const metadata: Metadata = { title: 'Oyun', robots: { index: false, follow: false } };
+export async function generateMetadata(): Promise<Metadata> {
+	const t = await getDict();
+	return { title: t.meta.game, robots: { index: false, follow: false } };
+}
 
 export default async function HostGamePage({ params }: PageProps<'/host/games/[code]'>) {
 	const host = await requireHost();

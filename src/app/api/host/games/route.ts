@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 
 import { getHost, unauthorized } from '@/lib/auth';
 import { makeCode } from '@/lib/game';
+import { getDict } from '@/lib/locale';
 import { db } from '@/lib/supabase/admin';
 
 // /host sayfasındaki "Oda aç" formu. Başarılıysa host ekranına yönlendirir.
 export async function POST(request: Request) {
+	const t = (await getDict()).api;
 	const host = await getHost();
 	if (!host) return unauthorized();
 	const quizId = (await request.formData()).get('quizId');
@@ -16,10 +18,7 @@ export async function POST(request: Request) {
 		.eq('owner_id', host.id)
 		.maybeSingle();
 	if (quiz?.status !== 'ready') {
-		return NextResponse.json(
-			{ error: 'Sadece hazır quizler için oda açılabilir' },
-			{ status: 400 },
-		);
+		return NextResponse.json({ error: t.onlyReady }, { status: 400 });
 	}
 
 	// Kod çakışırsa (unique ihlali) yeni kodla tekrar dene.
@@ -29,5 +28,5 @@ export async function POST(request: Request) {
 		if (!error) return NextResponse.redirect(new URL(`/host/games/${code}`, request.url), 303);
 		if (error.code !== '23505') break;
 	}
-	return NextResponse.json({ error: 'Oda açılamadı' }, { status: 500 });
+	return NextResponse.json({ error: t.roomFailed }, { status: 500 });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 
 import { getHost, notFoundJson, unauthorized } from '@/lib/auth';
+import { getDict } from '@/lib/locale';
 import { saveQuiz } from '@/lib/save-quiz';
 import { db } from '@/lib/supabase/admin';
 
@@ -11,6 +12,7 @@ export async function PUT(request: Request, ctx: RouteContext<'/api/host/quizzes
 }
 
 export async function DELETE(_: Request, ctx: RouteContext<'/api/host/quizzes/[id]'>) {
+	const t = (await getDict()).api;
 	const host = await getHost();
 	if (!host) return unauthorized();
 	const { id } = await ctx.params;
@@ -22,7 +24,7 @@ export async function DELETE(_: Request, ctx: RouteContext<'/api/host/quizzes/[i
 		.eq('id', id)
 		.eq('owner_id', host.id)
 		.select('id');
-	if (error) return NextResponse.json({ error: 'Silinemedi' }, { status: 500 });
-	if (!deleted.length) return notFoundJson('Quiz bulunamadı');
+	if (error) return NextResponse.json({ error: t.deleteFailed }, { status: 500 });
+	if (!deleted.length) return notFoundJson(t.quizNotFound);
 	return NextResponse.json({ ok: true });
 }

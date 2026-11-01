@@ -1,12 +1,11 @@
 'use client';
 
-import { Check, Lock, X } from 'lucide-react';
+import { Check, Lock, Share2, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 import { FIELD, LETTERS, Wordmark } from '@/components/brand';
-import { FORMATS } from '@/components/formats';
 import {
 	BuzzerImage,
 	Choices,
@@ -15,10 +14,13 @@ import {
 	Podium,
 	QuestionImage,
 	Scoreboard,
+	trueFalseLabel,
 	useRemaining,
 } from '@/components/game-views';
+import { useDict, useLocale } from '@/components/locale-provider';
 import { useGame } from '@/hooks/use-game';
 import type { GameState } from '@/lib/game-types';
+import { homePath } from '@/lib/i18n';
 import { blurLevel } from '@/lib/scoring';
 import { cn } from '@/lib/utils';
 
@@ -40,6 +42,8 @@ function writeStored(code: string, id: string | null) {
 }
 
 export function PlayerScreen({ code }: { code: string }) {
+	const t = useDict();
+	const locale = useLocale();
 	// Gizli oyuncu token'ı. undefined = localStorage henüz okunmadı, null = kayıtlı oyuncu yok
 	const [token, setToken] = useState<string | null | undefined>(undefined);
 	const [error, setError] = useState('');
@@ -57,11 +61,11 @@ export function PlayerScreen({ code }: { code: string }) {
 				method: 'POST',
 				body: JSON.stringify({ token, choiceIndex }),
 			});
-			if (!res.ok) setError((await res.json()).error ?? 'Cevap gönderilemedi');
+			if (!res.ok) setError((await res.json()).error ?? t.play.answerFailed);
 			await refresh();
 		} catch {
 			// Ağ hatası: cevap kaydedilmedi; seçim temizlenir, oyuncu tekrar basabilir.
-			setError('Bağlantı koptu, cevabın gönderilemedi. Tekrar dene.');
+			setError(t.play.answerDisconnected);
 		} finally {
 			setPending(null);
 		}
@@ -74,10 +78,10 @@ export function PlayerScreen({ code }: { code: string }) {
 				method: 'POST',
 				body: JSON.stringify({ token }),
 			});
-			if (!res.ok) setError((await res.json()).error ?? 'Basılamadı');
+			if (!res.ok) setError((await res.json()).error ?? t.play.buzzFailed);
 			await refresh();
 		} catch {
-			setError('Bağlantı koptu, tekrar bas.');
+			setError(t.play.buzzDisconnected);
 		}
 	}
 
@@ -100,7 +104,7 @@ export function PlayerScreen({ code }: { code: string }) {
 			setToken(null);
 			setError(body.token ? '' : data.error);
 		} catch {
-			if (!body.token) return setError('Bağlantı koptu, tekrar dene.');
+			if (!body.token) return setError(t.common.disconnected);
 			// Yeniden bağlanırken geçici hata: kimliği koru, biraz sonra tekrar dene.
 			setTimeout(() => join(body), 2000);
 		}
@@ -110,8 +114,8 @@ export function PlayerScreen({ code }: { code: string }) {
 	const router = useRouter();
 	const finishedForStranger = token === null && state?.game.phase === 'finished';
 	useEffect(() => {
-		if (finishedForStranger) router.replace('/');
-	}, [finishedForStranger, router]);
+		if (finishedForStranger) router.replace(homePath(locale));
+	}, [finishedForStranger, router, locale]);
 
 	// Sayfa yenilenince / geri gelinince kayıtlı token ile yeniden bağlan.
 	// biome-ignore lint/correctness/useExhaustiveDependencies: sadece ilk açılışta
@@ -124,25 +128,21 @@ export function PlayerScreen({ code }: { code: string }) {
 	if (notFound) {
 		return (
 			<Centered>
-				<p className="text-2xl font-semibold tracking-tight">
-					Bu oda kapatıldı ya da hiç açılmadı
-				</p>
-				<p className="text-muted-foreground">
-					Kodu host'un ekranından kontrol edip tekrar dene.
-				</p>
-				<a href="/" className="mt-4 font-medium text-brand-ink underline">
-					Kodu yeniden gir
+				<p className="text-2xl font-semibold tracking-tight">{t.play.roomClosed}</p>
+				<p className="text-muted-foreground">{t.play.roomClosedHint}</p>
+				<a href={homePath(locale)} className="mt-4 font-medium text-brand-ink underline">
+					{t.play.reenterCode}
 				</a>
 			</Centered>
 		);
 	}
 	// token ayarlandı ama state henüz o oyuncuyla yeniden çekilmediyse isim formunu gösterme.
 	if (token === undefined || !state || (token && !state.me)) {
-		return <Centered>Yükleniyor…</Centered>;
+		return <Centered>{t.common.loading}</Centered>;
 	}
 
 	if (!state.me) {
-		if (state.game.phase === 'finished') return <Centered>Yükleniyor…</Centered>;
+		if (state.game.phase === 'finished') return <Centered>{t.common.loading}</Centered>;
 		return (
 			<Stage>
 				<form
@@ -154,21 +154,21 @@ export function PlayerScreen({ code }: { code: string }) {
 				>
 					<Wordmark className="text-2xl" />
 					<Card className="flex flex-col gap-2">
-						<p className="eyebrow">Oda {state.game.code}</p>
+						<p className="eyebrow">{t.common.room(state.game.code)}</p>
 						<h1>{state.quiz.title}</h1>
 						<p className="text-ink-600">
 							{state.quiz.topic && `${state.quiz.topic}, `}
-							{state.game.questionCount} soru
+							{t.play.questionCount(state.game.questionCount)}
 						</p>
 						{state.quiz.authorName && (
 							<p className="text-sm text-ink-600">
-								Hazırlayan: {state.quiz.authorName}
+								{t.play.author(state.quiz.authorName)}
 							</p>
 						)}
 					</Card>
 					<div className="flex flex-col gap-2">
 						<label htmlFor="name" className="font-medium">
-							Adın
+							{t.play.yourName}
 						</label>
 						<input
 							id="name"
@@ -178,7 +178,7 @@ export function PlayerScreen({ code }: { code: string }) {
 							required
 							className={FIELD}
 						/>
-						<p className="text-sm text-ink-600">Sıralamada bu ad görünecek.</p>
+						<p className="text-sm text-ink-600">{t.play.nameHint}</p>
 						{error && (
 							<p role="alert" className="text-sm text-destructive">
 								{error}
@@ -186,7 +186,7 @@ export function PlayerScreen({ code }: { code: string }) {
 						)}
 					</div>
 					<PrimaryButton type="submit" className="mt-auto w-full">
-						Oyuna katıl
+						{t.play.joinGame}
 					</PrimaryButton>
 				</form>
 			</Stage>
@@ -208,13 +208,11 @@ export function PlayerScreen({ code }: { code: string }) {
 				<Wordmark className="text-2xl" />
 				<Card className="flex flex-col items-center gap-3 text-center">
 					<Avatar name={me.name} className="size-20 text-3xl" />
-					<h1>Hazırsın, {me.name}</h1>
-					<p className="text-ink-600">Host başlatınca ilk soru burada belirecek.</p>
+					<h1>{t.play.ready(me.name)}</h1>
+					<p className="text-ink-600">{t.play.waitStart}</p>
 				</Card>
 				<PlayerList players={state.players} meId={me.id} />
-				<p className="mt-auto text-center text-sm text-ink-600">
-					Sayfayı yenilersen kaldığın yerden devam edersin.
-				</p>
+				<p className="mt-auto text-center text-sm text-ink-600">{t.play.refreshHint}</p>
 			</Stage>
 		);
 	}
@@ -240,7 +238,7 @@ export function PlayerScreen({ code }: { code: string }) {
 			<Stage className="gap-4">
 				<QuestionHeader state={state} remaining={remaining} paused={paused} />
 				<Card className="flex flex-col gap-2 p-5 sm:p-6">
-					<p className="eyebrow">{FORMATS[question.type].label}</p>
+					<p className="eyebrow">{t.formats[question.type].label}</p>
 					<h2>{question.text}</h2>
 				</Card>
 				<QuestionImage src={question.imageUrl} className="max-h-48 sm:max-h-72" />
@@ -249,7 +247,7 @@ export function PlayerScreen({ code }: { code: string }) {
 						role="status"
 						className="rounded-xl border bg-white p-3 text-center font-medium"
 					>
-						{paused ? 'Oyun duraklatıldı' : 'Ekrana bak, video oynuyor…'}
+						{paused ? t.play.gamePaused : t.play.watchVideo}
 					</p>
 				)}
 				<Choices
@@ -264,7 +262,7 @@ export function PlayerScreen({ code }: { code: string }) {
 						className="mt-auto flex items-center justify-center gap-2 rounded-xl border bg-white p-4 font-semibold"
 					>
 						<Lock className="size-4 text-accent-800" aria-hidden />
-						Cevabın kilitlendi, diğerleri bekleniyor
+						{t.play.locked}
 					</p>
 				)}
 				{error && (
@@ -279,16 +277,19 @@ export function PlayerScreen({ code }: { code: string }) {
 	if (phase === 'reveal' && question && reveal) {
 		const right = !!reveal.myPoints;
 		const answered = question.myChoice != null;
-		const correctText = question.choices[reveal.correctIndex];
+		const correctText =
+			question.type === 'truefalse'
+				? trueFalseLabel(t, reveal.correctIndex)
+				: `${LETTERS[reveal.correctIndex]}) ${question.choices[reveal.correctIndex]}`;
 		return (
 			<Stage className="gap-4">
 				<ResultCard
 					right={right}
-					title={right ? 'Doğru!' : answered ? 'Yanlış' : 'Süre doldu'}
+					title={right ? t.play.right : answered ? t.play.wrong : t.play.timeUp}
 					sub={
 						right
-							? `+${reveal.myPoints} puan`
-							: `Doğru cevap: ${question.type === 'truefalse' ? correctText : `${LETTERS[reveal.correctIndex]}) ${correctText}`}`
+							? t.play.plusPoints(reveal.myPoints ?? 0)
+							: t.play.correctAnswerIs(correctText)
 					}
 				/>
 				<Card className="flex flex-col gap-4 p-5 sm:p-6">
@@ -296,7 +297,7 @@ export function PlayerScreen({ code }: { code: string }) {
 					<Choices state={{ ...state, question }} open={false} size="player" />
 				</Card>
 				{reveal.explanation && <Explanation text={reveal.explanation} />}
-				<p className="mt-auto text-center text-ink-600">Sonraki soru bekleniyor…</p>
+				<p className="mt-auto text-center text-ink-600">{t.play.waitingNext}</p>
 			</Stage>
 		);
 	}
@@ -308,40 +309,91 @@ export function PlayerScreen({ code }: { code: string }) {
 		return (
 			<Stage wide className="gap-5 sm:gap-6 lg:gap-8">
 				<h1>
-					{finished
-						? 'Sonuçlar'
-						: `${state.game.currentIndex + 1}. sorudan sonra sıralama`}
+					{finished ? t.play.results : t.game.rankingAfter(state.game.currentIndex + 1)}
 				</h1>
 				{finished && <Podium scores={state.scores} />}
 				{rank && (
 					<div className="flex items-center justify-between rounded-3xl border-2 border-ink-900 bg-white p-5 lg:p-6">
 						<div>
-							<p className="eyebrow">Senin sonucun</p>
+							<p className="eyebrow">{t.play.yourResult}</p>
 							<p className="text-4xl font-bold tabular-nums">{rank}.</p>
-							<p className="text-ink-600">{state.scores.length} kişi arasında</p>
+							<p className="text-ink-600">{t.play.amongN(state.scores.length)}</p>
 						</div>
 						<p className="text-3xl font-bold tabular-nums">
 							{myScore}
-							<span className="ml-1 text-base font-medium text-ink-600">puan</span>
+							<span className="ml-1 text-base font-medium text-ink-600">
+								{t.common.points}
+							</span>
 						</p>
 					</div>
 				)}
 				<Scoreboard scores={state.scores} meId={me.id} />
 				{finished ? (
-					<Link
-						href="/"
-						className="mt-auto flex h-14 items-center justify-center rounded-full bg-ink-900 px-6 text-lg font-bold text-white hover:bg-ink-700"
-					>
-						Ana sayfaya dön
-					</Link>
+					<FinishedActions
+						code={code}
+						shareText={rank ? t.play.shareText(rank, state.scores.length, myScore) : ''}
+					/>
 				) : (
-					<p className="text-center text-ink-600">Sıradaki soru birazdan…</p>
+					<p className="text-center text-ink-600">{t.play.nextSoon}</p>
 				)}
 			</Stage>
 		);
 	}
 
-	return <Centered>Yükleniyor…</Centered>;
+	return <Centered>{t.common.loading}</Centered>;
+}
+
+// Oyun sonu: oyuncuyu host'a çeviren çağrı ve sonucu paylaşma (link herkese açık sonuç sayfası).
+function FinishedActions({ code, shareText }: { code: string; shareText: string }) {
+	const t = useDict();
+	const locale = useLocale();
+	const [copied, setCopied] = useState(false);
+
+	async function share() {
+		const url = `${window.location.origin}/results/${code}`;
+		if (navigator.share) {
+			// Kullanıcı paylaşım penceresini kapatırsa hata fırlatır; yapılacak bir şey yok.
+			await navigator.share({ text: shareText, url }).catch(() => {});
+			return;
+		}
+		await navigator.clipboard?.writeText(`${shareText} ${url}`);
+		setCopied(true);
+	}
+
+	return (
+		<div className="mt-auto flex flex-col gap-3">
+			<div className="grid grid-cols-2 gap-2">
+				{shareText && (
+					<button
+						type="button"
+						onClick={share}
+						className="flex h-14 items-center justify-center gap-2 rounded-full border-[1.5px] border-ink-300 bg-white px-4 font-semibold hover:bg-ink-50"
+					>
+						<Share2 className="size-4" aria-hidden />
+						{copied ? t.play.shareCopied : t.play.share}
+					</button>
+				)}
+				<Link
+					href={homePath(locale)}
+					className={cn(
+						'flex h-14 items-center justify-center rounded-full border-[1.5px] border-ink-300 bg-white px-4 font-semibold hover:bg-ink-50',
+						!shareText && 'col-span-2',
+					)}
+				>
+					{t.play.backHome}
+				</Link>
+			</div>
+			<p className="text-center text-sm text-ink-600">
+				{t.play.makeYourOwnHint}{' '}
+				<Link
+					href="/register?from=game"
+					className="font-semibold text-ink-900 underline underline-offset-4"
+				>
+					{t.play.makeYourOwn}
+				</Link>
+			</p>
+		</div>
+	);
 }
 
 // Soru X / Y, yuvarlak sayaç ve altında kalan süreyi gösteren ince çubuk.
@@ -355,11 +407,12 @@ function QuestionHeader({
 	paused: boolean;
 }) {
 	const limitMs = state.game.timeLimitSec * 1000;
+	const t = useDict();
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex items-center justify-between gap-4">
 				<p className="font-mono text-sm font-medium text-ink-600 uppercase">
-					Soru {state.game.currentIndex + 1} / {state.game.questionCount}
+					{t.common.questionOf(state.game.currentIndex + 1, state.game.questionCount)}
 				</p>
 				<Countdown remaining={remaining} limitMs={limitMs} paused={paused} />
 			</div>
@@ -401,22 +454,24 @@ function ResultCard({ right, title, sub }: { right: boolean; title: string; sub:
 }
 
 function Explanation({ text }: { text: string }) {
+	const t = useDict();
 	return (
 		<div className="rounded-3xl border bg-white p-5">
-			<p className="eyebrow mb-1">Açıklama</p>
+			<p className="eyebrow mb-1">{t.play.explanation}</p>
 			<p className="text-ink-700">{text}</p>
 		</div>
 	);
 }
 
 export function Avatar({ name, className }: { name: string; className?: string }) {
+	const locale = useLocale();
 	const initials = name
 		.split(/\s+/)
 		.filter(Boolean)
 		.slice(0, 2)
 		.map(w => w[0])
 		.join('')
-		.toLocaleUpperCase('tr');
+		.toLocaleUpperCase(locale);
 	return (
 		<span
 			aria-hidden
@@ -437,10 +492,14 @@ export function PlayerList({
 	players: { id: string; name: string }[];
 	meId?: string;
 }) {
+	const t = useDict();
 	return (
-		<section aria-label="Oyuncular">
+		<section aria-label={t.game.players}>
 			<p className="mb-3 font-semibold">
-				Odadakiler <span className="font-normal text-ink-600">({players.length} kişi)</span>
+				{t.game.inRoom}{' '}
+				<span className="font-normal text-ink-600">
+					{t.game.peopleCount(players.length)}
+				</span>
 			</p>
 			<ul className="flex flex-wrap gap-2">
 				{players.map(p => (
@@ -528,6 +587,7 @@ function BuzzerPlayerView({
 	onBuzz: () => void;
 	error: string;
 }) {
+	const t = useDict();
 	const { question, reveal } = state;
 	const queue = state.buzzer?.queue ?? [];
 	const pending = queue.filter(b => !b.verdict);
@@ -542,22 +602,30 @@ function BuzzerPlayerView({
 				{reveal.myPoints ? (
 					<ResultCard
 						right={mineRight}
-						title={mineRight ? 'Doğru!' : 'Yanlış'}
-						sub={mineRight ? `+${reveal.myPoints} puan` : `${reveal.myPoints} puan`}
+						title={mineRight ? t.play.right : t.play.wrong}
+						sub={
+							mineRight
+								? t.play.plusPoints(reveal.myPoints)
+								: t.play.pointsN(reveal.myPoints)
+						}
 					/>
 				) : (
 					<ResultCard
 						right={false}
-						title={reveal.winner ? `${reveal.winner.name} bildi` : 'Kimse bilemedi'}
+						title={
+							reveal.winner
+								? t.play.someoneGotIt(reveal.winner.name)
+								: t.play.nobodyGotIt
+						}
 						sub={
 							reveal.winner
-								? `+${reveal.winner.points} puan aldı`
-								: 'Bu soruda puan yok'
+								? t.play.gainedPoints(reveal.winner.points)
+								: t.play.noPoints
 						}
 					/>
 				)}
 				<Card className="flex flex-col gap-3 p-5 sm:p-6">
-					<p className="eyebrow">Doğru cevap</p>
+					<p className="eyebrow">{t.game.correctAnswer}</p>
 					<h2>{reveal.answerText}</h2>
 					<BuzzerImage
 						code={code}
@@ -567,7 +635,7 @@ function BuzzerPlayerView({
 					/>
 				</Card>
 				{reveal.explanation && <Explanation text={reveal.explanation} />}
-				<p className="mt-auto text-center text-ink-600">Sonraki soru bekleniyor…</p>
+				<p className="mt-auto text-center text-ink-600">{t.play.waitingNext}</p>
 			</Stage>
 		);
 	}
@@ -579,33 +647,31 @@ function BuzzerPlayerView({
 	return (
 		<Stage className="gap-4">
 			<QuestionHeader state={state} remaining={remaining} paused={!!question.pausedAt} />
-			<h2>{question.text || 'Bu ne?'}</h2>
+			<h2>{question.text || t.common.whatIsThis}</h2>
 			<div className="relative">
 				<BuzzerImage code={code} level={level} src={null} className="max-h-[45vh]" />
 				<span className="absolute top-3 left-3 rounded-full bg-white px-3 py-1 text-sm font-semibold">
-					Netlik %{level * 10}
+					{t.play.clarity(level * 10)}
 				</span>
 			</div>
-			<p className="text-ink-600">
-				Görsel netleşiyor. Bildiğin an bas, cevabını sesli söyle.
-			</p>
+			<p className="text-ink-600">{t.play.buzzHint}</p>
 			{answering && answering.id !== meId && (
 				<p role="status" className="rounded-xl border bg-white p-3 text-center font-medium">
-					{answering.name} cevaplıyor…
+					{t.play.answering(answering.name)}
 				</p>
 			)}
 			<div className="mt-auto">
 				{mine?.verdict === 'wrong' ? (
 					<p className="rounded-3xl border bg-white p-5 text-center text-lg font-semibold text-wrong">
-						Yanlış, −300. Bu soruda hakkın bitti.
+						{t.play.wrongBuzz}
 					</p>
 				) : myTurn === 0 ? (
 					<p className="rounded-3xl bg-ink-900 p-6 text-center text-2xl font-bold text-white">
-						Sıra sende! Cevabını söyle.
+						{t.play.yourTurn}
 					</p>
 				) : myTurn > 0 ? (
 					<p className="rounded-3xl border-2 border-ink-900 bg-accent-50 p-6 text-center text-2xl font-bold text-ink-900">
-						Sıran: {myTurn + 1}
+						{t.play.yourPlace(myTurn + 1)}
 					</p>
 				) : (
 					<button
@@ -614,7 +680,7 @@ function BuzzerPlayerView({
 						disabled={remaining <= 0}
 						className="h-24 w-full rounded-full bg-accent-400 text-3xl font-bold tracking-tight text-ink-900 transition outline-none hover:bg-accent-300 focus-visible:ring-4 focus-visible:ring-ink-900/40 active:translate-y-0.5 disabled:opacity-40"
 					>
-						{remaining > 0 ? 'BİLDİM!' : 'Süre doldu'}
+						{remaining > 0 ? t.play.buzz : t.play.timeUp}
 					</button>
 				)}
 			</div>

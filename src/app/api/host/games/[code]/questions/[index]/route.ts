@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 
 import { getHost, notFoundJson, unauthorized } from '@/lib/auth';
 import { getOwnedGame } from '@/lib/game';
+import { getDict } from '@/lib/locale';
 import { db } from '@/lib/supabase/admin';
 
 // Host ekranındaki "Önceki soru" görüntüleyicisi. Oyun durumunu değiştirmez.
@@ -10,18 +11,19 @@ export async function GET(
 	_: Request,
 	ctx: RouteContext<'/api/host/games/[code]/questions/[index]'>,
 ) {
+	const t = (await getDict()).api;
 	const host = await getHost();
 	if (!host) return unauthorized();
 	const { code, index: raw } = await ctx.params;
 	const game = await getOwnedGame(code, host.id);
-	if (!game) return notFoundJson('Oda bulunamadı');
+	if (!game) return notFoundJson(t.roomNotFound);
 
 	const index = Number(raw);
 	// Mevcut soru, ancak cevabı gösterildikten sonra görüntülenebilir.
 	const revealed = ['reveal', 'leaderboard', 'finished'].includes(game.phase);
 	const last = revealed ? game.current_index : game.current_index - 1;
 	if (!Number.isInteger(index) || index < 0 || index > last) {
-		return notFoundJson('Bu soru henüz sorulmadı');
+		return notFoundJson(t.notAskedYet);
 	}
 	const { data: q } = await db
 		.from('questions')
@@ -30,7 +32,7 @@ export async function GET(
 		.order('position')
 		.range(index, index)
 		.maybeSingle();
-	if (!q) return notFoundJson('Soru bulunamadı');
+	if (!q) return notFoundJson(t.questionNotFound);
 
 	const { data: answers } = await db
 		.from('answers')

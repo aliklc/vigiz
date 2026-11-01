@@ -84,12 +84,21 @@ export function Wordmark({
 }
 
 // Oda kodu: her karakter ayrı bir kutu (projeksiyonda uzaktan okunur).
-export function CodeTiles({ code, size = 'lg' }: { code: string; size?: 'md' | 'lg' }) {
+export function CodeTiles({
+	code,
+	label,
+	size = 'lg',
+}: {
+	code: string;
+	// Ekran okuyucu etiketi: t.common.roomCodeLabel
+	label: (spaced: string) => string;
+	size?: 'md' | 'lg';
+}) {
 	return (
 		<span
 			role="img"
 			className="inline-flex gap-1.5 sm:gap-2.5"
-			aria-label={`Oda kodu ${code.split('').join(' ')}`}
+			aria-label={label(code.split('').join(' '))}
 		>
 			{code.split('').map((ch, i) => (
 				<span

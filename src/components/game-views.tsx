@@ -4,7 +4,9 @@ import { Check, ChevronDown, ChevronUp, Flame, X, Zap } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { LETTERS } from '@/components/brand';
+import { useDict } from '@/components/locale-provider';
 import type { GameState } from '@/lib/game-types';
+import type { Dict } from '@/lib/i18n';
 import { GRACE_MS } from '@/lib/scoring';
 import { cn } from '@/lib/utils';
 
@@ -48,6 +50,7 @@ export function Countdown({
 	paused: boolean;
 	size?: 'md' | 'lg';
 }) {
+	const t = useDict();
 	const r = 44;
 	const circumference = 2 * Math.PI * r;
 	// Videolu soruda klip oynarken süre henüz başlamadı: tam halka.
@@ -60,7 +63,7 @@ export function Countdown({
 				size === 'lg' ? 'size-24 lg:size-28' : 'size-14 sm:size-16 lg:size-28',
 			)}
 			role="timer"
-			aria-label={paused ? 'Duraklatıldı' : `${Math.ceil(remaining / 1000)} saniye`}
+			aria-label={paused ? t.game.paused : t.game.seconds(Math.ceil(remaining / 1000))}
 		>
 			<svg viewBox="0 0 100 100" className="size-full -rotate-90" aria-hidden>
 				<circle
@@ -110,6 +113,7 @@ export function Choices({
 	onChoose?: (index: number) => void;
 	size: 'host' | 'player';
 }) {
+	const t = useDict();
 	const { question, reveal } = state;
 	if (!question) return null;
 	const total = reveal
@@ -169,11 +173,14 @@ export function Choices({
 								LETTERS[i]
 							)}
 						</span>
-						<span className="flex-1">{choice}</span>
+						{/* Doğru/Yanlış şıkları Türkçe saklanır; ekranda oyuncunun dilinde */}
+						<span className="flex-1">
+							{question.type === 'truefalse' ? trueFalseLabel(t, i) : choice}
+						</span>
 						{reveal && (
 							<span className="font-semibold tabular-nums">
 								{reveal.counts[i]}
-								<span className="sr-only"> kişi seçti</span>
+								<span className="sr-only">{t.game.pickedBy}</span>
 							</span>
 						)}
 						{Mark && (
@@ -183,7 +190,7 @@ export function Choices({
 									correct ? 'text-forest' : 'text-wrong',
 								)}
 								strokeWidth={3}
-								aria-label={correct ? 'Doğru cevap' : 'Senin yanlış cevabın'}
+								aria-label={correct ? t.game.correctAnswer : t.game.yourWrongAnswer}
 							/>
 						)}
 						{reveal && (
@@ -202,6 +209,10 @@ export function Choices({
 		</div>
 	);
 }
+
+// Doğru/Yanlış sorusunda şık sırası sabit: 0 doğru, 1 yanlış.
+export const trueFalseLabel = (t: Dict, i: number) =>
+	i === 0 ? t.common.trueLabel : t.common.falseLabel;
 
 export type QuestionVideo = { id: string; start: number; cut: number; end: number | null };
 
@@ -245,6 +256,7 @@ export function Scoreboard({
 	meId?: string;
 	limit?: number;
 }) {
+	const t = useDict();
 	const max = Math.max(1, ...scores.map(s => s.score));
 	const animated = scores.some(s => s.gained !== undefined);
 	// Sıra değişimi: önceki puanlara göre (score − gained) eski sıra.
@@ -299,7 +311,7 @@ export function Scoreboard({
 								// Seri sayısı alevin içinde
 								<span
 									className="relative flex size-8 shrink-0 items-center justify-center"
-									title={`${s.streak} soru üst üste doğru`}
+									title={t.game.streak(s.streak)}
 								>
 									<Flame
 										className="absolute size-8 fill-accent-400 stroke-ink-900"
@@ -308,19 +320,19 @@ export function Scoreboard({
 									<span className="relative mt-2 text-xs font-extrabold text-white">
 										{s.streak}
 									</span>
-									<span className="sr-only"> soru üst üste doğru</span>
+									<span className="sr-only">{t.game.streakSr}</span>
 								</span>
 							)}
 							{s.fastest && (
 								<span
 									className="flex shrink-0 items-center rounded-full bg-accent-50 p-1 text-accent-800"
-									title="Bu turun en hızlısı"
+									title={t.game.fastest}
 								>
 									<Zap
 										className="size-4 fill-accent-400 stroke-ink-900"
 										aria-hidden
 									/>
-									<span className="sr-only">Bu turun en hızlısı</span>
+									<span className="sr-only">{t.game.fastest}</span>
 								</span>
 							)}
 						</span>
@@ -340,11 +352,7 @@ export function Scoreboard({
 									'relative flex items-center text-sm font-semibold tabular-nums',
 									moved > 0 ? 'text-accent-800' : 'text-ink-600',
 								)}
-								title={
-									moved > 0
-										? `${moved} basamak yükseldi`
-										: `${-moved} basamak düştü`
-								}
+								title={moved > 0 ? t.game.movedUp(moved) : t.game.movedDown(-moved)}
 							>
 								{moved > 0 ? (
 									<ChevronUp className="size-4" aria-hidden />
@@ -353,7 +361,7 @@ export function Scoreboard({
 								)}
 								{Math.abs(moved)}
 								<span className="sr-only">
-									{moved > 0 ? ' basamak yükseldi' : ' basamak düştü'}
+									{moved > 0 ? t.game.movedUpSr : t.game.movedDownSr}
 								</span>
 							</span>
 						)}
@@ -440,6 +448,7 @@ export function BuzzerImage({
 	src: string | null;
 	className?: string;
 }) {
+	const t = useDict();
 	const url = src ?? `/api/games/${code}/image?l=${level ?? 0}`;
 	// Yeni seviye arka planda yüklenip hazır olunca değiştirilir: arada boş kare görünmez.
 	const [shown, setShown] = useState(url);
@@ -456,7 +465,7 @@ export function BuzzerImage({
 		// biome-ignore lint/performance/noImgElement: sunucunun ürettiği görsel, next/image gerekmez
 		<img
 			src={shown}
-			alt={src ? 'Görsel' : 'Bulanık görsel'}
+			alt={src ? t.game.image : t.game.blurredImage}
 			className={cn(
 				'mx-auto w-full rounded-2xl bg-muted object-contain transition-[filter] duration-500',
 				className,

@@ -2,6 +2,7 @@ import 'server-only';
 import { redirect } from 'next/navigation';
 import { NextResponse } from 'next/server';
 
+import { getDict } from '@/lib/locale';
 import { createAuthClient } from '@/lib/supabase/server';
 
 export type Host = { id: string; email: string; name: string };
@@ -23,5 +24,6 @@ export async function requireHost(): Promise<Host> {
 	return host;
 }
 
-export const unauthorized = () => NextResponse.json({ error: 'Yetkisiz' }, { status: 401 });
-export const notFoundJson = (error = 'Bulunamadı') => NextResponse.json({ error }, { status: 404 });
+export const unauthorized = async () =>
+	NextResponse.json({ error: (await getDict()).api.unauthorized }, { status: 401 });
+export const notFoundJson = (error: string) => NextResponse.json({ error }, { status: 404 });

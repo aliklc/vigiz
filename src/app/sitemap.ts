@@ -1,8 +1,14 @@
 import type { MetadataRoute } from 'next';
 
+import { SITE_URL } from '@/lib/site';
+
+// Ana sayfanın iki dili; her biri diğerini hreflang ile gösterir.
 export default function sitemap(): MetadataRoute.Sitemap {
-	const base = process.env.VERCEL_PROJECT_PRODUCTION_URL
-		? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-		: 'http://localhost:3000';
-	return [{ url: `${base}/`, changeFrequency: 'monthly', priority: 1 }];
+	const languages = { tr: `${SITE_URL}/`, en: `${SITE_URL}/en` };
+	return Object.values(languages).map(url => ({
+		url,
+		changeFrequency: 'monthly',
+		priority: 1,
+		alternates: { languages },
+	}));
 }

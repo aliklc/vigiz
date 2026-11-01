@@ -2,25 +2,20 @@ import { Clapperboard, Plus } from 'lucide-react';
 import Link from 'next/link';
 
 import { CONTAINER, CodeTiles } from '@/components/brand';
-import { FORMATS } from '@/components/formats';
+import { FORMAT_ICONS } from '@/components/formats';
 import { Button } from '@/components/ui/button';
 import { requireHost } from '@/lib/auth';
+import type { Dict } from '@/lib/i18n';
+import { getDict, getLocale } from '@/lib/locale';
 import { QUESTION_TYPES, type QuestionType } from '@/lib/quiz';
 import { db } from '@/lib/supabase/admin';
 import { cn } from '@/lib/utils';
 
-const PHASE_LABEL: Record<string, string> = {
-	lobby: 'Lobide, oyuncular katılıyor',
-	question: 'Soru ekranda',
-	reveal: 'Cevaplar gösteriliyor',
-	leaderboard: 'Sıralama gösteriliyor',
-};
-
-const shortDate = (iso: string) =>
-	new Date(iso).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
-
 export default async function HostHome() {
 	const host = await requireHost();
+	const [t, locale] = await Promise.all([getDict(), getLocale()]);
+	const shortDate = (iso: string) =>
+		new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
 	const [{ data: quizzes }, { data: games }] = await Promise.all([
 		db
 			.from('quizzes')
@@ -43,22 +38,22 @@ export default async function HostHome() {
 		<main className={cn(CONTAINER, 'flex flex-col gap-8 py-8 sm:py-10')}>
 			<header className="flex flex-wrap items-center justify-between gap-4">
 				<div>
-					<h1>Quizlerim</h1>
-					<p className="text-ink-600">Merhaba, {host.name.split(' ')[0]}</p>
+					<h1>{t.common.myQuizzes}</h1>
+					<p className="text-ink-600">{t.panel.hello(host.name.split(' ')[0])}</p>
 				</div>
 				<Link
 					href="/host/quizzes/new"
 					className="flex h-14 items-center gap-2 rounded-full bg-ink-900 px-6 text-lg font-bold text-white hover:bg-ink-700"
 				>
-					<Plus className="size-5" aria-hidden /> Yeni quiz
+					<Plus className="size-5" aria-hidden /> {t.panel.newQuiz}
 				</Link>
 			</header>
 
 			<dl className="grid grid-cols-3 gap-3">
 				{[
-					['Quiz', quizzes?.length ?? 0],
-					['Oynanan oyun', played.length],
-					['Toplam katılım', totalPlayers],
+					[t.panel.statQuiz, quizzes?.length ?? 0],
+					[t.panel.statPlayed, played.length],
+					[t.panel.statPlayers, totalPlayers],
 				].map(([label, value]) => (
 					<div key={label} className="rounded-3xl border bg-white p-4 sm:p-5">
 						<dt className="text-sm text-ink-600">{label}</dt>
@@ -69,22 +64,23 @@ export default async function HostHome() {
 
 			{open.length > 0 && (
 				<section aria-labelledby="open-rooms" className="flex flex-col gap-3">
-					<h2 id="open-rooms">Açık odalar</h2>
+					<h2 id="open-rooms">{t.panel.openRooms}</h2>
 					{open.map(g => (
 						<Link
 							key={g.code}
 							href={`/host/games/${g.code}`}
 							className="flex flex-wrap items-center gap-4 rounded-3xl border bg-white p-4 hover:border-ink-900"
 						>
-							<CodeTiles code={g.code} size="md" />
+							<CodeTiles code={g.code} label={t.common.roomCodeLabel} size="md" />
 							<div className="min-w-0 flex-1">
 								<p className="truncate font-semibold">{g.quizzes.title}</p>
 								<p className="text-sm text-muted-foreground">
-									{PHASE_LABEL[g.phase]}, {g.players[0]?.count ?? 0} oyuncu
+									{t.panel.phases[g.phase]},{' '}
+									{t.panel.playersN(g.players[0]?.count ?? 0)}
 								</p>
 							</div>
 							<span className="rounded-xl bg-ink-900 px-4 py-2 text-sm font-semibold text-white">
-								Ekrana dön
+								{t.panel.backToScreen}
 							</span>
 						</Link>
 					))}
@@ -93,15 +89,15 @@ export default async function HostHome() {
 
 			<section aria-labelledby="quizzes" className="flex flex-col gap-3">
 				<h2 id="quizzes" className="sr-only">
-					Quizler
+					{t.panel.quizzes}
 				</h2>
 				{!quizzes?.length && (
 					<div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-ink-300 bg-white p-10 text-center">
-						<p className="font-semibold">Henüz bir quizin yok</p>
-						<p className="text-ink-600">Bir konu seç, soruları yaz, oda aç.</p>
+						<p className="font-semibold">{t.panel.empty}</p>
+						<p className="text-ink-600">{t.panel.emptyHint}</p>
 						<Button asChild>
 							<Link href="/host/quizzes/new">
-								<Plus /> İlk quizini oluştur
+								<Plus /> {t.panel.createFirst}
 							</Link>
 						</Button>
 					</div>
@@ -112,6 +108,7 @@ export default async function HostHome() {
 						const ready = q.status === 'ready';
 						const runs = played.filter(g => g.quiz_id === q.id);
 						const lastRun = runs[0]?.finished_at;
+						const status = runs.length ? 'played' : ready ? 'ready' : 'draft';
 						const byType = QUESTION_TYPES.map(type => ({
 							type,
 							count: q.questions.filter(x => (x.type as QuestionType) === type)
@@ -127,22 +124,21 @@ export default async function HostHome() {
 									aria-hidden
 									className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-accent-50 text-xl font-semibold text-accent-800 sm:size-14"
 								>
-									{(q.title || '?')[0].toLocaleUpperCase('tr')}
+									{(q.title || '?')[0].toLocaleUpperCase(locale)}
 								</span>
 								<div className="min-w-0 flex-1">
 									<div className="flex items-center gap-2">
 										<p className="truncate font-semibold sm:text-lg">
-											{q.title || 'Adsız quiz'}
+											{q.title || t.common.untitledQuiz}
 										</p>
 										<StatusBadge
-											status={
-												runs.length ? 'played' : ready ? 'ready' : 'draft'
-											}
+											status={status}
+											label={t.panel.badges[status]}
 										/>
 									</div>
 									<p className="truncate text-sm text-ink-600">
-										{q.topic || 'Konu yok'},{' '}
-										{date.toLocaleDateString('tr-TR', {
+										{q.topic || t.panel.noTopic},{' '}
+										{date.toLocaleDateString(locale, {
 											day: 'numeric',
 											month: 'long',
 										})}
@@ -150,7 +146,8 @@ export default async function HostHome() {
 									<div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-ink-600">
 										{byType.length ? (
 											byType.map(({ type, count }) => {
-												const { label, Icon } = FORMATS[type];
+												const label = t.formats[type].label;
+												const Icon = FORMAT_ICONS[type];
 												return (
 													<span
 														key={type}
@@ -164,33 +161,38 @@ export default async function HostHome() {
 												);
 											})
 										) : (
-											<span>Soru yok</span>
+											<span>{t.panel.noQuestions}</span>
 										)}
 										{videos > 0 && (
 											<span
 												className="flex items-center gap-1"
-												title="Videolu soru"
+												title={t.panel.videoQuestion}
 											>
 												<Clapperboard className="size-3.5" aria-hidden />
 												{videos}
-												<span className="sr-only"> videolu soru</span>
+												<span className="sr-only">
+													{t.panel.videoQuestionSr}
+												</span>
 											</span>
 										)}
 										<span>
 											{runs.length
-												? `${runs.length} kez oynandı${lastRun ? `, son ${shortDate(lastRun)}` : ''}`
-												: 'Henüz oynanmadı'}
+												? t.panel.playedTimes(
+														runs.length,
+														lastRun ? shortDate(lastRun) : null,
+													)
+												: t.panel.notPlayed}
 										</span>
 									</div>
 								</div>
 								<div className="flex shrink-0 gap-2">
 									<Button asChild variant="outline">
-										<Link href={`/host/quizzes/${q.id}`}>Düzenle</Link>
+										<Link href={`/host/quizzes/${q.id}`}>{t.panel.edit}</Link>
 									</Button>
 									{ready && (
 										<form method="post" action="/api/host/games">
 											<input type="hidden" name="quizId" value={q.id} />
-											<Button type="submit">Oda aç</Button>
+											<Button type="submit">{t.panel.openRoom}</Button>
 										</form>
 									)}
 								</div>
@@ -204,13 +206,13 @@ export default async function HostHome() {
 }
 
 const BADGES = {
-	ready: ['Hazır', 'bg-accent-50 text-accent-800'],
-	draft: ['Taslak', 'bg-ink-100 text-ink-700'],
-	played: ['Oynandı', 'bg-ink-50 text-ink-600 border'],
-} as const;
+	ready: 'bg-accent-50 text-accent-800',
+	draft: 'bg-ink-100 text-ink-700',
+	played: 'bg-ink-50 text-ink-600 border',
+} satisfies Record<keyof Dict['panel']['badges'], string>;
 
-function StatusBadge({ status }: { status: keyof typeof BADGES }) {
-	const [label, cls] = BADGES[status];
+function StatusBadge({ status, label }: { status: keyof typeof BADGES; label: string }) {
+	const cls = BADGES[status];
 	return (
 		<span className={cn('shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold', cls)}>
 			{label}

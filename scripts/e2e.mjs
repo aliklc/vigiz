@@ -79,7 +79,12 @@ try {
 	log('giriş: yanlış şifre reddedildi, girişsiz /host → /login, API 401');
 
 	const asB = (path, init = {}) =>
-		fetch(`${B}${path}`, { ...init, headers: { cookie: hostB.cookie }, redirect: 'manual' });
+		fetch(`${B}${path}`, {
+			...init,
+			// Arayüz dili tarayıcı dilinden: aşağıdaki metin kontrolleri Türkçe sayfayı bekler.
+			headers: { cookie: hostB.cookie, 'accept-language': 'tr' },
+			redirect: 'manual',
+		});
 	const hostBPage = await (await asB('/host')).text();
 	assert.ok(hostBPage.includes('Quizlerim'), 'B kendi paneline girebilmeli');
 	assert.ok(!hostBPage.includes('E2E Test'), "B, A'nın quizini listede görmemeli");
@@ -365,7 +370,7 @@ try {
 	const putA = body =>
 		fetch(`${B}/api/host/quizzes/${quizId}`, {
 			method: 'PUT',
-			headers: { cookie },
+			headers: { cookie, 'accept-language': 'tr' },
 			body: JSON.stringify(body),
 		});
 	assert.equal((await putA(playedQuiz)).status, 200, 'oynanmış quizin başlığı değişebilmeli');

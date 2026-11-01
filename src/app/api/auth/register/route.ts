@@ -5,15 +5,20 @@ import { createAuthClient } from '@/lib/supabase/server';
 export async function POST(request: Request) {
 	const form = await request.formData();
 	const name = String(form.get('name') ?? '').trim();
+	// Kaydın nereden geldiği (ör. oyun sonu çağrısı); sadece bilinen değer saklanır.
+	const source = form.get('from') === 'game' ? 'game' : null;
 	const back = (error: string) =>
-		NextResponse.redirect(new URL(`/register?error=${error}`, request.url), 303);
+		NextResponse.redirect(
+			new URL(`/register?error=${error}${source ? `&from=${source}` : ''}`, request.url),
+			303,
+		);
 	if (!name) return back('name');
 
 	const supabase = await createAuthClient();
 	const { data, error } = await supabase.auth.signUp({
 		email: String(form.get('email') ?? '').trim(),
 		password: String(form.get('password') ?? ''),
-		options: { data: { name } },
+		options: { data: { name, ...(source && { signup_source: source }) } },
 	});
 	if (error) return back(error.code ?? 'unknown');
 	// "Confirm email" açıksa oturum gelmez; kullanıcı e-postasını onaylamalı.
